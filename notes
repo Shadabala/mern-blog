@@ -1,0 +1,11 @@
+Note :- 
+1. mongoDb Indexing 
+2. Uppy Uploader(project directory, S3)
+3. Validation Zod schema
+4. Auth Token security checks saved to cookies    
+5. Admin panel, Staff Management (Role and Permission) -> Activity Logs()
+6. Cms Setting Saved to Website_settings tabele
+8. User -> block/unblock-> login as a User
+9. Login Two factor Authentications(Login request timer)
+10. Redis Cache Implment(upstash redis)
+11. Clear cache In admin Panel 
