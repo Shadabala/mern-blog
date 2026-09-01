@@ -5,19 +5,18 @@ export const protect = async (req, res, next) => {
     try {
         let token;
 
-        if (req.cookies && req.cookies.accessToken) {
-            token = req.cookies.accessToken;
-        } else if (
+        // Check Authorization Bearer Header
+        if (
             req.headers.authorization &&
             req.headers.authorization.startsWith("Bearer")
         ) {
             token = req.headers.authorization.split(" ")[1];
         }
 
-        if (!token) {
+        if (!token || token === "null" || token === "undefined") {
             return res.status(401).json({
                 success: false,
-                message: "Unauthorized! Token missing."
+                message: "Unauthorized! Access token missing. Please login first."
             });
         }
 
@@ -26,12 +25,12 @@ export const protect = async (req, res, next) => {
             process.env.ACCESS_SECRET_KEY
         );
 
-        const user = await User.findById(decoded.userId).select("-password");
+        const user = await User.findById(decoded.userId || decoded._id).select("-password");
 
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: "User not found"
+                message: "User account not found. Please login again."
             });
         }
 
@@ -43,12 +42,12 @@ export const protect = async (req, res, next) => {
             return res.status(401).json({
                 success: false,
                 code: "TOKEN_EXPIRED",
-                message: "Access token expired"
+                message: "Access token expired. Please login again."
             });
         }
         return res.status(401).json({
             success: false,
-            message: "Invalid or expired token. Please login again!"
+            message: "Invalid or expired token. Please login again."
         });
     }
 };
