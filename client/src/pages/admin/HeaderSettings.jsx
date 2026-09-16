@@ -242,14 +242,6 @@ const HeaderSettings = () => {
     const initialFormState = {
         header_logo: '',
 
-        topbar_banner: '',
-
-        topbar_banner_medium: '',
-
-        topbar_banner_small: '',
-
-        topbar_banner_link: '',
-
         helpline_number: '',
 
         header_nav_menu_text: 'light',
@@ -266,16 +258,6 @@ const HeaderSettings = () => {
     ] = useState(
         initialFormState
     );
-
-
-    /**
-     * =========================================================
-     * LANGUAGES
-     * =========================================================
-     */
-
-
-
 
     /**
      * =========================================================
@@ -305,26 +287,6 @@ const HeaderSettings = () => {
                             header_logo:
                                 res.settings
                                     .header_logo ||
-                                '',
-
-                            topbar_banner:
-                                res.settings
-                                    .topbar_banner ||
-                                '',
-
-                            topbar_banner_medium:
-                                res.settings
-                                    .topbar_banner_medium ||
-                                '',
-
-                            topbar_banner_small:
-                                res.settings
-                                    .topbar_banner_small ||
-                                '',
-
-                            topbar_banner_link:
-                                res.settings
-                                    .topbar_banner_link ||
                                 '',
 
                             helpline_number:
@@ -815,18 +777,6 @@ const HeaderSettings = () => {
                             }}
                         >
 
-                            {/* =================================================
-                                BRANDING
-                            ================================================== */}
-
-                            <SectionHeader>
-                                {t(
-                                    'Branding',
-                                    'Branding'
-                                )}
-                            </SectionHeader>
-
-
                             {/* HEADER LOGO */}
 
                             <FormFieldRow
@@ -857,160 +807,6 @@ const HeaderSettings = () => {
                                 />
                             </FormFieldRow>
 
-
-                            {/* =================================================
-                                TOPBAR
-                            ================================================== */}
-
-                            <SectionHeader>
-                                {t(
-                                    'Topbar Banner',
-                                    'Topbar Banner'
-                                )}
-                            </SectionHeader>
-
-
-                            {/* LARGE */}
-
-                            <FormFieldRow
-                                label={t(
-                                    'Topbar Banner',
-                                    'Topbar Banner'
-                                )}
-                                alignItems="start"
-                                helperText={t(
-                                    'Will be shown on large devices. Minimum dimensions required: 1920px width X 60px height.',
-                                    'Will be shown on large devices. Minimum dimensions required: 1920px width X 60px height.'
-                                )}
-                            >
-                                <AizUploaderInput
-                                    value={
-                                        form.topbar_banner
-                                    }
-                                    onChange={(
-                                        url
-                                    ) =>
-                                        handleFieldChange(
-                                            'topbar_banner',
-                                            url
-                                        )
-                                    }
-                                    type="image"
-                                    placeholder={t(
-                                        'Choose Large Banner',
-                                        'Choose Large Banner'
-                                    )}
-                                    helperText=""
-                                />
-                            </FormFieldRow>
-
-
-                            {/* MEDIUM */}
-
-                            <FormFieldRow
-                                label={t(
-                                    'Topbar Banner Medium',
-                                    'Topbar Banner Medium'
-                                )}
-                                alignItems="start"
-                                helperText={t(
-                                    'Will be shown on medium devices. Minimum dimensions required: 810px width X 40px height.',
-                                    'Will be shown on medium devices. Minimum dimensions required: 810px width X 40px height.'
-                                )}
-                            >
-                                <AizUploaderInput
-                                    value={
-                                        form.topbar_banner_medium
-                                    }
-                                    onChange={(
-                                        url
-                                    ) =>
-                                        handleFieldChange(
-                                            'topbar_banner_medium',
-                                            url
-                                        )
-                                    }
-                                    type="image"
-                                    placeholder={t(
-                                        'Choose Medium Banner',
-                                        'Choose Medium Banner'
-                                    )}
-                                    helperText=""
-                                />
-                            </FormFieldRow>
-
-
-                            {/* SMALL */}
-
-                            <FormFieldRow
-                                label={t(
-                                    'Topbar Banner Small',
-                                    'Topbar Banner Small'
-                                )}
-                                alignItems="start"
-                                helperText={t(
-                                    'Will be shown on small devices. Minimum dimensions required: 428px width X 40px height.',
-                                    'Will be shown on small devices. Minimum dimensions required: 428px width X 40px height.'
-                                )}
-                            >
-                                <AizUploaderInput
-                                    value={
-                                        form.topbar_banner_small
-                                    }
-                                    onChange={(
-                                        url
-                                    ) =>
-                                        handleFieldChange(
-                                            'topbar_banner_small',
-                                            url
-                                        )
-                                    }
-                                    type="image"
-                                    placeholder={t(
-                                        'Choose Small Banner',
-                                        'Choose Small Banner'
-                                    )}
-                                    helperText=""
-                                />
-                            </FormFieldRow>
-
-
-                            {/* LINK */}
-
-                            <FormFieldRow
-                                label={t(
-                                    'Topbar Banner Link',
-                                    'Topbar Banner Link'
-                                )}
-                                alignItems="start"
-                            >
-                                <TextField
-                                    fullWidth
-                                    placeholder={t(
-                                        'Link with http:// or https://',
-                                        'Link with http:// or https://'
-                                    )}
-                                    value={
-                                        form.topbar_banner_link ||
-                                        ''
-                                    }
-                                    onChange={(
-                                        e
-                                    ) =>
-                                        handleFieldChange(
-                                            'topbar_banner_link',
-                                            e
-                                                .target
-                                                .value
-                                        )
-                                    }
-                                    sx={
-                                        inputSx
-                                    }
-                                />
-                            </FormFieldRow>
-
-
                             {/* =================================================
                                 CONTACT
                             ================================================== */}
@@ -1025,15 +821,15 @@ const HeaderSettings = () => {
 
                             <FormFieldRow
                                 label={t(
-                                    'Help line number',
-                                    'Help line number'
+                                    'Contact Phone',
+                                    'Contact Phone'
                                 )}
                             >
                                 <TextField
                                     fullWidth
                                     placeholder={t(
-                                        'Help line number',
-                                        'Help line number'
+                                        'Please Enter Phone',
+                                        'Please Enter Phone'
                                     )}
                                     value={
                                         form.helpline_number ||

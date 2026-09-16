@@ -19,19 +19,12 @@ const PaymentMethodsSettings = () => {
     const [alertMessage, setAlertMessage] = useState({ type: 'info', text: '' });
 
     const [form, setForm] = useState({
-        PAYPAL_CLIENT_ID: '',
-        PAYPAL_CLIENT_SECRET: '',
-        paypal_sandbox: 1,
-        paypal_payment: 1,
         STRIPE_KEY: '',
         STRIPE_SECRET: '',
         stripe_payment: 1,
         RAZORPAY_KEY: '',
         RAZORPAY_SECRET: '',
         razorpay_payment: 0,
-        PAYSTACK_PUBLIC_KEY: '',
-        PAYSTACK_SECRET_KEY: '',
-        paystack_payment: 0,
         manual_payment_1_name: 'Bank Transfer / Wire',
         manual_payment_1_instruction: 'Please transfer funds to Account #123456 and email the receipt.',
         manual_payment_1_status: 1
@@ -112,59 +105,8 @@ const PaymentMethodsSettings = () => {
             )}
 
             <Grid container spacing={3}>
-                {/* 1. Paypal Card */}
-                <Grid item xs={12} md={6}>
-                    <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
-                        <CardHeader
-                            title={t("Paypal Credential")}
-                            titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
-                            action={
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={Boolean(Number(form.paypal_payment) === 1 || form.paypal_payment === true)}
-                                            onChange={(e) => handleFieldChange('paypal_payment', e.target.checked ? 1 : 0)}
-                                            color="success"
-                                        />
-                                    }
-                                    label={t("Active")}
-                                />
-                            }
-                            sx={{ borderBottom: '1px solid #f1f5f9', pb: 1.5 }}
-                        />
-                        <CardContent>
-                            <Stack spacing={2.5}>
-                                <TextField
-                                    label={t("Paypal Client Id")}
-                                    value={form.PAYPAL_CLIENT_ID || ''}
-                                    onChange={(e) => handleFieldChange('PAYPAL_CLIENT_ID', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                                <TextField
-                                    label={t("Paypal Client Secret")}
-                                    type="password"
-                                    value={form.PAYPAL_CLIENT_SECRET || ''}
-                                    onChange={(e) => handleFieldChange('PAYPAL_CLIENT_SECRET', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                                <Box display="flex" justifyContent="space-between" alignItems="center">
-                                    <Typography variant="body2" fontWeight={600} color="#475569">
-                                        {t("Paypal Sandbox Mode")}
-                                    </Typography>
-                                    <Switch
-                                        checked={Boolean(Number(form.paypal_sandbox) === 1 || form.paypal_sandbox === true)}
-                                        onChange={(e) => handleFieldChange('paypal_sandbox', e.target.checked ? 1 : 0)}
-                                        color="primary"
-                                    />
-                                </Box>
-                            </Stack>
-                        </CardContent>
-                    </Card>
-                </Grid>
 
-                {/* 2. Stripe Card */}
+                {/* Stripe Card */}
                 <Grid item xs={12} md={6}>
                     <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
                         <CardHeader
@@ -206,7 +148,7 @@ const PaymentMethodsSettings = () => {
                     </Card>
                 </Grid>
 
-                {/* 3. Razorpay Card */}
+                {/* Razorpay Card */}
                 <Grid item xs={12} md={6}>
                     <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
                         <CardHeader
@@ -248,50 +190,8 @@ const PaymentMethodsSettings = () => {
                     </Card>
                 </Grid>
 
-                {/* 4. Paystack Card */}
+                {/*  Manual / Offline Payment */}
                 <Grid item xs={12} md={6}>
-                    <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
-                        <CardHeader
-                            title={t("Paystack Credential")}
-                            titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
-                            action={
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={Boolean(Number(form.paystack_payment) === 1 || form.paystack_payment === true)}
-                                            onChange={(e) => handleFieldChange('paystack_payment', e.target.checked ? 1 : 0)}
-                                            color="success"
-                                        />
-                                    }
-                                    label={t("Active")}
-                                />
-                            }
-                            sx={{ borderBottom: '1px solid #f1f5f9', pb: 1.5 }}
-                        />
-                        <CardContent>
-                            <Stack spacing={2.5}>
-                                <TextField
-                                    label={t("Paystack Public Key")}
-                                    value={form.PAYSTACK_PUBLIC_KEY || ''}
-                                    onChange={(e) => handleFieldChange('PAYSTACK_PUBLIC_KEY', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                                <TextField
-                                    label={t("Paystack Secret Key")}
-                                    type="password"
-                                    value={form.PAYSTACK_SECRET_KEY || ''}
-                                    onChange={(e) => handleFieldChange('PAYSTACK_SECRET_KEY', e.target.value)}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Stack>
-                        </CardContent>
-                    </Card>
-                </Grid>
-
-                {/* 5. Manual / Offline Payment */}
-                <Grid item xs={12}>
                     <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0' }}>
                         <CardHeader
                             title={t("Manual / Offline Payment Method")}

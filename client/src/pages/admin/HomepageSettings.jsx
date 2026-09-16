@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box, Paper, Typography, TextField, Button, Grid, IconButton,
-    Alert, CircularProgress, Stack, FormControl, InputLabel, Select, MenuItem,
+    Alert, AlertTitle, CircularProgress, Stack, FormControl, InputLabel, Select, MenuItem,
     OutlinedInput, Chip
 } from '@mui/material';
 import {
@@ -32,12 +32,6 @@ const HomepageSettings = () => {
     const [settings, setSettings] = useState({
         home_slider_images: [],
         home_slider_links: [],
-        home_banner1_images: '',
-        home_banner1_links: '',
-        home_banner2_images: ['', ''],
-        home_banner2_links: ['', ''],
-        top10_categories: [],
-        featured_categories: []
     });
 
     const loadSettings = useCallback(async (langCode) => {
@@ -49,12 +43,6 @@ const HomepageSettings = () => {
                 setSettings({
                     home_slider_images: Array.isArray(s.home_slider_images) ? s.home_slider_images : (s.home_slider_images ? [s.home_slider_images] : []),
                     home_slider_links: Array.isArray(s.home_slider_links) ? s.home_slider_links : (s.home_slider_links ? [s.home_slider_links] : []),
-                    home_banner1_images: s.home_banner1_images || '',
-                    home_banner1_links: s.home_banner1_links || '',
-                    home_banner2_images: Array.isArray(s.home_banner2_images) ? s.home_banner2_images : ['', ''],
-                    home_banner2_links: Array.isArray(s.home_banner2_links) ? s.home_banner2_links : ['', ''],
-                    top10_categories: Array.isArray(s.top10_categories) ? s.top10_categories : [],
-                    featured_categories: Array.isArray(s.featured_categories) ? s.featured_categories : []
                 });
 
                 if (Array.isArray(res.categories)) {
@@ -184,47 +172,54 @@ const HomepageSettings = () => {
                             <Typography variant="subtitle1" fontWeight={700} color="#1e293b">
                                 {t("Home Slider")}
                             </Typography>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                size="small"
-                                disabled={saving}
-                                startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <SaveIcon fontSize="small" />}
-                                sx={{
-                                    bgcolor: '#3b82f6',
-                                    '&:hover': { bgcolor: '#2563eb' },
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                {t("Update")}
-                            </Button>
                         </Box>
 
                         {/* Minimum dimensions info banner */}
-                        <Box
+                        <Alert
+                            severity="info"
+                            icon={<InfoIcon />}
                             sx={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                gap: 1.5,
-                                p: 2,
                                 mb: 3,
-                                bgcolor: '#f8fafc',
-                                borderRadius: '8px',
-                                border: '1px dashed #cbd5e1'
+                                borderRadius: 2,
+                                bgcolor: '#EFF6FF',
+                                border: '1px solid #BFDBFE',
+                                alignItems: 'flex-start',
+
+                                '& .MuiAlert-icon': {
+                                    color: '#2563EB',
+                                    mt: '2px',
+                                },
+
+                                '& .MuiAlert-message': {
+                                    width: '100%',
+                                },
                             }}
                         >
-                            <InfoIcon sx={{ color: '#64748b', fontSize: 22, mt: '2px' }} />
-                            <Box>
-                                <Typography variant="body2" fontWeight={600} color="#080809ff" gutterBottom>
-                                    {t("Minimum dimensions required: 1903px width X 553px height.")}
-                                </Typography>
-                                <Typography variant="caption" color="#0b0d0eff" display="block" lineHeight={1.5}>
-                                    {t("We have limited banner height to maintain UI. We had to crop from both left & right side in view for different devices to make it responsive. Before designing banner keep these points in mind.")}
-                                </Typography>
-                            </Box>
-                        </Box>
+                            <Typography
+                                sx={{
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    color: '#1E3A8A',
+                                    mb: 0.5,
+                                }}
+                            >
+                                Minimum dimensions required: 1903px × 553px
+                            </Typography>
+
+                            <Typography
+                                sx={{
+                                    fontSize: '13px',
+                                    color: '#475569',
+                                    lineHeight: 1.6,
+                                    display: 'block',
+                                }}
+                            >
+                                The banner height is limited to maintain the UI layout. On
+                                different devices, the banner may be cropped from the left and
+                                right sides to remain responsive. Please keep this in mind when
+                                designing your banner.
+                            </Typography>
+                        </Alert>
 
                         {/* Slider Rows */}
                         <Stack spacing={3}>
@@ -309,276 +304,6 @@ const HomepageSettings = () => {
                         </Button>
                     </Paper>
 
-                    {/* SECTION 2: HOME BANNER 1 (FULL WIDTH) */}
-                    <Paper elevation={0} sx={{ p: { xs: 2.5, md: 3.5 }, border: '1px solid #e2e8f0', borderRadius: '12px', mb: 4, bgcolor: '#ffffff' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="subtitle1" fontWeight={700} color="#1e293b">
-                                {t("Home Banner 1 (Large Banner)")}
-                            </Typography>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                size="small"
-                                disabled={saving}
-                                startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <SaveIcon fontSize="small" />}
-                                sx={{
-                                    bgcolor: '#3b82f6',
-                                    '&:hover': { bgcolor: '#2563eb' },
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                {t("Update")}
-                            </Button>
-                        </Box>
-
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                p: 1.5,
-                                mb: 2.5,
-                                bgcolor: '#f8fafc',
-                                borderRadius: '6px',
-                                border: '1px dashed #cbd5e1'
-                            }}
-                        >
-                            <InfoIcon sx={{ color: '#64748b', fontSize: 18 }} />
-                            <Typography variant="caption" color="#64748b">
-                                {t("Minimum dimensions required: 1300px width X 650px height.")}
-                            </Typography>
-                        </Box>
-
-                        <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} sm={6}>
-                                <AizUploaderInput
-                                    value={settings.home_banner1_images}
-                                    type="image"
-                                    onChange={(val) => setSettings(prev => ({ ...prev, home_banner1_images: val }))}
-                                    placeholder={t("Choose File")}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    placeholder="http://"
-                                    value={settings.home_banner1_links || ''}
-                                    onChange={(e) => setSettings(prev => ({ ...prev, home_banner1_links: e.target.value }))}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
-                                />
-                            </Grid>
-                        </Grid>
-                    </Paper>
-
-                    {/* SECTION 3: HOME BANNER 2 (2 HALF BANNERS) */}
-                    <Paper elevation={0} sx={{ p: { xs: 2.5, md: 3.5 }, border: '1px solid #e2e8f0', borderRadius: '12px', mb: 4, bgcolor: '#ffffff' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="subtitle1" fontWeight={700} color="#1e293b">
-                                {t("Home Banner 2 (2 Half Banners)")}
-                            </Typography>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                size="small"
-                                disabled={saving}
-                                startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <SaveIcon fontSize="small" />}
-                                sx={{
-                                    bgcolor: '#3b82f6',
-                                    '&:hover': { bgcolor: '#2563eb' },
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                {t("Update")}
-                            </Button>
-                        </Box>
-
-                        <Grid container spacing={3}>
-                            {/* Banner 2.1 */}
-                            <Grid item xs={12} md={6}>
-                                <Typography variant="caption" fontWeight={700} color="#475569" display="block" mb={1}>
-                                    {t("Banner 1 (Left)")}
-                                </Typography>
-                                <AizUploaderInput
-                                    value={settings.home_banner2_images[0]}
-                                    type="image"
-                                    onChange={(val) => {
-                                        setSettings(prev => {
-                                            const arr = [...prev.home_banner2_images];
-                                            arr[0] = val;
-                                            return { ...prev, home_banner2_images: arr };
-                                        });
-                                    }}
-                                    placeholder={t("Choose File")}
-                                />
-                                <Box sx={{ mt: 1.5 }}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        placeholder="http://"
-                                        value={settings.home_banner2_links[0] || ''}
-                                        onChange={(e) => {
-                                            const arr = [...settings.home_banner2_links];
-                                            arr[0] = e.target.value;
-                                            setSettings(prev => ({ ...prev, home_banner2_links: arr }));
-                                        }}
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
-                                    />
-                                </Box>
-                            </Grid>
-
-                            {/* Banner 2.2 */}
-                            <Grid item xs={12} md={6}>
-                                <Typography variant="caption" fontWeight={700} color="#475569" display="block" mb={1}>
-                                    {t("Banner 2 (Right)")}
-                                </Typography>
-                                <AizUploaderInput
-                                    value={settings.home_banner2_images[1]}
-                                    type="image"
-                                    onChange={(val) => {
-                                        setSettings(prev => {
-                                            const arr = [...prev.home_banner2_images];
-                                            arr[1] = val;
-                                            return { ...prev, home_banner2_images: arr };
-                                        });
-                                    }}
-                                    placeholder={t("Choose File")}
-                                />
-                                <Box sx={{ mt: 1.5 }}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        placeholder="http://"
-                                        value={settings.home_banner2_links[1] || ''}
-                                        onChange={(e) => {
-                                            const arr = [...settings.home_banner2_links];
-                                            arr[1] = e.target.value;
-                                            setSettings(prev => ({ ...prev, home_banner2_links: arr }));
-                                        }}
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
-                                    />
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    </Paper>
-
-                    {/* SECTION 4: TOP CATEGORIES SELECTOR */}
-                    <Paper elevation={0} sx={{ p: { xs: 2.5, md: 3.5 }, border: '1px solid #e2e8f0', borderRadius: '12px', mb: 4, bgcolor: '#ffffff' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="subtitle1" fontWeight={700} color="#1e293b">
-                                {t("Top 10 Categories")}
-                            </Typography>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                size="small"
-                                disabled={saving}
-                                startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <SaveIcon fontSize="small" />}
-                                sx={{
-                                    bgcolor: '#3b82f6',
-                                    '&:hover': { bgcolor: '#2563eb' },
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                {t("Update")}
-                            </Button>
-                        </Box>
-
-                        <FormControl fullWidth size="small">
-                            <InputLabel>{t("Select Categories")}</InputLabel>
-                            <Select
-                                multiple
-                                value={settings.top10_categories || []}
-                                onChange={(e) => setSettings(prev => ({ ...prev, top10_categories: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value }))}
-                                input={<OutlinedInput label={t("Select Categories")} />}
-                                renderValue={(selected) => (
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                        {selected.map((val) => {
-                                            const cat = categories.find(c => (c._id === val || c.id === val));
-                                            return (
-                                                <Chip
-                                                    key={val}
-                                                    label={cat ? cat.name : val}
-                                                    size="small"
-                                                    sx={{ borderRadius: '4px' }}
-                                                />
-                                            );
-                                        })}
-                                    </Box>
-                                )}
-                                sx={{ borderRadius: '6px' }}
-                            >
-                                {categories.map((cat) => (
-                                    <MenuItem key={cat._id || cat.id} value={cat._id || cat.id}>
-                                        {cat.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Paper>
-
-                    {/* SECTION 5: FEATURED CATEGORIES SELECTOR */}
-                    <Paper elevation={0} sx={{ p: { xs: 2.5, md: 3.5 }, border: '1px solid #e2e8f0', borderRadius: '12px', mb: 4, bgcolor: '#ffffff' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="subtitle1" fontWeight={700} color="#1e293b">
-                                {t("Featured Categories")}
-                            </Typography>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                size="small"
-                                disabled={saving}
-                                startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <SaveIcon fontSize="small" />}
-                                sx={{
-                                    bgcolor: '#3b82f6',
-                                    '&:hover': { bgcolor: '#2563eb' },
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                {t("Update")}
-                            </Button>
-                        </Box>
-
-                        <FormControl fullWidth size="small">
-                            <InputLabel>{t("Select Featured Categories")}</InputLabel>
-                            <Select
-                                multiple
-                                value={settings.featured_categories || []}
-                                onChange={(e) => setSettings(prev => ({ ...prev, featured_categories: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value }))}
-                                input={<OutlinedInput label={t("Select Featured Categories")} />}
-                                renderValue={(selected) => (
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                        {selected.map((val) => {
-                                            const cat = categories.find(c => (c._id === val || c.id === val));
-                                            return (
-                                                <Chip
-                                                    key={val}
-                                                    label={cat ? cat.name : val}
-                                                    size="small"
-                                                    sx={{ borderRadius: '4px' }}
-                                                />
-                                            );
-                                        })}
-                                    </Box>
-                                )}
-                                sx={{ borderRadius: '6px' }}
-                            >
-                                {categories.map((cat) => (
-                                    <MenuItem key={cat._id || cat.id} value={cat._id || cat.id}>
-                                        {cat.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Paper>
 
                     {/* Primary Bottom Save Action */}
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>

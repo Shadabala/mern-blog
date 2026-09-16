@@ -21,14 +21,10 @@ const FeatureActivation = () => {
         FORCE_HTTPS: 0,
         maintenance_mode: 0,
         disable_image_optimization: 0,
-        vendor_system_activation: 0,
-        classified_product: 0,
         wallet_system: 0,
         email_verification: 0,
         facebook_login: 0,
         google_login: 0,
-        twitter_login: 0,
-        apple_login: 0
     });
 
     useEffect(() => {
@@ -169,44 +165,6 @@ const FeatureActivation = () => {
                         {t("Business Related")}
                     </Typography>
                     <Grid container spacing={3}>
-                        {/* Vendor System */}
-                        <Grid item xs={12} sm={6} md={4}>
-                            <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
-                                <CardHeader
-                                    title={t("Vendor System Activation")}
-                                    titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700, textAlign: 'center' }}
-                                    sx={{ borderBottom: '1px solid #f1f5f9', pb: 1.5 }}
-                                />
-                                <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                                    <Switch
-                                        checked={Boolean(Number(settings.vendor_system_activation) === 1)}
-                                        onChange={(e) => handleToggle('vendor_system_activation', e.target.checked)}
-                                        color="success"
-                                        size="medium"
-                                    />
-                                </CardContent>
-                            </Card>
-                        </Grid>
-
-                        {/* Classified Product */}
-                        <Grid item xs={12} sm={6} md={4}>
-                            <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
-                                <CardHeader
-                                    title={t("Classified Product")}
-                                    titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700, textAlign: 'center' }}
-                                    sx={{ borderBottom: '1px solid #f1f5f9', pb: 1.5 }}
-                                />
-                                <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                                    <Switch
-                                        checked={Boolean(Number(settings.classified_product) === 1)}
-                                        onChange={(e) => handleToggle('classified_product', e.target.checked)}
-                                        color="success"
-                                        size="medium"
-                                    />
-                                </CardContent>
-                            </Card>
-                        </Grid>
-
                         {/* Wallet System */}
                         <Grid item xs={12} sm={6} md={4}>
                             <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
@@ -308,56 +266,6 @@ const FeatureActivation = () => {
                                     />
                                     <Alert severity="info" sx={{ mt: 2, textAlign: 'left', fontSize: '0.75rem', borderRadius: 2 }}>
                                         {t("You need to configure Google Client.")}{' '}
-                                        <MuiLink component={RouterLink} to="/admin/setup/google" fontWeight={700}>
-                                            {t("Configure Now")}
-                                        </MuiLink>
-                                    </Alert>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-
-                        {/* Twitter login */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
-                                <CardHeader
-                                    title={t("Twitter login")}
-                                    titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700, textAlign: 'center' }}
-                                    sx={{ borderBottom: '1px solid #f1f5f9', pb: 1.5 }}
-                                />
-                                <CardContent sx={{ textAlign: 'center', py: 2.5 }}>
-                                    <Switch
-                                        checked={Boolean(Number(settings.twitter_login) === 1)}
-                                        onChange={(e) => handleToggle('twitter_login', e.target.checked)}
-                                        color="success"
-                                        size="medium"
-                                    />
-                                    <Alert severity="info" sx={{ mt: 2, textAlign: 'left', fontSize: '0.75rem', borderRadius: 2 }}>
-                                        {t("You need to configure Twitter Client.")}{' '}
-                                        <MuiLink component={RouterLink} to="/admin/setup/google" fontWeight={700}>
-                                            {t("Configure Now")}
-                                        </MuiLink>
-                                    </Alert>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-
-                        {/* Apple login */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
-                                <CardHeader
-                                    title={t("Apple login")}
-                                    titleTypographyProps={{ variant: 'subtitle2', fontWeight: 700, textAlign: 'center' }}
-                                    sx={{ borderBottom: '1px solid #f1f5f9', pb: 1.5 }}
-                                />
-                                <CardContent sx={{ textAlign: 'center', py: 2.5 }}>
-                                    <Switch
-                                        checked={Boolean(Number(settings.apple_login) === 1)}
-                                        onChange={(e) => handleToggle('apple_login', e.target.checked)}
-                                        color="success"
-                                        size="medium"
-                                    />
-                                    <Alert severity="info" sx={{ mt: 2, textAlign: 'left', fontSize: '0.75rem', borderRadius: 2 }}>
-                                        {t("You need to configure Apple Client.")}{' '}
                                         <MuiLink component={RouterLink} to="/admin/setup/google" fontWeight={700}>
                                             {t("Configure Now")}
                                         </MuiLink>

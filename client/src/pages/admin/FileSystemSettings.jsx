@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import {
     Box, Grid, Card, CardHeader, CardContent, Typography, TextField, Button,
     Radio, FormControlLabel, Select, MenuItem, FormControl, InputLabel,
-    CircularProgress, Alert, Stack
+    CircularProgress, Alert, AlertTitle, Stack
 } from "@mui/material";
 import {
-    SpeedOutlined as RedisIcon
+    SpeedOutlined as RedisIcon,
+    InfoOutlined as InfoIcon
 } from "@mui/icons-material";
 import {
     fetchFileSystemSettings,
@@ -35,16 +36,6 @@ const FileSystemSettings = () => {
         AWS_URL: ""
     });
 
-    // Backblaze Credentials
-    const [bbSettings, setBbSettings] = useState({
-        BACKBLAZE_ACCESS_KEY_ID: "",
-        BACKBLAZE_SECRET_ACCESS_KEY: "",
-        BACKBLAZE_DEFAULT_REGION: "us-east-005",
-        BACKBLAZE_BUCKET: "",
-        BACKBLAZE_ENDPOINT: "",
-        BACKBLAZE_URL: ""
-    });
-
     // Cache & Session Drivers
     const [driverSettings, setDriverSettings] = useState({
         CACHE_DRIVER: "file",
@@ -72,15 +63,6 @@ const FileSystemSettings = () => {
                     AWS_DEFAULT_REGION: s.AWS_DEFAULT_REGION || "us-east-1",
                     AWS_BUCKET: s.AWS_BUCKET || "",
                     AWS_URL: s.AWS_URL || ""
-                });
-
-                setBbSettings({
-                    BACKBLAZE_ACCESS_KEY_ID: s.BACKBLAZE_ACCESS_KEY_ID || "",
-                    BACKBLAZE_SECRET_ACCESS_KEY: s.BACKBLAZE_SECRET_ACCESS_KEY || "",
-                    BACKBLAZE_DEFAULT_REGION: s.BACKBLAZE_DEFAULT_REGION || "us-east-005",
-                    BACKBLAZE_BUCKET: s.BACKBLAZE_BUCKET || "",
-                    BACKBLAZE_ENDPOINT: s.BACKBLAZE_ENDPOINT || "",
-                    BACKBLAZE_URL: s.BACKBLAZE_URL || ""
                 });
 
                 setDriverSettings({
@@ -187,9 +169,38 @@ const FileSystemSettings = () => {
                 <Typography variant="h5" fontWeight={800} color="#1e293b">
                     {t("File System Configuration")}
                 </Typography>
-                <Typography variant="body2" color="#64748b">
-                    {t("Configure storage drivers, cloud S3 credentials, cache/session drivers, and Redis.")}
-                </Typography>
+                {/* Minimum dimensions info banner */}
+                <Alert
+                    severity="info"
+                    icon={<InfoIcon />}
+                    sx={{
+                        mb: 3,
+                        borderRadius: 2,
+                        bgcolor: '#EFF6FF',
+                        border: '1px solid #BFDBFE',
+                        alignItems: 'flex-start',
+
+                        '& .MuiAlert-icon': {
+                            color: '#2563EB',
+                            mt: '2px',
+                        },
+
+                        '& .MuiAlert-message': {
+                            width: '100%',
+                        },
+                    }}
+                >
+                    <Typography
+                        sx={{
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: '#1E3A8A',
+                            mb: 0.5,
+                        }}
+                    >
+                        Configure storage drivers, cloud S3 credentials, cache/session drivers, and Redis.
+                    </Typography>
+                </Alert>
             </Box>
 
             {/* Notification alert */}
@@ -204,12 +215,12 @@ const FileSystemSettings = () => {
             )}
 
             {/* Row 1: Cloud Credentials & Activations */}
-            <Grid container spacing={3} mb={3}>
-                {/* Left Column: S3 & Backblaze Credentials Form */}
+            <Grid container spacing={12} mb={12}>
+                {/* Left Column:  */}
                 <Grid item xs={12} lg={6}>
-                    <Stack spacing={3}>
+                    <Stack spacing={12}>
                         {/* AWS S3 Credentials Card */}
-                        <Card elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: 3 }}>
+                        <Card elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: 6 }}>
                             <CardHeader
                                 title={
                                     <Typography variant="subtitle1" fontWeight={700} textAlign="center" color="#1e293b">
@@ -270,81 +281,12 @@ const FileSystemSettings = () => {
                                 </Stack>
                             </CardContent>
                         </Card>
-
-                        {/* Backblaze Credentials Card */}
-                        <Card elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: 3 }}>
-                            <CardHeader
-                                title={
-                                    <Typography variant="subtitle1" fontWeight={700} textAlign="center" color="#1e293b">
-                                        {t("Backblaze File System Credentials")}
-                                    </Typography>
-                                }
-                                sx={{ bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0", py: 1.5 }}
-                            />
-                            <CardContent sx={{ p: 3 }}>
-                                <Stack spacing={2}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        label={t("BACKBLAZE_ACCESS_KEY_ID")}
-                                        value={bbSettings.BACKBLAZE_ACCESS_KEY_ID}
-                                        onChange={(e) => setBbSettings({ ...bbSettings, BACKBLAZE_ACCESS_KEY_ID: e.target.value })}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        type="password"
-                                        label={t("BACKBLAZE_SECRET_ACCESS_KEY")}
-                                        value={bbSettings.BACKBLAZE_SECRET_ACCESS_KEY}
-                                        onChange={(e) => setBbSettings({ ...bbSettings, BACKBLAZE_SECRET_ACCESS_KEY: e.target.value })}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        label={t("BACKBLAZE_DEFAULT_REGION")}
-                                        value={bbSettings.BACKBLAZE_DEFAULT_REGION}
-                                        onChange={(e) => setBbSettings({ ...bbSettings, BACKBLAZE_DEFAULT_REGION: e.target.value })}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        label={t("BACKBLAZE_BUCKET")}
-                                        value={bbSettings.BACKBLAZE_BUCKET}
-                                        onChange={(e) => setBbSettings({ ...bbSettings, BACKBLAZE_BUCKET: e.target.value })}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        label={t("BACKBLAZE_ENDPOINT")}
-                                        value={bbSettings.BACKBLAZE_ENDPOINT}
-                                        onChange={(e) => setBbSettings({ ...bbSettings, BACKBLAZE_ENDPOINT: e.target.value })}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        label={t("BACKBLAZE_URL")}
-                                        value={bbSettings.BACKBLAZE_URL}
-                                        onChange={(e) => setBbSettings({ ...bbSettings, BACKBLAZE_URL: e.target.value })}
-                                    />
-                                    <Box textAlign="right" pt={1}>
-                                        <Button
-                                            variant="contained"
-                                            onClick={() => handleSaveSection(bbSettings, t("Backblaze Credentials"))}
-                                            disabled={saving}
-                                            sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, textTransform: "none", borderRadius: 2 }}
-                                        >
-                                            {t("Save")}
-                                        </Button>
-                                    </Box>
-                                </Stack>
-                            </CardContent>
-                        </Card>
                     </Stack>
                 </Grid>
 
-                {/* Right Column: Driver Activations (same as base-module) */}
+                {/* Right Column: Driver Activations */}
                 <Grid item xs={12} lg={6}>
-                    <Stack spacing={3}>
+                    <Stack spacing={12}>
                         {/* AWS S3 Activation */}
                         <Card elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: 3 }}>
                             <CardHeader
@@ -369,29 +311,6 @@ const FileSystemSettings = () => {
                             </CardContent>
                         </Card>
 
-                        {/* Backblaze Activation */}
-                        <Card elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: 3 }}>
-                            <CardHeader
-                                title={
-                                    <Typography variant="subtitle1" fontWeight={700} textAlign="center" color="#1e293b">
-                                        {t("Backblaze File System Activation")}
-                                    </Typography>
-                                }
-                                sx={{ bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0", py: 1.5 }}
-                            />
-                            <CardContent sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-                                <FormControlLabel
-                                    control={
-                                        <Radio
-                                            checked={driver === "backblaze"}
-                                            onChange={() => handleDriverChange("backblaze")}
-                                            sx={{ color: "#6366f1", "&.Mui-checked": { color: "#6366f1" } }}
-                                        />
-                                    }
-                                    label={<Typography fontWeight={600}>{t("Enable Backblaze Driver")}</Typography>}
-                                />
-                            </CardContent>
-                        </Card>
 
                         {/* Local Activation */}
                         <Card elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: 3 }}>
@@ -421,7 +340,7 @@ const FileSystemSettings = () => {
             </Grid>
 
             {/* Row 2: Cache, Session Driver & Redis Configuration */}
-            <Grid container spacing={3}>
+            <Grid container spacing={12}>
                 {/* Cache & Session Driver */}
                 <Grid item xs={12} lg={6}>
                     <Card elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: 3, height: "100%" }}>

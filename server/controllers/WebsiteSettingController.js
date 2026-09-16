@@ -107,24 +107,12 @@ export const getHomepageSettings = async (req, res) => {
         const homepageKeys = [
             'home_slider_images',
             'home_slider_links',
-            'home_banner1_images',
-            'home_banner1_links',
-            'home_banner2_images',
-            'home_banner2_links',
-            'top10_categories',
-            'featured_categories',
-            'flash_deal_title',
-            'flash_deal_status'
         ];
 
         const { result, currentLang, candidateLangs } = await getSettingsMap(homepageKeys, requestedLang);
 
         if (!Array.isArray(result.home_slider_images)) result.home_slider_images = [];
         if (!Array.isArray(result.home_slider_links)) result.home_slider_links = [];
-        if (!Array.isArray(result.home_banner2_images)) result.home_banner2_images = ['', ''];
-        if (!Array.isArray(result.home_banner2_links)) result.home_banner2_links = ['', ''];
-        if (!Array.isArray(result.top10_categories)) result.top10_categories = [];
-        if (!Array.isArray(result.featured_categories)) result.featured_categories = [];
 
         result.lang = currentLang;
 
@@ -164,14 +152,6 @@ export const updateHomepageSettings = async (req, res) => {
             lang: requestedLang,
             home_slider_images,
             home_slider_links,
-            home_banner1_images,
-            home_banner1_links,
-            home_banner2_images,
-            home_banner2_links,
-            top10_categories,
-            featured_categories,
-            flash_deal_title,
-            flash_deal_status
         } = req.body;
 
         const { currentLang, defaultLang, candidateLangs, isDefault } = await resolveLanguageInfo(requestedLang);
@@ -179,14 +159,6 @@ export const updateHomepageSettings = async (req, res) => {
         const updates = {
             home_slider_images: Array.isArray(home_slider_images) ? JSON.stringify(home_slider_images) : home_slider_images,
             home_slider_links: Array.isArray(home_slider_links) ? JSON.stringify(home_slider_links) : home_slider_links,
-            home_banner1_images: typeof home_banner1_images === 'object' ? JSON.stringify(home_banner1_images) : (home_banner1_images || ''),
-            home_banner1_links: typeof home_banner1_links === 'object' ? JSON.stringify(home_banner1_links) : (home_banner1_links || ''),
-            home_banner2_images: Array.isArray(home_banner2_images) ? JSON.stringify(home_banner2_images) : home_banner2_images,
-            home_banner2_links: Array.isArray(home_banner2_links) ? JSON.stringify(home_banner2_links) : home_banner2_links,
-            top10_categories: Array.isArray(top10_categories) ? JSON.stringify(top10_categories) : top10_categories,
-            featured_categories: Array.isArray(featured_categories) ? JSON.stringify(featured_categories) : featured_categories,
-            flash_deal_title: flash_deal_title || '',
-            flash_deal_status: flash_deal_status !== undefined ? flash_deal_status : true
         };
 
         // Capture any other homepage/website setting key sent in body
@@ -253,15 +225,10 @@ export const getHeaderSettings = async (req, res) => {
         const headerKeys = [
             'header_logo',
             'topbar_banner',
-            'topbar_banner_medium',
-            'topbar_banner_small',
-            'topbar_banner_link',
             'helpline_number',
             'header_nav_menu_text',
             'header_menu_labels',
-            'header_menu_links',
-            'show_language_switcher',
-            'show_currency_switcher'
+            'header_menu_links'
         ];
 
         const { result, currentLang } = await getSettingsMap(headerKeys, requestedLang);
@@ -290,32 +257,20 @@ export const updateHeaderSettings = async (req, res) => {
         const {
             lang: requestedLang,
             header_logo,
-            topbar_banner,
-            topbar_banner_medium,
-            topbar_banner_small,
-            topbar_banner_link,
             helpline_number,
             header_nav_menu_text,
             header_menu_labels,
-            header_menu_links,
-            show_language_switcher,
-            show_currency_switcher
+            header_menu_links
         } = req.body;
 
         const { currentLang, defaultLang, candidateLangs, isDefault } = await resolveLanguageInfo(requestedLang);
 
         const updates = {
             header_logo: header_logo || '',
-            topbar_banner: topbar_banner || '',
-            topbar_banner_medium: topbar_banner_medium || '',
-            topbar_banner_small: topbar_banner_small || '',
-            topbar_banner_link: topbar_banner_link || '',
             helpline_number: helpline_number || '',
             header_nav_menu_text: header_nav_menu_text || 'light',
             header_menu_labels: Array.isArray(header_menu_labels) ? JSON.stringify(header_menu_labels) : header_menu_labels,
-            header_menu_links: Array.isArray(header_menu_links) ? JSON.stringify(header_menu_links) : header_menu_links,
-            show_language_switcher: show_language_switcher !== undefined ? show_language_switcher : 'on',
-            show_currency_switcher: show_currency_switcher !== undefined ? show_currency_switcher : 'on'
+            header_menu_links: Array.isArray(header_menu_links) ? JSON.stringify(header_menu_links) : header_menu_links
         };
 
         for (const [type, value] of Object.entries(updates)) {

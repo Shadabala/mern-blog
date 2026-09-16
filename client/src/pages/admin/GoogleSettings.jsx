@@ -24,12 +24,6 @@ const GoogleSettings = () => {
         google_recaptcha: 0,
         CAPTCHA_KEY: '',
         RECAPTCHA_SECRET_KEY: '',
-        google_analytics: 0,
-        TRACKING_ID: '',
-        facebook_pixel: 0,
-        FACEBOOK_PIXEL_ID: '',
-        facebook_chat: 0,
-        FACEBOOK_PAGE_ID: ''
     });
 
     useEffect(() => {
@@ -108,7 +102,7 @@ const GoogleSettings = () => {
 
             <form onSubmit={handleSave}>
                 <Grid container spacing={3}>
-                    {/* 1. Google reCAPTCHA */}
+                    {/*  Google reCAPTCHA */}
                     <Grid item xs={12} md={6}>
                         <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
                             <CardHeader
@@ -148,115 +142,6 @@ const GoogleSettings = () => {
                                         placeholder={t("SECRET KEY")}
                                     />
                                 </Stack>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    {/* 2. Google Analytics */}
-                    <Grid item xs={12} md={6}>
-                        <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
-                            <CardHeader
-                                title={t("Google Analytics Setting")}
-                                titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
-                                action={
-                                    <FormControlLabel
-                                        control={
-                                            <Switch
-                                                checked={Boolean(Number(form.google_analytics) === 1 || form.google_analytics === true)}
-                                                onChange={(e) => handleFieldChange('google_analytics', e.target.checked ? 1 : 0)}
-                                                color="success"
-                                            />
-                                        }
-                                        label={t("Active")}
-                                    />
-                                }
-                                sx={{ borderBottom: '1px solid #f1f5f9', pb: 1.5 }}
-                            />
-                            <CardContent>
-                                <Stack spacing={2.5}>
-                                    <TextField
-                                        label={t("Tracking ID")}
-                                        value={form.TRACKING_ID || ''}
-                                        onChange={(e) => handleFieldChange('TRACKING_ID', e.target.value)}
-                                        fullWidth
-                                        size="small"
-                                        placeholder="UA-XXXXXXXXX or G-XXXXXXXXXX"
-                                    />
-                                </Stack>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    {/* 3. Facebook Pixel */}
-                    <Grid item xs={12} md={6}>
-                        <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
-                            <CardHeader
-                                title={t("Facebook Pixel Setting")}
-                                titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
-                                action={
-                                    <FormControlLabel
-                                        control={
-                                            <Switch
-                                                checked={Boolean(Number(form.facebook_pixel) === 1 || form.facebook_pixel === true)}
-                                                onChange={(e) => handleFieldChange('facebook_pixel', e.target.checked ? 1 : 0)}
-                                                color="success"
-                                            />
-                                        }
-                                        label={t("Active")}
-                                    />
-                                }
-                                sx={{ borderBottom: '1px solid #f1f5f9', pb: 1.5 }}
-                            />
-                            <CardContent>
-                                <Stack spacing={2.5}>
-                                    <TextField
-                                        label={t("Facebook Pixel ID")}
-                                        value={form.FACEBOOK_PIXEL_ID || ''}
-                                        onChange={(e) => handleFieldChange('FACEBOOK_PIXEL_ID', e.target.value)}
-                                        fullWidth
-                                        size="small"
-                                        placeholder={t("Facebook Pixel ID")}
-                                    />
-                                </Stack>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    {/* 4. Facebook Pixel Instructions */}
-                    <Grid item xs={12} md={6}>
-                        <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%', bgcolor: '#f8fafc' }}>
-                            <CardHeader
-                                title={
-                                    <Box display="flex" alignItems="center" gap={1}>
-                                        <InfoIcon fontSize="small" sx={{ color: '#6366f1' }} />
-                                        <Typography variant="subtitle2" fontWeight={700}>
-                                            {t("Please be careful when you are configuring Facebook pixel.")}
-                                        </Typography>
-                                    </Box>
-                                }
-                                sx={{ borderBottom: '1px solid #e2e8f0', pb: 1.5 }}
-                            />
-                            <CardContent>
-                                <List dense disablePadding>
-                                    <ListItem disableGutters>
-                                        <ListItemText
-                                            primary={`1. ${t("Log in to Facebook and go to your Ads Manager account.")}`}
-                                            primaryTypographyProps={{ fontSize: '0.8125rem' }}
-                                        />
-                                    </ListItem>
-                                    <ListItem disableGutters>
-                                        <ListItemText
-                                            primary={`2. ${t("Open the Navigation Bar and select Events Manager.")}`}
-                                            primaryTypographyProps={{ fontSize: '0.8125rem' }}
-                                        />
-                                    </ListItem>
-                                    <ListItem disableGutters>
-                                        <ListItemText
-                                            primary={`3. ${t("Copy your Pixel ID from underneath your Site Name and paste the number into Facebook Pixel ID field.")}`}
-                                            primaryTypographyProps={{ fontSize: '0.8125rem' }}
-                                        />
-                                    </ListItem>
-                                </List>
                             </CardContent>
                         </Card>
                     </Grid>
