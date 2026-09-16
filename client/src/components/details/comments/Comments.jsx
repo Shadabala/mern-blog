@@ -1,0 +1,292 @@
+import { useState, useEffect, useContext } from 'react';
+import {
+    Box, Typography, styled, Avatar, TextField, Button, Divider
+} from '@mui/material';
+import { ChatBubbleOutline, LockOutlined, LoginOutlined, PersonAddOutlined } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../../../i18n/i18n';
+
+import { DataContext } from '../../../context/DataProvider';
+import { API } from '../../../service/api';
+import Comment from './Comment';
+
+// ── Styled ────────────────────────────────────────────────────────────────────
+
+const Section = styled(Box)`
+    margin-top: 60px;
+    border-top: 2px solid #f0f0f0;
+    padding-top: 40px;
+`;
+
+const SectionTitle = styled(Typography)`
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a1a2e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+`;
+
+const CommentCount = styled('span')`
+    font-size: 14px;
+    font-weight: 600;
+    background: rgba(233,69,96,0.1);
+    color: #e94560;
+    padding: 2px 10px;
+    border-radius: 20px;
+`;
+
+/* ── Input area (logged-in users) ── */
+const InputRow = styled(Box)`
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 32px;
+`;
+
+const StyledAvatar = styled(Avatar)`
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    font-weight: 700;
+    flex-shrink: 0;
+`;
+
+const InputBlock = styled(Box)`
+    flex: 1;
+`;
+
+const NameField = styled(TextField)`
+    margin-bottom: 10px;
+    & .MuiOutlinedInput-root {
+        border-radius: 10px;
+        font-size: 14px;
+    }
+`;
+
+const CommentField = styled(TextField)`
+    & .MuiOutlinedInput-root {
+        border-radius: 10px;
+        font-size: 15px;
+    }
+`;
+
+const PostBtn = styled(Button)`
+    margin-top: 10px;
+    background: linear-gradient(135deg, #e94560, #c0392b);
+    color: #fff;
+    border-radius: 8px;
+    text-transform: none;
+    font-weight: 700;
+    padding: 8px 24px;
+    float: right;
+    &:hover {
+        background: linear-gradient(135deg, #c0392b, #e94560);
+        box-shadow: 0 4px 15px rgba(233,69,96,0.35);
+    }
+`;
+
+/* ── Login gate ── */
+const LoginGate = styled(Box)`
+    background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+    border: 1.5px dashed #c5cae9;
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin-bottom: 32px;
+`;
+
+const GateIcon = styled(Box)`
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(233,69,96,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+`;
+
+const GateBtnRow = styled(Box)`
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+`;
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+const getUsernameFromToken = () => {
+    try {
+        const raw = sessionStorage.getItem('accessToken');
+        if (!raw) return '';
+        const token = raw.startsWith('Bearer ') ? raw.slice(7) : raw;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.username || '';
+    } catch { return ''; }
+};
+
+const Comments = ({ post }) => {
+    const navigate = useNavigate();
+    const { account } = useContext(DataContext);
+    const { t } = useTranslation();
+
+    // resolve logged-in user (context or JWT fallback)
+    const loggedInUsername = account.username || getUsernameFromToken();
+    const isLoggedIn = Boolean(loggedInUsername);
+
+    const [comments, setComments] = useState([]);
+    const [toggle, setToggle] = useState(false);
+
+    // Comment form state
+    const [commenterName, setCommenterName] = useState('');
+    const [commentText, setCommentText] = useState('');
+    const [nameError, setNameError] = useState('');
+    const [textError, setTextError] = useState('');
+
+    // Fetch all comments for this post (public)
+    useEffect(() => {
+        const getData = async () => {
+            const response = await API.getAllComments(post._id);
+            if (response.isSuccess) setComments(response.data);
+        };
+        getData();
+    }, [toggle, post._id]);
+
+    // Pre-fill the name field when the user is logged in
+    useEffect(() => {
+        if (isLoggedIn) setCommenterName(account.name || loggedInUsername);
+    }, [isLoggedIn, account.name, loggedInUsername]);
+
+    const validate = () => {
+        let valid = true;
+        if (!commenterName.trim()) { setNameError(t("post.enterName", "Please enter your name")); valid = false; }
+        else setNameError('');
+        if (!commentText.trim()) { setTextError(t("post.emptyComment", "Comment cannot be empty")); valid = false; }
+        else setTextError('');
+        return valid;
+    };
+
+    const addComment = async () => {
+        if (!validate()) return;
+        const payload = {
+            name: commenterName.trim(),
+            postId: post._id,
+            date: new Date(),
+            comments: commentText.trim()
+        };
+        const res = await API.newComment(payload);
+        if (res.isSuccess) {
+            setCommentText('');
+            setToggle(prev => !prev);
+        }
+    };
+
+    return (
+        <Section>
+            <SectionTitle>
+                <ChatBubbleOutline sx={{ color: '#e94560' }} />
+                {t("post.comments", "Comments")}
+                <CommentCount>{comments.length}</CommentCount>
+            </SectionTitle>
+
+            {/* ── Input area or login gate ── */}
+            {isLoggedIn ? (
+                <InputRow>
+                    <StyledAvatar>
+                        {(account.name || loggedInUsername).charAt(0).toUpperCase()}
+                    </StyledAvatar>
+                    <InputBlock>
+                        <NameField
+                            fullWidth
+                            size="small"
+                            label={t("post.namePlaceholder", "Your name (displayed with comment)")}
+                            value={commenterName}
+                            onChange={e => { setCommenterName(e.target.value); setNameError(''); }}
+                            error={Boolean(nameError)}
+                            helperText={nameError}
+                        />
+                        <CommentField
+                            fullWidth
+                            multiline
+                            minRows={3}
+                            placeholder={t("post.shareThoughts", "Share your thoughts...")}
+                            value={commentText}
+                            onChange={e => { setCommentText(e.target.value); setTextError(''); }}
+                            error={Boolean(textError)}
+                            helperText={textError}
+                        />
+                        <PostBtn onClick={addComment}>{t("post.postComment", "Post Comment")}</PostBtn>
+                        <Box sx={{ clear: 'both' }} />
+                    </InputBlock>
+                </InputRow>
+            ) : (
+                <LoginGate>
+                    <GateIcon>
+                        <LockOutlined sx={{ color: '#e94560', fontSize: 28 }} />
+                    </GateIcon>
+                    <Typography fontWeight={700} fontSize={18} color="#1a1a2e" mb={0.5}>
+                        {t("post.joinConversation", "Join the conversation")}
+                    </Typography>
+                    <Typography color="#666" fontSize={14}>
+                        {t("post.loginToComment", "Please log in or create an account to post a comment.")}
+                    </Typography>
+                    <GateBtnRow>
+                        <Button
+                            variant="contained"
+                            startIcon={<LoginOutlined />}
+                            onClick={() => navigate('/account')}
+                            sx={{
+                                background: 'linear-gradient(135deg, #e94560, #c0392b)',
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontWeight: 700,
+                                '&:hover': { boxShadow: '0 4px 15px rgba(233,69,96,0.4)' }
+                            }}
+                        >
+                            {t("post.logIn", "Log In")}
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            startIcon={<PersonAddOutlined />}
+                            onClick={() => navigate('/account')}
+                            sx={{
+                                borderColor: '#1a1a2e',
+                                color: '#1a1a2e',
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontWeight: 700,
+                                '&:hover': { background: 'rgba(26,26,46,0.06)' }
+                            }}
+                        >
+                            {t("post.signUp", "Sign Up")}
+                        </Button>
+                    </GateBtnRow>
+                </LoginGate>
+            )}
+
+            {/* ── Comment list (visible to everyone) ── */}
+            {comments.length > 0 ? (
+                <Box>
+                    <Divider sx={{ mb: 3 }} />
+                    {comments.map(c => (
+                        <Comment
+                            key={c._id}
+                            comment={c}
+                            setToggle={setToggle}
+                            currentUsername={loggedInUsername}
+                        />
+                    ))}
+                </Box>
+            ) : (
+                <Box textAlign="center" py={4} color="#aaa">
+                    <ChatBubbleOutline sx={{ fontSize: 40, mb: 1, opacity: 0.4 }} />
+                    <Typography>{t("post.noComments", "No comments yet. Be the first to share your thoughts!")}</Typography>
+                </Box>
+            )}
+        </Section>
+    );
+};
+
+export default Comments;

@@ -5,9 +5,18 @@ const CommentSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    blog_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Blog',
+        default: null
+    },
+    blogId: {
+        type: String,
+        default: ''
+    },
     postId: {
         type: String,
-        required: true
+        default: ''
     },
     date: {
         type: String,

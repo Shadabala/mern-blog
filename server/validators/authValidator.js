@@ -23,7 +23,7 @@ const otpSchema = z.preprocess(
 export const signupSchema = z.object({
     body: z.object({
         name: requiredString('Name is required', 2, 'Name must be at least 2 characters'),
-        username: requiredString('Username is required', 3, 'Username must be at least 3 characters'),
+        username: z.string().optional(),
         email: requiredEmail('Email is required', 'Invalid email address'),
         password: requiredString('Password is required', 6, 'Password must be at least 6 characters'),
     }),
@@ -75,3 +75,25 @@ export const changePasswordSchema = z.object({
         path: ['confirm_password']
     })
 });
+
+export const verify2faSchema = z.object({
+    body: z.object({
+        userId: z.string().optional(),
+        email: z.string().optional(),
+        otp: otpSchema
+    }).refine((data) => (data.userId && data.userId.trim()) || (data.email && data.email.trim()), {
+        message: 'User ID or Email is required',
+        path: ['email']
+    })
+});
+
+export const resend2faOtpSchema = z.object({
+    body: z.object({
+        userId: z.string().optional(),
+        email: z.string().optional()
+    }).refine((data) => (data.userId && data.userId.trim()) || (data.email && data.email.trim()), {
+        message: 'User ID or Email is required',
+        path: ['email']
+    })
+});
+

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 
 import Token from '../models/Token.js';
 import User from '../models/User.js';
+import LoginHistory from '../models/LoginHistory.js';
 import sendEmail from '../utils/sendEmail.js';
 import Mail, { ResetPasswordMail } from '../emails/Mail.js';
 
@@ -13,9 +14,21 @@ export const singupUser = async (request, response) => {
     try {
         const { name, username, email, password } = request.body;
 
+        let finalUsername = username ? username.trim() : "";
+        if (!finalUsername) {
+            const emailPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '');
+            let candidate = emailPrefix || 'user';
+            let counter = 1;
+            while (await User.findOne({ username: candidate })) {
+                candidate = `${emailPrefix}${counter}`;
+                counter++;
+            }
+            finalUsername = candidate;
+        }
+
         const existingUser = await User.findOne({
             $or: [
-                { username: username },
+                { username: finalUsername },
                 { email: email }
             ]
         });
@@ -27,12 +40,12 @@ export const singupUser = async (request, response) => {
             });
         }
 
-        const hashedPassword = await bcrypt.hash(request.body.password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new User({
-            username: request.body.username,
-            name: request.body.name,
-            email: request.body.email,
+            username: finalUsername,
+            name: name,
+            email: email,
             password: hashedPassword
         });
         await newUser.save();
@@ -50,27 +63,92 @@ export const singupUser = async (request, response) => {
 
 export const loginUser = async (request, response) => {
     const { username, email, password } = request.body;
+    const loginIdentifier = username || email;
 
-
-    const user = await User.findOne({
-        $or: [
-            { username: username },
-            { email: username }
-        ]
-    });
-
-    if (!user) {
-        return response.status(400).json({ msg: 'User not found' });
+    if (!loginIdentifier || !password) {
+        return response.status(400).json({
+            success: false,
+            message: 'Email or username and password are required'
+        });
     }
 
     try {
+        const user = await User.findOne({
+            $or: [
+                { username: loginIdentifier },
+                { email: loginIdentifier }
+            ]
+        }).select('+password');
+
+        if (!user) {
+            return response.status(400).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.status === 'blocked') {
+            return response.status(403).json({
+                success: false,
+                message: 'Your account has been blocked. Please contact system administration.'
+            });
+        }
+
         const match = await bcrypt.compare(password, user.password);
         if (match) {
+            // Check if Two-Factor Authentication is enabled
+            if (user.twoFactorEnabled) {
+                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                user.twoFactorOtp = otp;
+                user.twoFactorOtpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+                await user.save();
+
+                try {
+                    await sendEmail({
+                        to: user.email,
+                        subject: 'Your 2FA Login Verification Code',
+                        html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
+                            <h2>Security Verification</h2>
+                            <p>Hello ${user.name},</p>
+                            <p>Your 2-Factor Authentication code is:</p>
+                            <h1 style="color: #4f46e5; letter-spacing: 4px; font-size: 32px;">${otp}</h1>
+                            <p>This code expires in 5 minutes. If you did not attempt to log in, please secure your account immediately.</p>
+                        </div>`
+                    });
+                } catch (emailErr) {
+                    console.warn('[2FA] Email notification failed (dev mode fallback):', emailErr.message);
+                }
+                console.log(`[2FA OTP for ${user.email}]: ${otp}`);
+
+                return response.status(200).json({
+                    success: true,
+                    twoFactorRequired: true,
+                    userId: user._id,
+                    email: user.email,
+                    cooldownSeconds: 60,
+                    message: 'Two-factor verification code sent to your email.'
+                });
+            }
+
+            user.lastLoginAt = new Date();
+            await user.save();
+
+            try {
+                await LoginHistory.create({
+                    user: user._id,
+                    ipAddress: request.ip || request.headers['x-forwarded-for'] || '127.0.0.1',
+                    deviceInfo: request.headers['user-agent'] || 'Web Browser'
+                });
+            } catch (logErr) {
+                console.error("Login history logging error:", logErr);
+            }
+
+            const userRole = user.role || user.user_type || 'user';
+
             const payload = {
                 userId: user._id.toString(),
                 name: user.name,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                role: userRole,
+                role_id: user.role_id || null
             };
 
             const accessToken = jwt.sign(
@@ -88,36 +166,189 @@ export const loginUser = async (request, response) => {
             await newToken.save();
 
             const isProduction = process.env.NODE_ENV === 'production';
+            const sameSiteSetting = isProduction ? 'strict' : 'lax';
 
             // Set HttpOnly Cookies
             response.cookie('accessToken', accessToken, {
                 httpOnly: true,
                 secure: isProduction,
-                sameSite: 'strict',
+                sameSite: sameSiteSetting,
                 maxAge: 15 * 60 * 1000 // 15 minutes
             });
 
             response.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: isProduction,
-                sameSite: 'strict',
+                sameSite: sameSiteSetting,
                 maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
             });
 
-            response.status(200).json({
+            return response.status(200).json({
+                success: true,
+                message: 'Login successful',
                 accessToken: accessToken,
                 refreshToken: refreshToken,
-                name: user.name,
-                username: user.username,
-                email: user.email
+                user: {
+                    id: user._id,
+                    _id: user._id,
+                    name: user.name,
+                    username: user.username,
+                    email: user.email,
+                    role: userRole,
+                    role_id: user.role_id,
+                    status: user.status
+                }
             });
 
         } else {
-            response.status(400).json({ msg: 'Password does not match' });
+            return response.status(400).json({ success: false, message: 'Invalid password. Please try again.' });
         }
     } catch (error) {
         console.error("Login error:", error);
-        response.status(500).json({ msg: 'Error while logging in the user' });
+        return response.status(500).json({ success: false, message: 'Error while logging in user', error: error.message });
+    }
+};
+
+/**
+ * Verify 2FA OTP Code
+ */
+export const verifyTwoFactor = async (request, response) => {
+    try {
+        const { userId, email, otp } = request.body;
+
+        const query = userId ? { _id: userId } : { email: (email || '').trim().toLowerCase() };
+        const user = await User.findOne(query).select('+password');
+
+        if (!user) {
+            return response.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.status === 'blocked') {
+            return response.status(403).json({ success: false, message: 'Your account is blocked' });
+        }
+
+        if (!user.twoFactorOtp || user.twoFactorOtp !== otp.trim()) {
+            return response.status(400).json({ success: false, message: 'Invalid verification code' });
+        }
+
+        if (!user.twoFactorOtpExpires || new Date() > user.twoFactorOtpExpires) {
+            return response.status(400).json({ success: false, message: 'Verification code has expired. Please request a new one.' });
+        }
+
+        // Clear OTP after successful verification
+        user.twoFactorOtp = null;
+        user.twoFactorOtpExpires = null;
+        user.lastLoginAt = new Date();
+        await user.save();
+
+        try {
+            await LoginHistory.create({
+                user: user._id,
+                ipAddress: request.ip || request.headers['x-forwarded-for'] || '127.0.0.1',
+                deviceInfo: request.headers['user-agent'] || 'Web Browser'
+            });
+        } catch (logErr) {
+            console.error("Login history error:", logErr);
+        }
+
+        const userRole = user.role || user.user_type || 'user';
+        const payload = {
+            userId: user._id.toString(),
+            name: user.name,
+            username: user.username,
+            email: user.email,
+            role: userRole,
+            role_id: user.role_id || null
+        };
+
+        const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET_KEY, { expiresIn: '15m' });
+        const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET_KEY, { expiresIn: '7d' });
+
+        const newToken = new Token({ token: refreshToken });
+        await newToken.save();
+
+        const isProduction = process.env.NODE_ENV === 'production';
+        const sameSiteSetting = isProduction ? 'strict' : 'lax';
+
+        response.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: sameSiteSetting,
+            maxAge: 15 * 60 * 1000
+        });
+
+        response.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: sameSiteSetting,
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        return response.status(200).json({
+            success: true,
+            message: '2FA Verification successful',
+            accessToken,
+            refreshToken,
+            user: {
+                id: user._id,
+                _id: user._id,
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                role: userRole,
+                role_id: user.role_id,
+                status: user.status
+            }
+        });
+    } catch (error) {
+        console.error('2FA verification error:', error);
+        return response.status(500).json({ success: false, message: 'Failed to verify 2FA code', error: error.message });
+    }
+};
+
+/**
+ * Resend 2FA OTP Code
+ */
+export const resendTwoFactorOtp = async (request, response) => {
+    try {
+        const { userId, email } = request.body;
+        const query = userId ? { _id: userId } : { email: (email || '').trim().toLowerCase() };
+        const user = await User.findOne(query);
+
+        if (!user) {
+            return response.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.twoFactorOtp = otp;
+        user.twoFactorOtpExpires = new Date(Date.now() + 5 * 60 * 1000);
+        await user.save();
+
+        try {
+            await sendEmail({
+                to: user.email,
+                subject: 'New 2FA Verification Code',
+                html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2>New Security Verification Code</h2>
+                    <p>Hello ${user.name},</p>
+                    <p>Your new 2-Factor Authentication code is:</p>
+                    <h1 style="color: #4f46e5; letter-spacing: 4px; font-size: 32px;">${otp}</h1>
+                    <p>This code expires in 5 minutes.</p>
+                </div>`
+            });
+        } catch (emailErr) {
+            console.warn('[2FA Resend] Email notification failed (dev mode fallback):', emailErr.message);
+        }
+        console.log(`[2FA Resend OTP for ${user.email}]: ${otp}`);
+
+        return response.status(200).json({
+            success: true,
+            message: 'A new verification code has been sent to your email.',
+            cooldownSeconds: 60
+        });
+    } catch (error) {
+        console.error('Resend 2FA OTP error:', error);
+        return response.status(500).json({ success: false, message: 'Failed to resend code', error: error.message });
     }
 };
 
@@ -130,17 +361,18 @@ export const logoutUser = async (request, response) => {
         }
 
         const isProduction = process.env.NODE_ENV === 'production';
+        const sameSiteSetting = isProduction ? 'strict' : 'lax';
 
         response.clearCookie('accessToken', {
             httpOnly: true,
             secure: isProduction,
-            sameSite: 'strict'
+            sameSite: sameSiteSetting
         });
 
         response.clearCookie('refreshToken', {
             httpOnly: true,
             secure: isProduction,
-            sameSite: 'strict'
+            sameSite: sameSiteSetting
         });
 
         return response.status(200).json({
@@ -280,9 +512,13 @@ export const resetPassword = async (request, response) => {
         const oldPass = old_password || oldPassword || current_password || currentPassword;
         const newPass = password || new_password || newPassword;
 
+        if (!oldPass || !newPass) {
+            return response.status(400).json({ success: false, message: 'Current password and new password are required' });
+        }
+
         // Get logged in user from protect middleware
         const userId = request.user?._id || request.user?.userId;
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).select('+password');
 
         if (!user) {
             return response.status(404).json({ success: false, message: 'User account not found' });
@@ -340,11 +576,12 @@ export const refreshToken = async (request, response) => {
             );
 
             const isProduction = process.env.NODE_ENV === 'production';
+            const sameSiteSetting = isProduction ? 'strict' : 'lax';
 
             response.cookie('accessToken', newAccessToken, {
                 httpOnly: true,
                 secure: isProduction,
-                sameSite: 'strict',
+                sameSite: sameSiteSetting,
                 maxAge: 15 * 60 * 1000 // 15 minutes
             });
 
