@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import DataProvider from "./context/DataProvider";
 import { LanguageProvider } from "./context/LanguageContext";
+import { SettingsProvider } from "./context/SettingsContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RTLProvider from "./components/common/RTLProvider";
 import AppToastContainer from "./components/common/AppToastContainer";
@@ -154,10 +155,12 @@ function App() {
       <AuthProvider>
         <DataProvider>
           <LanguageProvider>
-            <RTLProvider>
-              <AppRoutes />
-              <AppToastContainer />
-            </RTLProvider>
+            <SettingsProvider>
+              <RTLProvider>
+                <AppRoutes />
+                <AppToastContainer />
+              </RTLProvider>
+            </SettingsProvider>
           </LanguageProvider>
         </DataProvider>
       </AuthProvider>

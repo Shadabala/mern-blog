@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../../i18n/i18n';
 
 import { DataContext } from '../../../context/DataProvider';
+import { useAuth } from '../../../context/AuthContext';
 import { API } from '../../../service/api';
 import Comment from './Comment';
 
@@ -119,22 +120,25 @@ const GateBtnRow = styled(Box)`
 
 const getUsernameFromToken = () => {
     try {
-        const raw = sessionStorage.getItem('accessToken');
+        const raw = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
         if (!raw) return '';
         const token = raw.startsWith('Bearer ') ? raw.slice(7) : raw;
         const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.username || '';
+        return payload.username || payload.name || '';
     } catch { return ''; }
 };
 
 const Comments = ({ post }) => {
     const navigate = useNavigate();
     const { account } = useContext(DataContext);
+    const { user, isAuthenticated } = useAuth();
     const { t } = useTranslation();
 
-    // resolve logged-in user (context or JWT fallback)
-    const loggedInUsername = account.username || getUsernameFromToken();
-    const isLoggedIn = Boolean(loggedInUsername);
+    // resolve logged-in user (from AuthContext, DataContext, localStorage or JWT)
+    const currentUser = user || account || {};
+    const loggedInUsername = currentUser.username || currentUser.name || account?.username || account?.name || getUsernameFromToken();
+    const displayName = currentUser.name || currentUser.username || account?.name || account?.username || loggedInUsername || '';
+    const isLoggedIn = Boolean(isAuthenticated || loggedInUsername);
 
     const [comments, setComments] = useState([]);
     const [toggle, setToggle] = useState(false);
@@ -145,19 +149,27 @@ const Comments = ({ post }) => {
     const [nameError, setNameError] = useState('');
     const [textError, setTextError] = useState('');
 
+    const targetPostId = post?._id || post?.id || (typeof post === 'string' ? post : '');
+
     // Fetch all comments for this post (public)
     useEffect(() => {
         const getData = async () => {
-            const response = await API.getAllComments(post._id);
-            if (response.isSuccess) setComments(response.data);
+            if (!targetPostId) return;
+            const response = await API.getAllComments(targetPostId);
+            if (response && response.isSuccess) {
+                const list = Array.isArray(response.data) ? response.data : (response.data?.comments || []);
+                setComments(list);
+            }
         };
         getData();
-    }, [toggle, post._id]);
+    }, [toggle, targetPostId]);
 
     // Pre-fill the name field when the user is logged in
     useEffect(() => {
-        if (isLoggedIn) setCommenterName(account.name || loggedInUsername);
-    }, [isLoggedIn, account.name, loggedInUsername]);
+        if (isLoggedIn && displayName) {
+            setCommenterName(displayName);
+        }
+    }, [isLoggedIn, displayName]);
 
     const validate = () => {
         let valid = true;
@@ -172,12 +184,14 @@ const Comments = ({ post }) => {
         if (!validate()) return;
         const payload = {
             name: commenterName.trim(),
-            postId: post._id,
-            date: new Date(),
+            postId: targetPostId,
+            blogId: targetPostId,
+            blog_id: targetPostId,
+            date: new Date().toISOString(),
             comments: commentText.trim()
         };
         const res = await API.newComment(payload);
-        if (res.isSuccess) {
+        if (res && res.isSuccess) {
             setCommentText('');
             setToggle(prev => !prev);
         }
@@ -195,7 +209,7 @@ const Comments = ({ post }) => {
             {isLoggedIn ? (
                 <InputRow>
                     <StyledAvatar>
-                        {(account.name || loggedInUsername).charAt(0).toUpperCase()}
+                        {(displayName || 'U').charAt(0).toUpperCase()}
                     </StyledAvatar>
                     <InputBlock>
                         <NameField
@@ -236,7 +250,7 @@ const Comments = ({ post }) => {
                         <Button
                             variant="contained"
                             startIcon={<LoginOutlined />}
-                            onClick={() => navigate('/account')}
+                            onClick={() => navigate('/login')}
                             sx={{
                                 background: 'linear-gradient(135deg, #e94560, #c0392b)',
                                 borderRadius: 2,
@@ -250,7 +264,7 @@ const Comments = ({ post }) => {
                         <Button
                             variant="outlined"
                             startIcon={<PersonAddOutlined />}
-                            onClick={() => navigate('/account')}
+                            onClick={() => navigate('/signup')}
                             sx={{
                                 borderColor: '#1a1a2e',
                                 color: '#1a1a2e',

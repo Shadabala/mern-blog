@@ -5,6 +5,7 @@ import { CreateOutlined, DashboardOutlined, HomeOutlined, InfoOutlined, ContactM
 import { DataContext } from '../../context/DataProvider';
 import { API } from '../../service/api';
 import { useTranslation } from "../../i18n/i18n";
+import { useSettings } from "../../context/SettingsContext";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const StyledAppBar = styled(AppBar)`
@@ -59,8 +60,12 @@ const WriteButton = styled(Button)`
 const Header = ({ isAuthenticated }) => {
     const navigate = useNavigate();
     const { account, setAccount } = useContext(DataContext);
+    const { get_setting, uploaded_asset } = useSettings();
     const [anchorEl, setAnchorEl] = useState(null);
     const { t } = useTranslation();
+
+    const headerLogo = get_setting('header_logo');
+    const siteName = get_setting('site_name', get_setting('website_name', t("navbar.home")));
 
     const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
     const handleMenuClose = () => setAnchorEl(null);
@@ -75,9 +80,47 @@ const Header = ({ isAuthenticated }) => {
     };
 
     return (
-        <StyledAppBar position="fixed">
+        <StyledAppBar position={get_setting('enable_sticky_header', 'on') === 'off' ? 'static' : 'fixed'}>
             <Toolbar sx={{ gap: 1, px: { xs: 2, md: 4 } }}>
-                <Brand onClick={() => navigate('/')}>{t("navbar.home")}</Brand>
+                <Box
+                    onClick={() => navigate('/')}
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        mr: { xs: 2, md: 4 },
+                        flexShrink: 0
+                    }}
+                >
+                    {headerLogo ? (
+                        <Box
+                            component="img"
+                            src={uploaded_asset(headerLogo)}
+                            alt={siteName}
+                            sx={{
+                                width: { xs: 40, md: 50 },
+                                height: { xs: 40, md: 50 },
+                                borderRadius: 20,
+                                objectFit: 'cover',
+                                display: 'block'
+                            }}
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = document.getElementById('user-brand-text');
+                                if (fallback) fallback.style.display = 'block';
+                            }}
+                        />
+                    ) : null}
+                    <Brand
+                        id="user-brand-text"
+                        sx={{
+                            display: headerLogo ? 'none' : 'block',
+                            mr: 0
+                        }}
+                    >
+                        {siteName}
+                    </Brand>
+                </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
                     <NavLink to='/'><HomeOutlined sx={{ fontSize: 18 }} />{t("navbar.home")}</NavLink>

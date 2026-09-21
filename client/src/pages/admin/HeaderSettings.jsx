@@ -14,6 +14,7 @@ import {
     IconButton,
     Alert,
     CircularProgress,
+    Switch,
 } from '@mui/material';
 
 import {
@@ -22,7 +23,6 @@ import {
     Close as CloseIcon,
 } from '@mui/icons-material';
 
-import LanguageTabBar from '../../components/common/LanguageTabBar';
 import AizUploaderInput from '../../components/uploader/AizUploaderInput';
 
 import {
@@ -240,14 +240,29 @@ const HeaderSettings = () => {
      */
 
     const initialFormState = {
+        types: [
+            'header_logo',
+            'topbar_banner',
+            'topbar_banner_link',
+            'helpline_number',
+            'helpine_email',
+            'helpine_whatsapp',
+            'show_language_switcher',
+            'enable_sticky_header',
+            'header_nav_menu_text',
+            'header_menu_labels',
+            'header_menu_links',
+        ],
         header_logo: '',
-
+        topbar_banner: '',
+        topbar_banner_link: '',
         helpline_number: '',
-
+        helpine_email: '',
+        helpine_whatsapp: '',
+        show_language_switcher: 'off',
+        enable_sticky_header: 'off',
         header_nav_menu_text: 'light',
-
         header_menu_labels: [],
-
         header_menu_links: [],
     };
 
@@ -284,37 +299,46 @@ const HeaderSettings = () => {
                         res.settings
                     ) {
                         setForm({
+                            types: initialFormState.types,
                             header_logo:
-                                res.settings
-                                    .header_logo ||
-                                '',
+                                res.settings.header_logo || '',
+
+                            topbar_banner:
+                                res.settings.topbar_banner || '',
+
+                            topbar_banner_link:
+                                res.settings.topbar_banner_link || '',
 
                             helpline_number:
-                                res.settings
-                                    .helpline_number ||
-                                '',
+                                res.settings.helpline_number || '',
+
+                            helpine_email:
+                                res.settings.helpine_email || res.settings.helpline_email || '',
+
+                            helpine_whatsapp:
+                                res.settings.helpine_whatsapp || res.settings.helpline_whatsapp || '',
+
+                            show_language_switcher:
+                                (res.settings.show_language_switcher === 'on' || res.settings.show_language_switcher === '1' || res.settings.show_language_switcher === true) ? 'on' : 'off',
+
+                            enable_sticky_header:
+                                (res.settings.enable_sticky_header === 'on' || res.settings.enable_sticky_header === '1' || res.settings.enable_sticky_header === true) ? 'on' : 'off',
 
                             header_nav_menu_text:
-                                res.settings
-                                    .header_nav_menu_text ||
-                                'light',
+                                res.settings.header_nav_menu_text || 'light',
 
                             header_menu_labels:
                                 Array.isArray(
-                                    res.settings
-                                        .header_menu_labels
+                                    res.settings.header_menu_labels
                                 )
-                                    ? res.settings
-                                        .header_menu_labels
+                                    ? res.settings.header_menu_labels
                                     : [],
 
                             header_menu_links:
                                 Array.isArray(
-                                    res.settings
-                                        .header_menu_links
+                                    res.settings.header_menu_links
                                 )
-                                    ? res.settings
-                                        .header_menu_links
+                                    ? res.settings.header_menu_links
                                     : [],
                         });
                     }
@@ -525,6 +549,9 @@ const HeaderSettings = () => {
                     text: successMsg,
                 });
                 toast.success(successMsg);
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new Event('website_settings_updated'));
+                }
             } catch (
             err
             ) {
@@ -722,31 +749,6 @@ const HeaderSettings = () => {
                         </Typography>
                     </Box>
 
-
-                    {/* =================================================
-                        LANGUAGE TABS
-                    ================================================== */}
-
-                    <Box
-                        sx={{
-                            px: {
-                                xs: 2,
-                                sm: 3,
-                                md: 4.5,
-                            },
-
-                            pt: 2.5,
-
-                            pb: 0.5,
-                        }}
-                    >
-                        <LanguageTabBar
-                            activeLang={selectedLang}
-                            onLangChange={(code) => setSelectedLang(code)}
-                        />
-                    </Box>
-
-
                     {/* =================================================
                         FORM
                     ================================================== */}
@@ -800,36 +802,87 @@ const HeaderSettings = () => {
                                     }
                                     type="image"
                                     placeholder={t(
-                                        'Choose Header Logo',
-                                        'Choose Header Logo'
+                                        'Choose file',
+                                        'Choose file'
                                     )}
                                     helperText=""
                                 />
                             </FormFieldRow>
 
-                            {/* =================================================
-                                CONTACT
-                            ================================================== */}
-
-                            <SectionHeader>
-                                {t(
-                                    'Contact Information',
-                                    'Contact Information'
-                                )}
-                            </SectionHeader>
-
+                            {/* TOPBAR BANNER */}
 
                             <FormFieldRow
                                 label={t(
-                                    'Contact Phone',
-                                    'Contact Phone'
+                                    'Topbar Banner',
+                                    'Topbar Banner'
+                                )}
+                                alignItems="start"
+                            >
+                                <AizUploaderInput
+                                    value={
+                                        form.topbar_banner
+                                    }
+                                    onChange={(
+                                        url
+                                    ) =>
+                                        handleFieldChange(
+                                            'topbar_banner',
+                                            url
+                                        )
+                                    }
+                                    type="image"
+                                    placeholder={t(
+                                        'Choose file',
+                                        'Choose file'
+                                    )}
+                                    helperText=""
+                                />
+                            </FormFieldRow>
+
+                            {/* TOPBAR BANNER LINK */}
+
+                            <FormFieldRow
+                                label={t(
+                                    'Topbar banner link',
+                                    'Topbar banner link'
+                                )}
+                            >
+                                <TextField
+                                    fullWidth
+                                    placeholder="Link with http:// or https://"
+                                    value={
+                                        form.topbar_banner_link ||
+                                        ''
+                                    }
+                                    onChange={(
+                                        e
+                                    ) =>
+                                        handleFieldChange(
+                                            'topbar_banner_link',
+                                            e
+                                                .target
+                                                .value
+                                        )
+                                    }
+                                    sx={
+                                        inputSx
+                                    }
+                                />
+                            </FormFieldRow>
+
+                            {/* HELPLINE NUMBER */}
+
+                            <FormFieldRow
+                                label={t(
+                                    'Helpline number',
+                                    'Helpline number'
                                 )}
                             >
                                 <TextField
                                     fullWidth
                                     placeholder={t(
-                                        'Please Enter Phone',
-                                        'Please Enter Phone'
+                                        'Helpline number',
+                                        'Helpline number'
                                     )}
                                     value={
                                         form.helpline_number ||
@@ -849,6 +902,128 @@ const HeaderSettings = () => {
                                         inputSx
                                     }
                                 />
+                            </FormFieldRow>
+
+                            {/* E-MAIL */}
+
+                            <FormFieldRow
+                                label={t(
+                                    'E-Mail',
+                                    'E-Mail'
+                                )}
+                            >
+                                <TextField
+                                    fullWidth
+                                    placeholder={t(
+                                        'E-Mail',
+                                        'E-Mail'
+                                    )}
+                                    value={
+                                        form.helpine_email ||
+                                        ''
+                                    }
+                                    onChange={(
+                                        e
+                                    ) =>
+                                        handleFieldChange(
+                                            'helpine_email',
+                                            e
+                                                .target
+                                                .value
+                                        )
+                                    }
+                                    sx={
+                                        inputSx
+                                    }
+                                />
+                            </FormFieldRow>
+
+                            {/* WHATSAPP */}
+
+                            <FormFieldRow
+                                label={t(
+                                    'WhatsApp',
+                                    'WhatsApp'
+                                )}
+                            >
+                                <TextField
+                                    fullWidth
+                                    placeholder={t(
+                                        'WhatsApp',
+                                        'WhatsApp'
+                                    )}
+                                    value={
+                                        form.helpine_whatsapp ||
+                                        ''
+                                    }
+                                    onChange={(
+                                        e
+                                    ) =>
+                                        handleFieldChange(
+                                            'helpine_whatsapp',
+                                            e
+                                                .target
+                                                .value
+                                        )
+                                    }
+                                    sx={
+                                        inputSx
+                                    }
+                                />
+                            </FormFieldRow>
+
+                            {/* SHOW LANGUAGE SWITCHER */}
+
+                            <FormFieldRow
+                                label={t(
+                                    'Show language switcher ?',
+                                    'Show language switcher ?'
+                                )}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', minHeight: '64px' }}>
+                                    <Switch
+                                        checked={Boolean(
+                                            form.show_language_switcher === 'on' ||
+                                            form.show_language_switcher === true ||
+                                            form.show_language_switcher === '1' ||
+                                            form.show_language_switcher === 1
+                                        )}
+                                        onChange={(e) =>
+                                            handleFieldChange(
+                                                'show_language_switcher',
+                                                e.target.checked ? 'on' : 'off'
+                                            )
+                                        }
+                                        color="primary"
+                                    />
+                                </Box>
+                            </FormFieldRow>
+
+                            {/* ENABLE STICKY HEADER */}
+
+                            <FormFieldRow
+                                label={t(
+                                    'Enable sticky header ?',
+                                    'Enable sticky header ?'
+                                )}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', minHeight: '64px' }}>
+                                    <Switch
+                                        checked={Boolean(
+                                            form.enable_sticky_header === 'on' ||
+                                            form.enable_sticky_header === true ||
+                                            form.enable_sticky_header === '1' ||
+                                            form.enable_sticky_header === 1
+                                        )}
+                                        onChange={(e) =>
+                                            handleFieldChange(
+                                                'enable_sticky_header',
+                                                e.target.checked ? 'on' : 'off'
+                                            )
+                                        }
+                                        color="primary"
+                                    />
+                                </Box>
                             </FormFieldRow>
 
 

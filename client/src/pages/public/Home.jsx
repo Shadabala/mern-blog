@@ -7,6 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { API } from '../../service/api';
 import PublicLayout from '../../layouts/PublicLayout';
 import Post from '../../components/home/post/Post';
+import CategoryNav from '../../components/header/CategoryNav';
 
 const PageWrapper = styled(Box)`
     min-height: 100vh;
@@ -175,6 +176,9 @@ const Home = () => {
                         }}
                     />
                 </HeroSection>
+
+                {/* Category Navigation Bar */}
+                <CategoryNav />
 
                 {/* Posts Grid - Blog Website Style */}
                 {loading ? (

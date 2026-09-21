@@ -2,6 +2,7 @@ import { Avatar, Box, Typography, styled, IconButton, Tooltip } from '@mui/mater
 import { DeleteOutline } from '@mui/icons-material';
 import { API } from '../../../service/api';
 import { confirmDelete } from '../../../utils/swal';
+import { useAuth } from '../../../context/AuthContext';
 
 // ── Styled ────────────────────────────────────────────────────────────────────
 
@@ -52,11 +53,13 @@ const CommentText = styled(Typography)`
     font-size: 15px;
     color: #444;
     line-height: 1.6;
+    white-space: pre-line;
 `;
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const Comment = ({ comment, setToggle, currentUsername }) => {
+    const { user } = useAuth();
 
     const removeComment = async () => {
         const confirmed = await confirmDelete({
@@ -72,7 +75,26 @@ const Comment = ({ comment, setToggle, currentUsername }) => {
         }
     };
 
-    const isOwner = currentUsername && comment.name === currentUsername;
+    const isUserAdminOrStaff = user?.role === 'admin' || user?.role === 'staff' || user?.user_type === 'admin';
+    const isOwner = isUserAdminOrStaff || (
+        currentUsername && (
+            comment.name === currentUsername ||
+            comment.name === user?.name ||
+            comment.name === user?.username
+        )
+    );
+
+    const formattedDate = (() => {
+        try {
+            const d = new Date(comment.date || comment.createdAt);
+            if (isNaN(d.getTime())) return '';
+            return d.toLocaleDateString(undefined, {
+                month: 'short', day: 'numeric', year: 'numeric'
+            });
+        } catch {
+            return '';
+        }
+    })();
 
     return (
         <CommentCard>
@@ -82,13 +104,12 @@ const Comment = ({ comment, setToggle, currentUsername }) => {
             <CommentBody>
                 <CommentHeader>
                     <Box display="flex" alignItems="center">
-                        {/* Shows the saved name (not username) */}
                         <CommenterName>{comment.name}</CommenterName>
-                        <CommentDate>
-                            {new Date(comment.date).toLocaleDateString(undefined, {
-                                month: 'short', day: 'numeric', year: 'numeric'
-                            })}
-                        </CommentDate>
+                        {formattedDate && (
+                            <CommentDate>
+                                {formattedDate}
+                            </CommentDate>
+                        )}
                     </Box>
                     {isOwner && (
                         <Tooltip title="Delete comment">

@@ -5,6 +5,7 @@ import { useParams, Link as RouterLink } from "react-router-dom";
 import { useLanguage } from "../../context/LanguageContext";
 import PublicLayout from "../../layouts/PublicLayout";
 import { fetchPublicBlogDetail } from "../../api/public.api";
+import Comments from "../../components/details/comments/Comments";
 
 const BlogDetail = () => {
     const { id } = useParams();
@@ -130,6 +131,9 @@ const BlogDetail = () => {
                         }}
                         dangerouslySetInnerHTML={{ __html: blog.description || '' }}
                     />
+
+                    {/* Comments System (identical to Blog-Website project) */}
+                    <Comments post={blog} />
                 </Paper>
             </Container>
         </PublicLayout>

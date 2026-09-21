@@ -28,7 +28,8 @@ import {
     postToggleStatus
 } from '../controllers/BlogController.js';
 import { getPublicSettings } from '../controllers/SettingController.js';
-import { getHomepageSettings } from '../controllers/WebsiteSettingController.js';
+import { newComment, getComments, deleteComment } from '../controllers/CommentController.js';
+import { getHomepageSettings, getHeaderSettings, getWebsiteSettings } from '../controllers/WebsiteSettingController.js';
 import { getPublicPageBySlug } from '../controllers/PageController.js';
 import { getActiveLanguages, getTranslationsByCode, syncMissingKeys } from '../controllers/LanguageController.js';
 import {
@@ -64,6 +65,8 @@ const router = express.Router();
 // Public System Health & Settings
 router.get('/', (req, res) => res.send('MERN Blog Server API Working'));
 router.get('/public/settings', getPublicSettings);
+router.get('/public/website-settings', getWebsiteSettings);
+router.get('/public/website-settings/header', getHeaderSettings);
 router.get('/public/website-settings/homepage', getHomepageSettings);
 router.get('/public/page/:slug', getPublicPageBySlug);
 router.get('/public/languages', getActiveLanguages);
@@ -116,6 +119,13 @@ router.post("/post", protect, validate(createBlogSchema), blogCreate);
 router.put("/post/:id", protect, validate(updateBlogSchema), blogUpdate);
 router.delete("/post/:id", protect, blogRemove);
 router.patch("/post/:id/toggle", protect, authorize('admin', 'staff'), blogToggleStatus);
+
+// Comments (identical to Blog-Website project)
+router.post('/comment/new', optionalAuth, newComment);
+router.get('/comments/:id', getComments);
+router.get('/comment/:id', getComments);
+router.delete('/comment/delete/:id', optionalAuth, deleteComment);
+router.delete('/comment/:id', optionalAuth, deleteComment);
 
 // User File Upload & Uploader Routes
 router.get("/file/get_uploaded_files", protect, getUploadedFiles);

@@ -6,13 +6,9 @@ import { clearAdminCache } from '../controllers/CacheController.js';
 import { getSettings, updateSettings } from '../controllers/SettingController.js';
 import {
     getHomepageSettings,
-    updateHomepageSettings,
     getHeaderSettings,
-    updateHeaderSettings,
     getFooterSettings,
-    updateFooterSettings,
     getAppearanceSettings,
-    updateAppearanceSettings,
     getSmtpSettings,
     updateSmtpSettings,
     testSmtpEmail,
@@ -23,7 +19,13 @@ import {
     getGoogleSettings,
     updateGoogleSettings,
     getWebsiteSettings,
-    updateWebsiteSettings
+    updateWebsiteSettings,
+    env_key_update,
+    payment_method_update,
+    google_recaptcha_update,
+    google_firebase_update,
+    google_file_update,
+    google_play
 } from '../controllers/WebsiteSettingController.js';
 import {
     getPages,
@@ -340,26 +342,26 @@ router.post('/cache/clear', protect, authorize('admin', 'staff'), clearAdminCach
 // Website Setup - Homepage Settings (matching Laravel base-module /admin/website-setup/homepage)
 router.get('/website-settings/homepage', protect, authorize('admin', 'staff'), getHomepageSettings);
 router.get('/admin/website-settings/homepage', protect, authorize('admin', 'staff'), getHomepageSettings);
-router.post('/website-settings/homepage', protect, authorize('admin'), updateHomepageSettings);
-router.post('/admin/website-settings/homepage', protect, authorize('admin'), updateHomepageSettings);
+router.post('/website-settings/homepage', protect, authorize('admin'), updateWebsiteSettings);
+router.post('/admin/website-settings/homepage', protect, authorize('admin'), updateWebsiteSettings);
 
 // Website Setup - Header Settings (/admin/website-setup/header)
 router.get('/website-settings/header', protect, authorize('admin', 'staff'), getHeaderSettings);
 router.get('/admin/website-settings/header', protect, authorize('admin', 'staff'), getHeaderSettings);
-router.post('/website-settings/header', protect, authorize('admin'), updateHeaderSettings);
-router.post('/admin/website-settings/header', protect, authorize('admin'), updateHeaderSettings);
+router.post('/website-settings/header', protect, authorize('admin'), updateWebsiteSettings);
+router.post('/admin/website-settings/header', protect, authorize('admin'), updateWebsiteSettings);
 
 // Website Setup - Footer Settings (/admin/website-setup/footer)
 router.get('/website-settings/footer', protect, authorize('admin', 'staff'), getFooterSettings);
 router.get('/admin/website-settings/footer', protect, authorize('admin', 'staff'), getFooterSettings);
-router.post('/website-settings/footer', protect, authorize('admin'), updateFooterSettings);
-router.post('/admin/website-settings/footer', protect, authorize('admin'), updateFooterSettings);
+router.post('/website-settings/footer', protect, authorize('admin'), updateWebsiteSettings);
+router.post('/admin/website-settings/footer', protect, authorize('admin'), updateWebsiteSettings);
 
 // Website Setup - Appearance Settings (/admin/website-setup/appearance)
 router.get('/website-settings/appearance', protect, authorize('admin', 'staff'), getAppearanceSettings);
 router.get('/admin/website-settings/appearance', protect, authorize('admin', 'staff'), getAppearanceSettings);
-router.post('/website-settings/appearance', protect, authorize('admin'), updateAppearanceSettings);
-router.post('/admin/website-settings/appearance', protect, authorize('admin'), updateAppearanceSettings);
+router.post('/website-settings/appearance', protect, authorize('admin'), updateWebsiteSettings);
+router.post('/admin/website-settings/appearance', protect, authorize('admin'), updateWebsiteSettings);
 
 // Website Setup - Pages Management (/admin/website-setup/pages)
 router.get('/pages', protect, authorize('admin', 'staff'), getPages);
@@ -398,13 +400,40 @@ router.post('/admin/setup/payment-methods', protect, authorize('admin'), updateP
 // Setup & Config - Google / Third Party Settings (/admin/setup/google)
 router.get('/setup/google', protect, authorize('admin', 'staff'), getGoogleSettings);
 router.get('/admin/setup/google', protect, authorize('admin', 'staff'), getGoogleSettings);
-router.post('/setup/google', protect, authorize('admin'), updateGoogleSettings);
-router.post('/admin/setup/google', protect, authorize('admin'), updateGoogleSettings);
+router.post('/setup/google', protect, authorize('admin'), updateWebsiteSettings);
+router.post('/admin/setup/google', protect, authorize('admin'), updateWebsiteSettings);
 
-// Generic Website Settings
+// Generic Website Settings & Laravel Compatibility Routes
 router.get('/website-settings', protect, authorize('admin', 'staff'), getWebsiteSettings);
 router.get('/admin/website-settings', protect, authorize('admin', 'staff'), getWebsiteSettings);
 router.post('/website-settings', protect, authorize('admin'), updateWebsiteSettings);
 router.post('/admin/website-settings', protect, authorize('admin'), updateWebsiteSettings);
+router.post('/website-settings/update', protect, authorize('admin'), updateWebsiteSettings);
+router.post('/admin/website-settings/update', protect, authorize('admin'), updateWebsiteSettings);
+router.post('/business_settings/update', protect, authorize('admin'), updateWebsiteSettings);
+router.post('/admin/business_settings/update', protect, authorize('admin'), updateWebsiteSettings);
+
+// Environment Key Update Routes
+router.post('/env_key_update', protect, authorize('admin'), env_key_update);
+router.post('/admin/env_key_update', protect, authorize('admin'), env_key_update);
+router.post('/env-key-update', protect, authorize('admin'), env_key_update);
+router.post('/admin/env-key-update', protect, authorize('admin'), env_key_update);
+
+// Payment Method Update Routes
+router.post('/payment_method_update', protect, authorize('admin'), payment_method_update);
+router.post('/admin/payment_method_update', protect, authorize('admin'), payment_method_update);
+router.post('/payment-method-update', protect, authorize('admin'), payment_method_update);
+router.post('/admin/payment-method-update', protect, authorize('admin'), payment_method_update);
+
+// Google & Third-Party Configuration Update Routes
+router.post('/google_recaptcha_update', protect, authorize('admin'), google_recaptcha_update);
+router.post('/admin/google_recaptcha_update', protect, authorize('admin'), google_recaptcha_update);
+router.post('/google_firebase_update', protect, authorize('admin'), google_firebase_update);
+router.post('/admin/google_firebase_update', protect, authorize('admin'), google_firebase_update);
+router.post('/google_file_update', protect, authorize('admin'), google_file_update);
+router.post('/admin/google_file_update', protect, authorize('admin'), google_file_update);
+router.get('/google-play', protect, authorize('admin', 'staff'), google_play);
+router.get('/admin/google-play', protect, authorize('admin', 'staff'), google_play);
 
 export default router;
+

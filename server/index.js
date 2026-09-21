@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 
 import Connection from './database/db.js';
 import Router from './routes/route.js';
+import './helpers/Helper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

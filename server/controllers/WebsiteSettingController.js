@@ -1,99 +1,118 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import WebsiteSetting from '../models/WebsiteSetting.js';
-import Language from '../models/Language.js';
 import Category from '../models/Category.js';
 import ActivityLog from '../models/ActivityLog.js';
 import sendEmail from '../utils/sendEmail.js';
 
-const resolveLanguageInfo = async (requestedLang) => {
-    let defaultDoc = null;
-    try {
-        defaultDoc = await Language.findOne({ isDefault: true }) || await Language.findOne({ isActive: true });
-    } catch {
-        defaultDoc = null;
-    }
-    const defaultLang = (defaultDoc?.code || 'en').toLowerCase().trim();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-    const cleanReq = requestedLang ? String(requestedLang).toLowerCase().trim() : defaultLang;
-    let langDoc = null;
-    try {
-        langDoc = await Language.findOne({
-            $or: [{ code: cleanReq }, { app_code: cleanReq }]
-        });
-    } catch {
-        langDoc = null;
-    }
-
-    const candidateLangs = new Set([cleanReq]);
-    if (langDoc) {
-        if (langDoc.code) candidateLangs.add(langDoc.code.toLowerCase());
-        if (langDoc.app_code) candidateLangs.add(langDoc.app_code.toLowerCase());
-    }
-
-    const currentLang = langDoc?.code || cleanReq;
-    const isDefault = Boolean(
-        langDoc?.isDefault ||
-        currentLang === defaultLang ||
-        (langDoc?.app_code && langDoc.app_code === defaultLang)
-    );
-
-    return {
-        currentLang,
-        defaultLang,
-        candidateLangs: Array.from(candidateLangs),
-        isDefault
-    };
+export const getEnvPath = () => {
+    const serverEnv = path.resolve(__dirname, '../.env');
+    if (fs.existsSync(serverEnv)) return serverEnv;
+    const rootEnv = path.resolve(__dirname, '../../.env');
+    if (fs.existsSync(rootEnv)) return rootEnv;
+    return serverEnv;
 };
 
-const getDefaultLanguageCode = async () => {
-    try {
-        const defaultLang = await Language.findOne({ isDefault: true });
-        return defaultLang ? defaultLang.code : 'en';
-    } catch {
-        return 'en';
-    }
+export const getStoragePath = (relativePath = '') => {
+    return path.resolve(__dirname, '../storage', relativePath);
 };
 
 /**
- * Helper to get settings map for specific keys and language fallback
+ * overWrite the Env File values (matching Laravel overWriteEnvFile)
+ * @param  {string} type - Env key name
+ * @param  {string} val - Env value
  */
-const getSettingsMap = async (keys, requestedLang) => {
-    const { currentLang, defaultLang, candidateLangs } = await resolveLanguageInfo(requestedLang);
+export const overWriteEnvFile = (type, val) => {
+    if (process.env.DEMO_MODE === 'On') {
+        return;
+    }
+    const envPath = getEnvPath();
+    if (!fs.existsSync(envPath)) {
+        return;
+    }
 
-    const settings = await WebsiteSetting.find({
-        type: { $in: keys },
-        $or: [
-            { lang: { $in: candidateLangs } },
-            { lang: null },
-            { lang: '' },
-            { lang: defaultLang }
-        ]
-    });
+    const trimmedVal = val !== undefined && val !== null ? String(val).trim() : '';
+    const formattedVal = `"${trimmedVal}"`;
+    let content = fs.readFileSync(envPath, 'utf8');
 
+    const escapedKey = type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`^${escapedKey}\\s*=.*$`, 'm');
+
+    if (regex.test(content)) {
+        content = content.replace(regex, `${type}=${formattedVal}`);
+    } else {
+        content += (content.endsWith('\n') ? '' : '\r\n') + `${type}=${formattedVal}\r\n`;
+    }
+
+    fs.writeFileSync(envPath, content, 'utf8');
+    process.env[type] = trimmedVal;
+};
+
+/**
+ * overWrite the Env File values for Google / Firebase (matching Laravel overWriteEnvFileGoogle)
+ * @param  {string} key
+ * @param  {string} value
+ */
+export const overWriteEnvFileGoogle = (key, value) => {
+    const envPath = getEnvPath();
+    if (!fs.existsSync(envPath)) {
+        return;
+    }
+
+    const cleanVal = value !== undefined && value !== null ? String(value).replace(/^["']|["']$/g, '').trim() : '';
+    const newLine = `${key}=${cleanVal}`;
+    let envContent = fs.readFileSync(envPath, 'utf8');
+
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`^${escapedKey}\\s*=.*$`, 'm');
+
+    if (pattern.test(envContent)) {
+        envContent = envContent.replace(pattern, newLine);
+    } else {
+        envContent += (envContent.endsWith('\n') ? '' : '\r\n') + newLine + '\r\n';
+    }
+
+    fs.writeFileSync(envPath, envContent, 'utf8');
+    process.env[key] = cleanVal;
+};
+
+
+/**
+ * Helper to get settings map for specific keys
+ */
+const getSettingsMap = async (keys, requestedLang = null) => {
+    const cleanLang = requestedLang ? String(requestedLang).toLowerCase().trim() : null;
+    const query = { type: { $in: keys } };
+    if (cleanLang) {
+        query.$or = [{ lang: cleanLang }, { lang: null }, { lang: '' }];
+    }
+
+    const settings = await WebsiteSetting.find(query);
     const result = {};
-    keys.forEach(key => {
-        // Priority 1: Localized candidate match
-        const localized = settings.find(s => s.type === key && candidateLangs.includes(s.lang));
-        // Priority 2: Null / empty (universal fallback)
-        const fallbackNull = settings.find(s => s.type === key && (s.lang === null || s.lang === ''));
-        // Priority 3: Default language
-        const fallbackDefault = settings.find(s => s.type === key && s.lang === defaultLang);
-        // Priority 4: Any matching record
-        const match = localized || fallbackNull || fallbackDefault || settings.find(s => s.type === key);
 
-        if (match) {
+    keys.forEach(key => {
+        const item = cleanLang
+            ? (settings.find(s => s.type === key && s.lang?.toLowerCase() === cleanLang) || settings.find(s => s.type === key))
+            : settings.find(s => s.type === key);
+
+        if (item) {
             try {
-                result[key] = typeof match.value === 'string' && (match.value.startsWith('[') || match.value.startsWith('{'))
-                    ? JSON.parse(match.value)
-                    : match.value;
+                result[key] = typeof item.value === 'string' && (item.value.startsWith('[') || item.value.startsWith('{'))
+                    ? JSON.parse(item.value)
+                    : item.value;
             } catch {
-                result[key] = match.value;
+                result[key] = item.value;
             }
         } else {
             result[key] = '';
         }
     });
 
-    return { result, currentLang, defaultLang, candidateLangs };
+    return { result };
 };
 
 /**
@@ -103,112 +122,29 @@ const getSettingsMap = async (keys, requestedLang) => {
  */
 export const getHomepageSettings = async (req, res) => {
     try {
-        const { lang: requestedLang } = req.query;
         const homepageKeys = [
             'home_slider_images',
             'home_slider_links',
         ];
 
-        const { result, currentLang, candidateLangs } = await getSettingsMap(homepageKeys, requestedLang);
+        const { result } = await getSettingsMap(homepageKeys, req.query?.lang);
 
         if (!Array.isArray(result.home_slider_images)) result.home_slider_images = [];
         if (!Array.isArray(result.home_slider_links)) result.home_slider_links = [];
 
-        result.lang = currentLang;
-
         const categories = await Category.find({ status: true })
-            .populate('category_translations')
-            .select('name slug _id category_translations')
+            .select('name slug _id')
             .sort({ order_level: -1 });
-
-        const mappedCategories = categories.map(cat => {
-            const trans = (cat.category_translations || []).find(t => candidateLangs.includes(t.lang?.toLowerCase()));
-            return {
-                _id: cat._id,
-                id: cat._id,
-                name: trans?.name || cat.name,
-                slug: cat.slug
-            };
-        });
 
         return res.status(200).json({
             success: true,
             settings: result,
-            categories: mappedCategories
+            categories
         });
     } catch (error) {
-        console.error('Error fetching homepage settings:', error);
         return res.status(500).json({
             success: false,
             message: 'Failed to fetch homepage settings',
-            error: error.message
-        });
-    }
-};
-
-export const updateHomepageSettings = async (req, res) => {
-    try {
-        const {
-            lang: requestedLang,
-            home_slider_images,
-            home_slider_links,
-        } = req.body;
-
-        const { currentLang, defaultLang, candidateLangs, isDefault } = await resolveLanguageInfo(requestedLang);
-
-        const updates = {
-            home_slider_images: Array.isArray(home_slider_images) ? JSON.stringify(home_slider_images) : home_slider_images,
-            home_slider_links: Array.isArray(home_slider_links) ? JSON.stringify(home_slider_links) : home_slider_links,
-        };
-
-        // Capture any other homepage/website setting key sent in body
-        for (const [key, val] of Object.entries(req.body)) {
-            if (key !== 'lang' && updates[key] === undefined && val !== undefined) {
-                updates[key] = typeof val === 'object' ? JSON.stringify(val) : String(val);
-            }
-        }
-
-        for (const [type, value] of Object.entries(updates)) {
-            if (value !== undefined) {
-                for (const l of candidateLangs) {
-                    await WebsiteSetting.findOneAndUpdate(
-                        { type, lang: l },
-                        { $set: { type, value, lang: l } },
-                        { upsert: true, returnDocument: 'after' }
-                    );
-                }
-
-                if (isDefault) {
-                    await WebsiteSetting.findOneAndUpdate(
-                        { type, lang: null },
-                        { $set: { type, value, lang: null } },
-                        { upsert: true, returnDocument: 'after' }
-                    );
-                }
-            }
-        }
-
-        if (req.user) {
-            await ActivityLog.create({
-                user: req.user._id,
-                userName: req.user.name || req.user.username,
-                userRole: req.user.role || 'admin',
-                action: 'Updated Homepage Settings',
-                module: 'website_settings',
-                ipAddress: req.ip || '',
-                details: `Updated homepage settings for language [${currentLang}]`
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Homepage settings has been updated successfully'
-        });
-    } catch (error) {
-        console.error('Error updating homepage settings:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to update homepage settings',
             error: error.message
         });
     }
@@ -221,23 +157,34 @@ export const updateHomepageSettings = async (req, res) => {
  */
 export const getHeaderSettings = async (req, res) => {
     try {
-        const { lang: requestedLang } = req.query;
         const headerKeys = [
             'header_logo',
             'topbar_banner',
+            'topbar_banner_link',
             'helpline_number',
+            'helpine_email',
+            'helpline_email',
+            'helpine_whatsapp',
+            'helpline_whatsapp',
+            'show_language_switcher',
+            'enable_sticky_header',
             'header_nav_menu_text',
             'header_menu_labels',
             'header_menu_links'
         ];
 
-        const { result, currentLang } = await getSettingsMap(headerKeys, requestedLang);
+        const { result } = await getSettingsMap(headerKeys, req.query?.lang);
 
         if (!Array.isArray(result.header_menu_labels)) result.header_menu_labels = [];
         if (!Array.isArray(result.header_menu_links)) result.header_menu_links = [];
         if (!result.header_nav_menu_text) result.header_nav_menu_text = 'light';
 
-        result.lang = currentLang;
+        if (!result.helpine_email && result.helpline_email) {
+            result.helpine_email = result.helpline_email;
+        }
+        if (!result.helpine_whatsapp && result.helpline_whatsapp) {
+            result.helpine_whatsapp = result.helpline_whatsapp;
+        }
 
         return res.status(200).json({
             success: true,
@@ -252,60 +199,6 @@ export const getHeaderSettings = async (req, res) => {
     }
 };
 
-export const updateHeaderSettings = async (req, res) => {
-    try {
-        const {
-            lang: requestedLang,
-            header_logo,
-            helpline_number,
-            header_nav_menu_text,
-            header_menu_labels,
-            header_menu_links
-        } = req.body;
-
-        const { currentLang, defaultLang, candidateLangs, isDefault } = await resolveLanguageInfo(requestedLang);
-
-        const updates = {
-            header_logo: header_logo || '',
-            helpline_number: helpline_number || '',
-            header_nav_menu_text: header_nav_menu_text || 'light',
-            header_menu_labels: Array.isArray(header_menu_labels) ? JSON.stringify(header_menu_labels) : header_menu_labels,
-            header_menu_links: Array.isArray(header_menu_links) ? JSON.stringify(header_menu_links) : header_menu_links
-        };
-
-        for (const [type, value] of Object.entries(updates)) {
-            if (value !== undefined) {
-                for (const l of candidateLangs) {
-                    await WebsiteSetting.findOneAndUpdate(
-                        { type, lang: l },
-                        { $set: { type, value, lang: l } },
-                        { upsert: true, returnDocument: 'after' }
-                    );
-                }
-
-                if (isDefault) {
-                    await WebsiteSetting.findOneAndUpdate(
-                        { type, lang: null },
-                        { $set: { type, value, lang: null } },
-                        { upsert: true, returnDocument: 'after' }
-                    );
-                }
-            }
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Header settings updated successfully'
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to update header settings',
-            error: error.message
-        });
-    }
-};
-
 /**
  * =========================================================================
  * FOOTER SETTINGS
@@ -313,7 +206,6 @@ export const updateHeaderSettings = async (req, res) => {
  */
 export const getFooterSettings = async (req, res) => {
     try {
-        const { lang: requestedLang } = req.query;
         const footerKeys = [
             'footer_logo',
             'about_us_description',
@@ -338,15 +230,13 @@ export const getFooterSettings = async (req, res) => {
             'payment_method_images'
         ];
 
-        const { result, currentLang } = await getSettingsMap(footerKeys, requestedLang);
+        const { result } = await getSettingsMap(footerKeys, req.query?.lang);
 
         if (!Array.isArray(result.widget_one_labels)) result.widget_one_labels = [];
         if (!Array.isArray(result.widget_one_links)) result.widget_one_links = [];
         if (!Array.isArray(result.widget_two_labels)) result.widget_two_labels = [];
         if (!Array.isArray(result.widget_two_links)) result.widget_two_links = [];
         if (!Array.isArray(result.payment_method_images)) result.payment_method_images = [];
-
-        result.lang = currentLang;
 
         return res.status(200).json({
             success: true,
@@ -356,88 +246,6 @@ export const getFooterSettings = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'Failed to fetch footer settings',
-            error: error.message
-        });
-    }
-};
-
-export const updateFooterSettings = async (req, res) => {
-    try {
-        const {
-            lang: requestedLang,
-            footer_logo,
-            about_us_description,
-            contact_address,
-            contact_phone,
-            contact_email,
-            widget_one_title,
-            widget_one_labels,
-            widget_one_links,
-            widget_two_title,
-            widget_two_labels,
-            widget_two_links,
-            frontend_copyright_text,
-            show_social_links,
-            facebook_link,
-            twitter_link,
-            instagram_link,
-            youtube_link,
-            linkedin_link,
-            payment_method_images
-        } = req.body;
-
-        const { currentLang, defaultLang, candidateLangs, isDefault } = await resolveLanguageInfo(requestedLang);
-
-        const updates = {
-            footer_logo: footer_logo || '',
-            about_us_description: about_us_description || '',
-            contact_address: contact_address || '',
-            contact_phone: contact_phone || '',
-            contact_email: contact_email || '',
-            widget_one_title: widget_one_title || '',
-            widget_one_labels: Array.isArray(widget_one_labels) ? JSON.stringify(widget_one_labels) : widget_one_labels,
-            widget_one_links: Array.isArray(widget_one_links) ? JSON.stringify(widget_one_links) : widget_one_links,
-            widget_two_title: widget_two_title || '',
-            widget_two_labels: Array.isArray(widget_two_labels) ? JSON.stringify(widget_two_labels) : widget_two_labels,
-            widget_two_links: Array.isArray(widget_two_links) ? JSON.stringify(widget_two_links) : widget_two_links,
-            frontend_copyright_text: frontend_copyright_text || '',
-            show_social_links: show_social_links !== undefined ? show_social_links : 'on',
-            facebook_link: facebook_link || '',
-            twitter_link: twitter_link || '',
-            instagram_link: instagram_link || '',
-            youtube_link: youtube_link || '',
-            linkedin_link: linkedin_link || '',
-            payment_method_images: Array.isArray(payment_method_images) ? JSON.stringify(payment_method_images) : payment_method_images
-        };
-
-        for (const [type, value] of Object.entries(updates)) {
-            if (value !== undefined) {
-                for (const l of candidateLangs) {
-                    await WebsiteSetting.findOneAndUpdate(
-                        { type, lang: l },
-                        { $set: { type, value, lang: l } },
-                        { upsert: true, returnDocument: 'after' }
-                    );
-                }
-
-                if (isDefault) {
-                    await WebsiteSetting.findOneAndUpdate(
-                        { type, lang: null },
-                        { $set: { type, value, lang: null } },
-                        { upsert: true, returnDocument: 'after' }
-                    );
-                }
-            }
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Footer settings updated successfully'
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to update footer settings',
             error: error.message
         });
     }
@@ -473,7 +281,7 @@ export const getAppearanceSettings = async (req, res) => {
             'footer_script'
         ];
 
-        const { result } = await getSettingsMap(appearanceKeys, 'en');
+        const { result } = await getSettingsMap(appearanceKeys, req.query?.lang);
 
         return res.status(200).json({
             success: true,
@@ -483,34 +291,6 @@ export const getAppearanceSettings = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'Failed to fetch appearance settings',
-            error: error.message
-        });
-    }
-};
-
-export const updateAppearanceSettings = async (req, res) => {
-    try {
-        const payload = req.body;
-
-        for (const [type, value] of Object.entries(payload)) {
-            if (value !== undefined) {
-                const storedValue = typeof value === 'object' ? JSON.stringify(value) : value;
-                await WebsiteSetting.findOneAndUpdate(
-                    { type, lang: null },
-                    { $set: { type, value: storedValue, lang: null } },
-                    { upsert: true, new: true }
-                );
-            }
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Appearance settings updated successfully'
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to update appearance settings',
             error: error.message
         });
     }
@@ -671,7 +451,39 @@ export const getActivationSettings = async (req, res) => {
     }
 };
 
-export const updateActivationSetting = async (req, res) => {
+/**
+ * Update activation settings in .env file (matching Laravel updateActivationSettingsInEnv)
+ * @param {string} type
+ * @param {any} value
+ */
+export const updateActivationSettingsInEnv = (type, value) => {
+    const isValTrue = (value === '1' || value === 1 || value === true || value === 'On' || value === 's3');
+
+    if (type === 'FORCE_HTTPS' && isValTrue) {
+        overWriteEnvFile(type, 'On');
+        const appUrl = process.env.APP_URL || '';
+        if (appUrl.includes('http:')) {
+            overWriteEnvFile('APP_URL', appUrl.replace('http:', 'https:'));
+        }
+    } else if (type === 'FORCE_HTTPS' && !isValTrue) {
+        overWriteEnvFile(type, 'Off');
+        const appUrl = process.env.APP_URL || '';
+        if (appUrl.includes('https:')) {
+            overWriteEnvFile('APP_URL', appUrl.replace('https:', 'http:'));
+        }
+    } else if (type === 'FILESYSTEM_DRIVER' && isValTrue) {
+        overWriteEnvFile(type, 's3');
+    } else if (type === 'FILESYSTEM_DRIVER' && !isValTrue) {
+        overWriteEnvFile(type, 'local');
+    }
+
+    return '1';
+};
+
+/**
+ * Update feature activation settings (matching Laravel updateActivationSettings)
+ */
+export const updateActivationSettings = async (req, res) => {
     try {
         const { type, value } = req.body;
 
@@ -682,17 +494,31 @@ export const updateActivationSetting = async (req, res) => {
             });
         }
 
+        const envChanges = ['FORCE_HTTPS', 'FILESYSTEM_DRIVER'];
+        if (envChanges.includes(type)) {
+            updateActivationSettingsInEnv(type, value);
+        }
+
+        const isValTrue = (value === 1 || value === '1' || value === true || value === 'On' || value === 's3');
+        const numericVal = isValTrue ? 1 : 0;
+
         await WebsiteSetting.findOneAndUpdate(
             { type, lang: null },
-            { $set: { type, value: value === 1 || value === true || value === '1' || value === 'On' ? 1 : 0, lang: null } },
-            { upsert: true, new: true }
+            { $set: { type, value: numericVal, lang: null } },
+            { upsert: true, returnDocument: 'after' }
         );
+
+        if (req.headers['x-requested-with'] === 'XMLHttpRequest' && !req.headers.accept?.includes('application/json')) {
+            return res.status(200).send('1');
+        }
 
         return res.status(200).json({
             success: true,
-            message: 'Feature setting updated successfully'
+            status: 1,
+            message: 'Settings updated successfully'
         });
     } catch (error) {
+        console.error('Error updating activation setting:', error);
         return res.status(500).json({
             success: false,
             message: 'Failed to update feature setting',
@@ -700,6 +526,9 @@ export const updateActivationSetting = async (req, res) => {
         });
     }
 };
+
+export const updateActivationSetting = updateActivationSettings;
+
 
 /**
  * =========================================================================
@@ -742,25 +571,72 @@ export const getPaymentMethodSettings = async (req, res) => {
     }
 };
 
-export const updatePaymentMethodSettings = async (req, res) => {
+/**
+ * Update payment method configuration and env credentials (matching Laravel payment_method_update)
+ */
+export const payment_method_update = async (req, res) => {
     try {
-        const payload = req.body;
+        const { types, payment_method } = req.body;
 
-        for (const [type, value] of Object.entries(payload)) {
-            if (value !== undefined) {
+        // Update env variables from types array if provided
+        if (Array.isArray(types)) {
+            for (const type of types) {
+                if (typeof type === 'string' && req.body[type] !== undefined) {
+                    overWriteEnvFile(type, req.body[type]);
+                    await WebsiteSetting.findOneAndUpdate(
+                        { type, lang: null },
+                        { $set: { type, value: String(req.body[type]), lang: null } },
+                        { upsert: true, returnDocument: 'after' }
+                    );
+                }
+            }
+        }
+
+        // Handle sandbox and payment toggle for the specific payment method
+        if (payment_method) {
+            const sandboxKey = `${payment_method}_sandbox`;
+            const isSandbox = (req.body[sandboxKey] == 1 || req.body[sandboxKey] === true || req.body[sandboxKey] === '1' || req.body[sandboxKey] === 'on') ? 1 : 0;
+            await WebsiteSetting.findOneAndUpdate(
+                { type: sandboxKey, lang: null },
+                { $set: { type: sandboxKey, value: isSandbox, lang: null } },
+                { upsert: true, returnDocument: 'after' }
+            );
+
+            const paymentKey = `${payment_method}_payment`;
+            if (req.body[paymentKey] !== undefined) {
+                const isEnabled = (req.body[paymentKey] == 1 || req.body[paymentKey] === true || req.body[paymentKey] === '1' || req.body[paymentKey] === 'on') ? 1 : 0;
                 await WebsiteSetting.findOneAndUpdate(
-                    { type, lang: null },
-                    { $set: { type, value: typeof value === 'boolean' ? (value ? 1 : 0) : String(value), lang: null } },
-                    { upsert: true, new: true }
+                    { type: paymentKey, lang: null },
+                    { $set: { type: paymentKey, value: isEnabled, lang: null } },
+                    { upsert: true, returnDocument: 'after' }
+                );
+            }
+        }
+
+        // Also process any direct payload fields
+        for (const [key, value] of Object.entries(req.body)) {
+            if (key === 'types' || key === 'payment_method') continue;
+            if (value !== undefined) {
+                const isEnvKey = ['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET', 'STRIPE_KEY', 'STRIPE_SECRET', 'RAZORPAY_KEY', 'RAZORPAY_SECRET', 'PAYSTACK_PUBLIC_KEY', 'PAYSTACK_SECRET_KEY'].includes(key);
+                if (isEnvKey) {
+                    overWriteEnvFile(key, value);
+                }
+                const formattedVal = typeof value === 'boolean' ? (value ? 1 : 0) : String(value);
+                await WebsiteSetting.findOneAndUpdate(
+                    { type: key, lang: null },
+                    { $set: { type: key, value: formattedVal, lang: null } },
+                    { upsert: true, returnDocument: 'after' }
                 );
             }
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Payment method configuration updated successfully'
+            status: true,
+            message: 'Settings updated successfully'
         });
     } catch (error) {
+        console.error('Error in payment_method_update:', error);
         return res.status(500).json({
             success: false,
             message: 'Failed to update payment settings',
@@ -768,6 +644,9 @@ export const updatePaymentMethodSettings = async (req, res) => {
         });
     }
 };
+
+export const paymentMethodUpdate = payment_method_update;
+export const updatePaymentMethodSettings = payment_method_update;
 
 /**
  * =========================================================================
@@ -804,32 +683,170 @@ export const getGoogleSettings = async (req, res) => {
     }
 };
 
-export const updateGoogleSettings = async (req, res) => {
-    try {
-        const payload = req.body;
+export async function updateGoogleSettings(req, res) {
+    return updateWebsiteSettings(req, res);
+}
 
-        for (const [type, value] of Object.entries(payload)) {
-            if (value !== undefined) {
-                await WebsiteSetting.findOneAndUpdate(
-                    { type, lang: null },
-                    { $set: { type, value: typeof value === 'boolean' ? (value ? 1 : 0) : String(value), lang: null } },
-                    { upsert: true, new: true }
-                );
+export async function google_recaptcha_update(req, res) {
+    return updateWebsiteSettings(req, res);
+}
+
+export const googleRecaptchaUpdate = google_recaptcha_update;
+
+/**
+ * Update Google Firebase settings (matching Laravel google_firebase_update)
+ */
+export const google_firebase_update = async (req, res) => {
+    try {
+        const types = req.body.types || [];
+        if (Array.isArray(types)) {
+            for (const type of types) {
+                if (typeof type === 'string' && req.body[type] !== undefined) {
+                    overWriteEnvFileGoogle(type, req.body[type]);
+                    await WebsiteSetting.findOneAndUpdate(
+                        { type, lang: null },
+                        { $set: { type, value: String(req.body[type]), lang: null } },
+                        { upsert: true, returnDocument: 'after' }
+                    );
+                }
+            }
+        }
+
+        const isFirebaseEnabled = (req.body.google_firebase == 1 || req.body.google_firebase === true || req.body.google_firebase === '1' || req.body.google_firebase === 'on') ? 1 : 0;
+        await WebsiteSetting.findOneAndUpdate(
+            { type: 'google_firebase', lang: null },
+            { $set: { type: 'google_firebase', value: isFirebaseEnabled, lang: null } },
+            { upsert: true, returnDocument: 'after' }
+        );
+
+        return res.status(200).json({
+            success: true,
+            status: true,
+            message: 'Settings updated successfully'
+        });
+    } catch (error) {
+        console.error('Error in google_firebase_update:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+export const googleFirebaseUpdate = google_firebase_update;
+
+/**
+ * Update Google external files like firebase / google-play JSON (matching Laravel google_file_update)
+ */
+export const google_file_update = async (req, res) => {
+    try {
+        const files = {
+            fcm_content: path.join('external', 'kash-firebase.json'),
+            google_play_content: path.join('external', 'kash-google-play.json'),
+        };
+
+        for (const [requestKey, relativePath] of Object.entries(files)) {
+            if (req.body[requestKey] !== undefined) {
+                const content = typeof req.body[requestKey] === 'object'
+                    ? JSON.stringify(req.body[requestKey], null, 2)
+                    : String(req.body[requestKey]);
+
+                const filePath = getStoragePath(relativePath);
+                const directory = path.dirname(filePath);
+
+                if (!fs.existsSync(directory)) {
+                    fs.mkdirSync(directory, { recursive: true });
+                }
+
+                fs.writeFileSync(filePath, content, 'utf8');
             }
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Configuration updated successfully'
+            status: true,
+            message: 'File updated successfully'
+        });
+    } catch (error) {
+        console.error('Error in google_file_update:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+export const googleFileUpdate = google_file_update;
+
+/**
+ * Read Google Play configuration JSON file content (matching Laravel google_play)
+ */
+export const google_play = async (req, res) => {
+    try {
+        const filePath = getStoragePath(path.join('external', 'kash-google-play.json'));
+        const content = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+
+        return res.status(200).json({
+            success: true,
+            content
         });
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Failed to update settings',
-            error: error.message
+            message: error.message
         });
     }
 };
+
+/**
+ * Update environment keys directly (matching Laravel env_key_update)
+ */
+export const env_key_update = async (req, res) => {
+    try {
+        const types = req.body.types || [];
+        if (Array.isArray(types)) {
+            for (const type of types) {
+                if (typeof type === 'string' && req.body[type] !== undefined) {
+                    overWriteEnvFile(type, req.body[type]);
+                }
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            status: true,
+            message: 'Settings updated successfully'
+        });
+    } catch (error) {
+        console.error('Error in env_key_update:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+export const envKeyUpdate = env_key_update;
+
+/**
+ * Clear system / application cache (matching Laravel clearCache)
+ */
+export const clearCache = async (req, res) => {
+    try {
+        return res.status(200).json({
+            success: true,
+            status: true,
+            message: 'Cache cleared successfully'
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+export const clear_cache = clearCache;
 
 /**
  * =========================================================================
@@ -839,12 +856,24 @@ export const updateGoogleSettings = async (req, res) => {
 export const getWebsiteSettings = async (req, res) => {
     try {
         const { lang } = req.query;
-        const query = lang ? { $or: [{ lang }, { lang: null }] } : {};
-        const settings = await WebsiteSetting.find(query);
+        const query = lang ? { $or: [{ lang }, { lang: null }, { lang: '' }] } : {};
+        const settings = await WebsiteSetting.find(query).lean();
+
+        const settingsMap = {};
+        settings.forEach(s => {
+            let val = s.value;
+            if (typeof val === 'string' && (val.startsWith('[') || val.startsWith('{'))) {
+                try { val = JSON.parse(val); } catch {}
+            }
+            if (!settingsMap[s.type] || s.lang === lang) {
+                settingsMap[s.type] = val;
+            }
+        });
 
         return res.status(200).json({
             success: true,
-            settings
+            settings,
+            settingsMap
         });
     } catch (error) {
         return res.status(500).json({
@@ -854,36 +883,140 @@ export const getWebsiteSettings = async (req, res) => {
     }
 };
 
+/**
+ * Update website settings & synchronize system env keys (matching Laravel update(Request $request))
+ * Single unified method used for updating and inserting type, value, lang with timestamp
+ */
 export const updateWebsiteSettings = async (req, res) => {
     try {
-        const { settings, lang } = req.body;
+        const typesInput = req.body.types || req.body['types[]'];
+        let types = [];
 
-        if (Array.isArray(settings)) {
-            for (const item of settings) {
-                await WebsiteSetting.findOneAndUpdate(
-                    { type: item.type, lang: lang || null },
-                    { $set: { type: item.type, value: item.value, lang: lang || null } },
-                    { upsert: true, new: true }
-                );
+        if (Array.isArray(typesInput)) {
+            types = typesInput;
+        } else if (typeof typesInput === 'string') {
+            try {
+                const parsed = JSON.parse(typesInput);
+                types = Array.isArray(parsed) ? parsed : [typesInput];
+            } catch {
+                types = [typesInput];
             }
-        } else if (typeof settings === 'object' && settings !== null) {
-            for (const [type, value] of Object.entries(settings)) {
-                await WebsiteSetting.findOneAndUpdate(
-                    { type, lang: lang || null },
-                    { $set: { type, value, lang: lang || null } },
-                    { upsert: true, new: true }
-                );
+        } else if (Array.isArray(req.body.settings)) {
+            types = req.body.settings.map(s => s.type);
+        } else if (req.body && typeof req.body === 'object') {
+            types = Object.keys(req.body).filter(k => !['types', 'types[]', 'lang', '_id', '__v'].includes(k));
+        }
+
+        const bodyLang = req.body.lang || req.query?.lang || null;
+
+        for (const item of types) {
+            let type = item;
+            let lang = null;
+
+            if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+                lang = Object.keys(item)[0];
+                type = item[lang];
+            } else if (bodyLang) {
+                lang = bodyLang;
             }
+
+            if (!type || typeof type !== 'string') continue;
+            type = type.trim();
+
+            if (type === 'site_name') {
+                const val = req.body[type] !== undefined ? req.body[type] : (req.body.site_name || req.body.system_name);
+                if (val !== undefined) {
+                    overWriteEnvFile('APP_NAME', val);
+                }
+            } else if (type === 'timezone' || type === 'time_zone') {
+                const val = req.body[type] !== undefined ? req.body[type] : (req.body.timezone || req.body.time_zone);
+                if (val !== undefined) {
+                    overWriteEnvFile('APP_TIMEZONE', val);
+                }
+            } else {
+                let settings = null;
+                if (lang) {
+                    settings = await WebsiteSetting.findOne({ type, lang });
+                    if (!settings && (lang === 'en' || lang === 'null')) {
+                        settings = await WebsiteSetting.findOne({ type, lang: null });
+                    }
+                } else {
+                    settings = await WebsiteSetting.findOne({ type, $or: [{ lang: null }, { lang: '' }] })
+                        || await WebsiteSetting.findOne({ type });
+                }
+
+                let reqVal = req.body[type];
+                if (reqVal === undefined && typeof item === 'object') {
+                    reqVal = req.body[Object.values(item)[0]];
+                }
+
+                // Handle switch/checkbox default if sent in types
+                if (reqVal === undefined) {
+                    if (type.startsWith('show_') || type.startsWith('enable_')) {
+                        reqVal = 'off';
+                    } else {
+                        reqVal = '';
+                    }
+                } else if (typeof reqVal === 'boolean') {
+                    reqVal = reqVal ? 'on' : 'off';
+                }
+
+                let valueToSave;
+                if (typeof reqVal === 'object' && reqVal !== null) {
+                    valueToSave = JSON.stringify(reqVal);
+                } else {
+                    valueToSave = reqVal !== undefined && reqVal !== null ? String(reqVal) : '';
+                }
+
+                if (settings != null) {
+                    settings.value = valueToSave;
+                    settings.lang = lang;
+                    await settings.save();
+                } else {
+                    settings = new WebsiteSetting({
+                        type: type,
+                        value: valueToSave,
+                        lang: lang
+                    });
+                    await settings.save();
+                }
+            }
+        }
+
+        if (req.user) {
+            try {
+                await ActivityLog.create({
+                    user: req.user._id,
+                    userName: req.user.name || req.user.username,
+                    userRole: req.user.role || 'admin',
+                    action: 'Updated Website Settings',
+                    module: 'website_settings',
+                    ipAddress: req.ip || '',
+                    details: 'Updated website settings'
+                });
+            } catch {
+                // Ignore activity log failure
+            }
+        }
+
+        if (typeof clearSettingsCache === 'function') {
+            clearSettingsCache();
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Website settings updated successfully'
+            status: true,
+            message: 'Settings updated successfully'
         });
     } catch (error) {
+        console.error('Error in updateWebsiteSettings:', error);
         return res.status(500).json({
             success: false,
             message: error.message
         });
     }
 };
+
+export const update = updateWebsiteSettings;
+
+
