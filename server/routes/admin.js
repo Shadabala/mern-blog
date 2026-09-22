@@ -85,8 +85,14 @@ import {
     bulkDeleteFiles,
     fileInfo
 } from '../controllers/AizUploadController.js';
+import {
+    getAllPayments,
+    approveManualPayment,
+    rejectManualPayment
+} from '../controllers/PaymentController.js';
 import { aizUploadMiddleware } from '../middleware/uploadMiddleware.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
+import { checkPermission } from '../middleware/permissionMiddleware.js';
 import { validate } from '../middleware/validate.js';
 import { createCategorySchema, updateCategorySchema } from '../validators/categoryValidator.js';
 import { createBlogSchema, updateBlogSchema, createPostSchema, updatePostSchema } from '../validators/blogValidator.js';
@@ -95,345 +101,279 @@ import { createRoleSchema, updateRoleSchema } from '../validators/roleValidator.
 
 const router = express.Router();
 
-// Admin Dashboard Stats
+// 1. Admin Dashboard Stats
 router.get('/dashboard-stats', protect, authorize('admin', 'staff'), getDashboardStats);
 router.get('/admin/dashboard-stats', protect, authorize('admin', 'staff'), getDashboardStats);
 
-// User Management
-router.get('/users', protect, authorize('admin', 'staff'), getAllUsers);
-router.get('/admin/users', protect, authorize('admin', 'staff'), getAllUsers);
-
-router.put('/users/:id/role', protect, authorize('admin'), updateUserRole);
-router.put('/admin/users/:id/role', protect, authorize('admin'), updateUserRole);
-
-router.patch('/users/:id/status', protect, authorize('admin', 'staff'), toggleUserStatus);
-router.patch('/admin/users/:id/status', protect, authorize('admin', 'staff'), toggleUserStatus);
-router.patch('/admin/users/:id/toggle-status', protect, authorize('admin', 'staff'), toggleUserStatus);
-
-router.delete('/users/:id', protect, authorize('admin'), deleteUser);
-router.delete('/admin/users/:id', protect, authorize('admin'), deleteUser);
-
-// Site Settings
-router.get('/settings', protect, authorize('admin', 'staff'), getSettings);
-router.get('/admin/settings', protect, authorize('admin', 'staff'), getSettings);
-
-router.post('/settings', protect, authorize('admin'), updateSettings);
-router.post('/admin/settings', protect, authorize('admin'), updateSettings);
-
-// Language Management
-router.get('/languages', protect, authorize('admin', 'staff'), getAllLanguages);
-router.get('/admin/languages', protect, authorize('admin', 'staff'), getAllLanguages);
-router.get('/languages/:id', protect, authorize('admin', 'staff'), getLanguageById);
-router.get('/admin/languages/:id', protect, authorize('admin', 'staff'), getLanguageById);
-
-router.post('/languages', protect, authorize('admin'), createLanguage);
-router.post('/admin/languages', protect, authorize('admin'), createLanguage);
-
-router.put('/languages/:id', protect, authorize('admin'), updateLanguage);
-router.put('/admin/languages/:id', protect, authorize('admin'), updateLanguage);
-
-router.patch('/languages/:id/toggle', protect, authorize('admin', 'staff'), toggleLanguageStatus);
-router.patch('/admin/languages/:id/toggle', protect, authorize('admin', 'staff'), toggleLanguageStatus);
-
-router.patch('/languages/:id/rtl', protect, authorize('admin', 'staff'), toggleLanguageRtl);
-router.patch('/admin/languages/:id/rtl', protect, authorize('admin', 'staff'), toggleLanguageRtl);
-
-router.patch('/languages/:id/default', protect, authorize('admin'), setDefaultLanguage);
-router.patch('/admin/languages/:id/default', protect, authorize('admin'), setDefaultLanguage);
-
-router.get('/languages/:id/translations', protect, authorize('admin', 'staff'), getLanguageTranslations);
-router.get('/admin/languages/:id/translations', protect, authorize('admin', 'staff'), getLanguageTranslations);
-
-router.put('/languages/:id/translations', protect, authorize('admin'), updateLanguageTranslations);
-router.put('/admin/languages/:id/translations', protect, authorize('admin'), updateLanguageTranslations);
-
-router.post('/languages/import', protect, authorize('admin'), importTranslations);
-router.post('/admin/languages/import', protect, authorize('admin'), importTranslations);
-router.post('/languages/:id/import', protect, authorize('admin'), importTranslations);
-router.post('/admin/languages/:id/import', protect, authorize('admin'), importTranslations);
-
-router.get('/languages/:id/export', protect, authorize('admin', 'staff'), exportTranslations);
-router.get('/admin/languages/:id/export', protect, authorize('admin', 'staff'), exportTranslations);
-
-router.delete('/languages/:id', protect, authorize('admin'), deleteLanguage);
-router.delete('/admin/languages/:id', protect, authorize('admin'), deleteLanguage);
-
-// Activity Logs
-router.get('/activity-logs', protect, authorize('admin', 'staff'), getActivityLogs);
-router.get('/logs', protect, authorize('admin', 'staff'), getActivityLogs);
-router.get('/admin/activity-logs', protect, authorize('admin', 'staff'), getActivityLogs);
-router.get('/admin/logs', protect, authorize('admin', 'staff'), getActivityLogs);
-
-// Contact Inquiries
-router.get('/contacts', protect, authorize('admin', 'staff'), getContacts);
-router.get('/admin/contacts', protect, authorize('admin', 'staff'), getContacts);
-
-router.post('/contacts/:id/reply', protect, authorize('admin', 'staff'), replyContact);
-router.post('/admin/contacts/:id/reply', protect, authorize('admin', 'staff'), replyContact);
-
-router.delete('/contacts/:id', protect, authorize('admin'), deleteContact);
-router.delete('/admin/contacts/:id', protect, authorize('admin'), deleteContact);
-
-router.post('/contacts/bulk-delete', protect, authorize('admin'), bulkDeleteContacts);
-router.post('/admin/contacts/bulk-delete', protect, authorize('admin'), bulkDeleteContacts);
-
-// User Login History
-router.get('/login-history', protect, authorize('admin', 'staff'), getLoginHistory);
-router.get('/admin/login-history', protect, authorize('admin', 'staff'), getLoginHistory);
-
-// Admin Category Management
-router.get('/categories', protect, authorize('admin', 'staff'), categoryGetAll);
-router.get('/admin/categories', protect, authorize('admin', 'staff'), categoryGetAll);
-
-router.get('/categories/:id', protect, authorize('admin', 'staff'), categoryGetById);
-router.get('/admin/categories/:id', protect, authorize('admin', 'staff'), categoryGetById);
-
-router.post('/categories', protect, authorize('admin', 'staff'), validate(createCategorySchema), categoryCreate);
-router.post('/admin/categories', protect, authorize('admin', 'staff'), validate(createCategorySchema), categoryCreate);
-
-router.put('/categories/:id', protect, authorize('admin', 'staff'), validate(updateCategorySchema), categoryUpdate);
-router.put('/admin/categories/:id', protect, authorize('admin', 'staff'), validate(updateCategorySchema), categoryUpdate);
-
-router.delete('/categories/:id', protect, authorize('admin'), categoryRemove);
-router.delete('/admin/categories/:id', protect, authorize('admin'), categoryRemove);
-
-router.patch('/categories/:id/toggle', protect, authorize('admin', 'staff'), categoryToggleStatus);
-router.patch('/admin/categories/:id/toggle', protect, authorize('admin', 'staff'), categoryToggleStatus);
-
-
-// Admin Blog Management (matching Laravel base-module /admin/blogs)
-router.get('/blogs', protect, authorize('admin', 'staff'), blogGetAll);
-router.get('/admin/blogs', protect, authorize('admin', 'staff'), blogGetAll);
-router.get('/blogs/:id', protect, authorize('admin', 'staff'), blogGetById);
-router.get('/admin/blogs/:id', protect, authorize('admin', 'staff'), blogGetById);
-
-router.post('/blogs', protect, authorize('admin', 'staff'), validate(createBlogSchema), blogCreate);
-router.post('/admin/blogs', protect, authorize('admin', 'staff'), validate(createBlogSchema), blogCreate);
-
-router.put('/blogs/:id', protect, authorize('admin', 'staff'), validate(updateBlogSchema), blogUpdate);
-router.put('/admin/blogs/:id', protect, authorize('admin', 'staff'), validate(updateBlogSchema), blogUpdate);
-
-router.patch('/blogs/:id/toggle', protect, authorize('admin', 'staff'), blogToggleStatus);
-router.patch('/admin/blogs/:id/toggle', protect, authorize('admin', 'staff'), blogToggleStatus);
-
-router.delete('/blogs/:id', protect, authorize('admin'), blogRemove);
-router.delete('/admin/blogs/:id', protect, authorize('admin'), blogRemove);
-
-// Backward-compatible Post routes
-router.get('/posts', protect, authorize('admin', 'staff'), blogGetAll);
-router.get('/admin/posts', protect, authorize('admin', 'staff'), blogGetAll);
-router.get('/posts/:id', protect, authorize('admin', 'staff'), blogGetById);
-router.get('/admin/posts/:id', protect, authorize('admin', 'staff'), blogGetById);
-
-router.post('/posts', protect, authorize('admin', 'staff'), validate(createBlogSchema), blogCreate);
-router.post('/admin/posts', protect, authorize('admin', 'staff'), validate(createBlogSchema), blogCreate);
-
-router.put('/posts/:id', protect, authorize('admin', 'staff'), validate(updateBlogSchema), blogUpdate);
-router.put('/admin/posts/:id', protect, authorize('admin', 'staff'), validate(updateBlogSchema), blogUpdate);
-
-router.patch('/posts/:id/toggle', protect, authorize('admin', 'staff'), blogToggleStatus);
-router.patch('/admin/posts/:id/toggle', protect, authorize('admin', 'staff'), blogToggleStatus);
-
-router.delete('/posts/:id', protect, authorize('admin'), blogRemove);
-router.delete('/admin/posts/:id', protect, authorize('admin'), blogRemove);
-
-// File System & Redis Configuration (matching base-module admin/file_system)
-router.get('/file_system', protect, authorize('admin', 'staff'), getFileSystemSettings);
-router.get('/admin/file_system', protect, authorize('admin', 'staff'), getFileSystemSettings);
-router.get('/setup/file-system', protect, authorize('admin', 'staff'), getFileSystemSettings);
-router.get('/admin/setup/file-system', protect, authorize('admin', 'staff'), getFileSystemSettings);
-
-router.post('/file_system', protect, authorize('admin'), updateFileSystemSettings);
-router.post('/admin/file_system', protect, authorize('admin'), updateFileSystemSettings);
-router.post('/setup/file-system', protect, authorize('admin'), updateFileSystemSettings);
-router.post('/admin/setup/file-system', protect, authorize('admin'), updateFileSystemSettings);
-
-router.post('/file_system/activation', protect, authorize('admin'), updateFileSystemActivation);
-router.post('/admin/file_system/activation', protect, authorize('admin'), updateFileSystemActivation);
-router.post('/business_settings/update/activation', protect, authorize('admin'), updateFileSystemActivation);
-router.post('/admin/business_settings/update/activation', protect, authorize('admin'), updateFileSystemActivation);
-
-router.post('/file_system/test-redis', protect, authorize('admin'), testRedisConnection);
-router.post('/admin/file_system/test-redis', protect, authorize('admin'), testRedisConnection);
-
-// AIZ Uploader & Uploaded Files Management (matching Laravel base-module)
-router.get('/aiz-uploader/get-uploaded-files', protect, getUploadedFiles);
-router.get('/aiz-uploader/get_uploaded_files', protect, getUploadedFiles);
-router.get('/admin/aiz-uploader/get-uploaded-files', protect, getUploadedFiles);
-
-router.post('/aiz-uploader/upload', protect, aizUploadMiddleware, uploadFile);
-router.post('/admin/aiz-uploader/upload', protect, aizUploadMiddleware, uploadFile);
-
-router.post('/aiz-uploader/get_file_by_ids', protect, getFileByIds);
-router.post('/admin/aiz-uploader/get_file_by_ids', protect, getFileByIds);
-
-router.get('/uploaded-files', protect, getUploadedFiles);
-router.get('/admin/uploaded-files', protect, getUploadedFiles);
-
-router.get('/uploaded-files/info/:id', protect, fileInfo);
-router.post('/uploaded-files/info', protect, fileInfo);
-router.get('/admin/uploaded-files/info/:id', protect, fileInfo);
-router.post('/admin/uploaded-files/info', protect, fileInfo);
-
-router.delete('/uploaded-files/:id', protect, destroyFile);
-router.delete('/uploaded-files/destroy/:id', protect, destroyFile);
-router.delete('/admin/uploaded-files/:id', protect, destroyFile);
-router.delete('/admin/uploaded-files/destroy/:id', protect, destroyFile);
-
-router.post('/bulk-uploaded-files-delete', protect, bulkDeleteFiles);
-router.post('/admin/bulk-uploaded-files-delete', protect, bulkDeleteFiles);
-
-// User Impersonation ("Login as User")
-router.post('/users/:id/impersonate', protect, authorize('admin'), impersonateUser);
-router.post('/admin/users/:id/impersonate', protect, authorize('admin'), impersonateUser);
-
-// Staff Management Routes (matching Laravel base-module /admin/staffs)
-router.get('/staffs', protect, authorize('admin'), getAllStaff);
-router.get('/admin/staffs', protect, authorize('admin'), getAllStaff);
-router.get('/staff', protect, authorize('admin'), getAllStaff);
-router.get('/admin/staff', protect, authorize('admin'), getAllStaff);
-router.get('/admin/staff/all', protect, authorize('admin'), getAllStaff);
-
-router.post('/staffs', protect, authorize('admin'), validate(createStaffSchema), createStaff);
-router.post('/admin/staffs', protect, authorize('admin'), validate(createStaffSchema), createStaff);
-router.post('/staff', protect, authorize('admin'), validate(createStaffSchema), createStaff);
-router.post('/admin/staff', protect, authorize('admin'), validate(createStaffSchema), createStaff);
-
-router.put('/staffs/:id', protect, authorize('admin'), validate(updateStaffSchema), updateStaff);
-router.put('/admin/staffs/:id', protect, authorize('admin'), validate(updateStaffSchema), updateStaff);
-router.put('/staff/:id', protect, authorize('admin'), validate(updateStaffSchema), updateStaff);
-router.put('/admin/staff/:id', protect, authorize('admin'), validate(updateStaffSchema), updateStaff);
-
-router.patch('/staffs/:id/toggle', protect, authorize('admin'), toggleStaffStatus);
-router.patch('/admin/staffs/:id/toggle', protect, authorize('admin'), toggleStaffStatus);
-router.patch('/staff/:id/toggle', protect, authorize('admin'), toggleStaffStatus);
-router.patch('/admin/staff/:id/toggle', protect, authorize('admin'), toggleStaffStatus);
-
-router.delete('/staffs/:id', protect, authorize('admin'), deleteStaff);
-router.delete('/admin/staffs/:id', protect, authorize('admin'), deleteStaff);
-router.delete('/staff/:id', protect, authorize('admin'), deleteStaff);
-router.delete('/admin/staff/:id', protect, authorize('admin'), deleteStaff);
-
-// Staff Roles & Permissions Routes (matching Laravel base-module /admin/roles)
-router.get('/roles', protect, authorize('admin'), getAllRoles);
-router.get('/admin/roles', protect, authorize('admin'), getAllRoles);
-router.get('/admin/staff/permissions', protect, authorize('admin'), getAllRoles);
-router.get('/roles/permissions/list', protect, authorize('admin'), getAvailablePermissions);
-router.get('/admin/roles/permissions/list', protect, authorize('admin'), getAvailablePermissions);
-
-router.get('/roles/:id', protect, authorize('admin'), getRoleById);
-router.get('/admin/roles/:id', protect, authorize('admin'), getRoleById);
-
-router.post('/roles', protect, authorize('admin'), validate(createRoleSchema), createRole);
-router.post('/admin/roles', protect, authorize('admin'), validate(createRoleSchema), createRole);
-
-router.put('/roles/:id', protect, authorize('admin'), validate(updateRoleSchema), updateRole);
-router.put('/admin/roles/:id', protect, authorize('admin'), validate(updateRoleSchema), updateRole);
-
-router.delete('/roles/:id', protect, authorize('admin'), deleteRole);
-router.delete('/admin/roles/:id', protect, authorize('admin'), deleteRole);
-
-// Clear Cache Route (for Admin panel top toolbar button)
-router.post('/clear-cache', protect, authorize('admin', 'staff'), clearAdminCache);
-router.post('/admin/clear-cache', protect, authorize('admin', 'staff'), clearAdminCache);
-router.post('/admin/clear_cache', protect, authorize('admin', 'staff'), clearAdminCache);
-router.post('/cache/clear', protect, authorize('admin', 'staff'), clearAdminCache);
-
-// Website Setup - Homepage Settings (matching Laravel base-module /admin/website-setup/homepage)
-router.get('/website-settings/homepage', protect, authorize('admin', 'staff'), getHomepageSettings);
-router.get('/admin/website-settings/homepage', protect, authorize('admin', 'staff'), getHomepageSettings);
-router.post('/website-settings/homepage', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/admin/website-settings/homepage', protect, authorize('admin'), updateWebsiteSettings);
-
-// Website Setup - Header Settings (/admin/website-setup/header)
-router.get('/website-settings/header', protect, authorize('admin', 'staff'), getHeaderSettings);
-router.get('/admin/website-settings/header', protect, authorize('admin', 'staff'), getHeaderSettings);
-router.post('/website-settings/header', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/admin/website-settings/header', protect, authorize('admin'), updateWebsiteSettings);
-
-// Website Setup - Footer Settings (/admin/website-setup/footer)
-router.get('/website-settings/footer', protect, authorize('admin', 'staff'), getFooterSettings);
-router.get('/admin/website-settings/footer', protect, authorize('admin', 'staff'), getFooterSettings);
-router.post('/website-settings/footer', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/admin/website-settings/footer', protect, authorize('admin'), updateWebsiteSettings);
-
-// Website Setup - Appearance Settings (/admin/website-setup/appearance)
-router.get('/website-settings/appearance', protect, authorize('admin', 'staff'), getAppearanceSettings);
-router.get('/admin/website-settings/appearance', protect, authorize('admin', 'staff'), getAppearanceSettings);
-router.post('/website-settings/appearance', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/admin/website-settings/appearance', protect, authorize('admin'), updateWebsiteSettings);
-
-// Website Setup - Pages Management (/admin/website-setup/pages)
-router.get('/pages', protect, authorize('admin', 'staff'), getPages);
-router.get('/admin/pages', protect, authorize('admin', 'staff'), getPages);
-router.get('/pages/:id', protect, authorize('admin', 'staff'), getPageById);
-router.get('/admin/pages/:id', protect, authorize('admin', 'staff'), getPageById);
-router.post('/pages', protect, authorize('admin'), createPage);
-router.post('/admin/pages', protect, authorize('admin'), createPage);
-router.put('/pages/:id', protect, authorize('admin'), updatePage);
-router.put('/admin/pages/:id', protect, authorize('admin'), updatePage);
-router.delete('/pages/:id', protect, authorize('admin'), deletePage);
-router.delete('/admin/pages/:id', protect, authorize('admin'), deletePage);
-
-// Setup & Config - SMTP Settings (/admin/setup/smtp)
-router.get('/setup/smtp', protect, authorize('admin', 'staff'), getSmtpSettings);
-router.get('/admin/setup/smtp', protect, authorize('admin', 'staff'), getSmtpSettings);
-router.post('/setup/smtp', protect, authorize('admin'), updateSmtpSettings);
-router.post('/admin/setup/smtp', protect, authorize('admin'), updateSmtpSettings);
-router.post('/setup/smtp/test', protect, authorize('admin'), testSmtpEmail);
-router.post('/admin/setup/smtp/test', protect, authorize('admin'), testSmtpEmail);
-
-// Setup & Config - Feature Activation (/admin/setup/features)
-router.get('/setup/features', protect, authorize('admin', 'staff'), getActivationSettings);
-router.get('/admin/setup/features', protect, authorize('admin', 'staff'), getActivationSettings);
-router.post('/setup/features/toggle', protect, authorize('admin'), updateActivationSetting);
-router.post('/admin/setup/features/toggle', protect, authorize('admin'), updateActivationSetting);
-router.post('/settings/activation', protect, authorize('admin'), updateActivationSetting);
-router.post('/admin/settings/activation', protect, authorize('admin'), updateActivationSetting);
-
-// Setup & Config - Payment Methods (/admin/setup/payment-methods)
-router.get('/setup/payment-methods', protect, authorize('admin', 'staff'), getPaymentMethodSettings);
-router.get('/admin/setup/payment-methods', protect, authorize('admin', 'staff'), getPaymentMethodSettings);
-router.post('/setup/payment-methods', protect, authorize('admin'), updatePaymentMethodSettings);
-router.post('/admin/setup/payment-methods', protect, authorize('admin'), updatePaymentMethodSettings);
-
-// Setup & Config - Google / Third Party Settings (/admin/setup/google)
-router.get('/setup/google', protect, authorize('admin', 'staff'), getGoogleSettings);
-router.get('/admin/setup/google', protect, authorize('admin', 'staff'), getGoogleSettings);
-router.post('/setup/google', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/admin/setup/google', protect, authorize('admin'), updateWebsiteSettings);
-
-// Generic Website Settings & Laravel Compatibility Routes
-router.get('/website-settings', protect, authorize('admin', 'staff'), getWebsiteSettings);
-router.get('/admin/website-settings', protect, authorize('admin', 'staff'), getWebsiteSettings);
-router.post('/website-settings', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/admin/website-settings', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/website-settings/update', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/admin/website-settings/update', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/business_settings/update', protect, authorize('admin'), updateWebsiteSettings);
-router.post('/admin/business_settings/update', protect, authorize('admin'), updateWebsiteSettings);
-
-// Environment Key Update Routes
-router.post('/env_key_update', protect, authorize('admin'), env_key_update);
-router.post('/admin/env_key_update', protect, authorize('admin'), env_key_update);
-router.post('/env-key-update', protect, authorize('admin'), env_key_update);
-router.post('/admin/env-key-update', protect, authorize('admin'), env_key_update);
-
-// Payment Method Update Routes
-router.post('/payment_method_update', protect, authorize('admin'), payment_method_update);
-router.post('/admin/payment_method_update', protect, authorize('admin'), payment_method_update);
-router.post('/payment-method-update', protect, authorize('admin'), payment_method_update);
-router.post('/admin/payment-method-update', protect, authorize('admin'), payment_method_update);
-
-// Google & Third-Party Configuration Update Routes
-router.post('/google_recaptcha_update', protect, authorize('admin'), google_recaptcha_update);
-router.post('/admin/google_recaptcha_update', protect, authorize('admin'), google_recaptcha_update);
-router.post('/google_firebase_update', protect, authorize('admin'), google_firebase_update);
-router.post('/admin/google_firebase_update', protect, authorize('admin'), google_firebase_update);
-router.post('/google_file_update', protect, authorize('admin'), google_file_update);
-router.post('/admin/google_file_update', protect, authorize('admin'), google_file_update);
-router.get('/google-play', protect, authorize('admin', 'staff'), google_play);
-router.get('/admin/google-play', protect, authorize('admin', 'staff'), google_play);
+// 2. Customer & User Management
+router.get('/users', protect, checkPermission('users_view'), getAllUsers);
+router.get('/admin/users', protect, checkPermission('users_view'), getAllUsers);
+router.put('/users/:id/role', protect, checkPermission('users_edit'), updateUserRole);
+router.put('/admin/users/:id/role', protect, checkPermission('users_edit'), updateUserRole);
+router.put('/users/:id/status', protect, checkPermission('users_edit'), toggleUserStatus);
+router.put('/admin/users/:id/status', protect, checkPermission('users_edit'), toggleUserStatus);
+router.patch('/users/:id/toggle', protect, checkPermission('users_edit'), toggleUserStatus);
+router.patch('/admin/users/:id/toggle', protect, checkPermission('users_edit'), toggleUserStatus);
+router.post('/users/:id/impersonate', protect, checkPermission('users_impersonate'), impersonateUser);
+router.post('/admin/users/:id/impersonate', protect, checkPermission('users_impersonate'), impersonateUser);
+router.delete('/users/:id', protect, checkPermission('users_delete'), deleteUser);
+router.delete('/admin/users/:id', protect, checkPermission('users_delete'), deleteUser);
+
+// 3. Activity Logs & Login History
+router.get('/logs', protect, checkPermission('logs_view'), getActivityLogs);
+router.get('/admin/logs', protect, checkPermission('logs_view'), getActivityLogs);
+router.get('/login-history', protect, checkPermission('login_history_view'), getLoginHistory);
+router.get('/admin/login-history', protect, checkPermission('login_history_view'), getLoginHistory);
+
+// 4. Contact Enquiries
+router.get('/contacts', protect, checkPermission('contacts_manage'), getContacts);
+router.get('/admin/contacts', protect, checkPermission('contacts_manage'), getContacts);
+router.post('/contacts/:id/reply', protect, checkPermission('contacts_manage'), replyContact);
+router.post('/admin/contacts/:id/reply', protect, checkPermission('contacts_manage'), replyContact);
+router.delete('/contacts/:id', protect, checkPermission('contacts_manage'), deleteContact);
+router.delete('/admin/contacts/:id', protect, checkPermission('contacts_manage'), deleteContact);
+router.post('/contacts/bulk-delete', protect, checkPermission('contacts_manage'), bulkDeleteContacts);
+router.post('/admin/contacts/bulk-delete', protect, checkPermission('contacts_manage'), bulkDeleteContacts);
+
+// 5. Category Management
+router.get('/categories', protect, checkPermission(['categories_manage', 'blogs_view', 'blogs_create', 'blogs_edit']), categoryGetAll);
+router.get('/admin/categories', protect, checkPermission(['categories_manage', 'blogs_view', 'blogs_create', 'blogs_edit']), categoryGetAll);
+router.get('/categories/:id', protect, checkPermission(['categories_manage', 'blogs_view']), categoryGetById);
+router.get('/admin/categories/:id', protect, checkPermission(['categories_manage', 'blogs_view']), categoryGetById);
+
+router.post('/categories', protect, checkPermission('categories_manage'), validate(createCategorySchema), categoryCreate);
+router.post('/admin/categories', protect, checkPermission('categories_manage'), validate(createCategorySchema), categoryCreate);
+router.put('/categories/:id', protect, checkPermission('categories_manage'), validate(updateCategorySchema), categoryUpdate);
+router.put('/admin/categories/:id', protect, checkPermission('categories_manage'), validate(updateCategorySchema), categoryUpdate);
+router.delete('/categories/:id', protect, checkPermission('categories_manage'), categoryRemove);
+router.delete('/admin/categories/:id', protect, checkPermission('categories_manage'), categoryRemove);
+router.patch('/categories/:id/toggle', protect, checkPermission('categories_manage'), categoryToggleStatus);
+router.patch('/admin/categories/:id/toggle', protect, checkPermission('categories_manage'), categoryToggleStatus);
+
+// 6. Blog & Post Management
+router.get('/blogs', protect, checkPermission('blogs_view'), blogGetAll);
+router.get('/admin/blogs', protect, checkPermission('blogs_view'), blogGetAll);
+router.get('/blogs/:id', protect, checkPermission(['blogs_view', 'blogs_edit']), blogGetById);
+router.get('/admin/blogs/:id', protect, checkPermission(['blogs_view', 'blogs_edit']), blogGetById);
+
+router.post('/blogs', protect, checkPermission('blogs_create'), validate(createBlogSchema), blogCreate);
+router.post('/admin/blogs', protect, checkPermission('blogs_create'), validate(createBlogSchema), blogCreate);
+router.put('/blogs/:id', protect, checkPermission('blogs_edit'), validate(updateBlogSchema), blogUpdate);
+router.put('/admin/blogs/:id', protect, checkPermission('blogs_edit'), validate(updateBlogSchema), blogUpdate);
+router.patch('/blogs/:id/toggle', protect, checkPermission('blogs_edit'), blogToggleStatus);
+router.patch('/admin/blogs/:id/toggle', protect, checkPermission('blogs_edit'), blogToggleStatus);
+router.delete('/blogs/:id', protect, checkPermission('blogs_delete'), blogRemove);
+router.delete('/admin/blogs/:id', protect, checkPermission('blogs_delete'), blogRemove);
+
+// Post aliases
+router.get('/posts', protect, checkPermission('blogs_view'), blogGetAll);
+router.get('/admin/posts', protect, checkPermission('blogs_view'), blogGetAll);
+router.get('/posts/:id', protect, checkPermission(['blogs_view', 'blogs_edit']), blogGetById);
+router.get('/admin/posts/:id', protect, checkPermission(['blogs_view', 'blogs_edit']), blogGetById);
+router.post('/posts', protect, checkPermission('blogs_create'), validate(createBlogSchema), blogCreate);
+router.post('/admin/posts', protect, checkPermission('blogs_create'), validate(createBlogSchema), blogCreate);
+router.put('/posts/:id', protect, checkPermission('blogs_edit'), validate(updateBlogSchema), blogUpdate);
+router.put('/admin/posts/:id', protect, checkPermission('blogs_edit'), validate(updateBlogSchema), blogUpdate);
+router.patch('/posts/:id/toggle', protect, checkPermission('blogs_edit'), blogToggleStatus);
+router.patch('/admin/posts/:id/toggle', protect, checkPermission('blogs_edit'), blogToggleStatus);
+router.delete('/posts/:id', protect, checkPermission('blogs_delete'), blogRemove);
+router.delete('/admin/posts/:id', protect, checkPermission('blogs_delete'), blogRemove);
+
+// 7. File System & Storage Configuration
+router.get('/file_system', protect, checkPermission('file_system_manage'), getFileSystemSettings);
+router.get('/admin/file_system', protect, checkPermission('file_system_manage'), getFileSystemSettings);
+router.get('/setup/file-system', protect, checkPermission('file_system_manage'), getFileSystemSettings);
+router.get('/admin/setup/file-system', protect, checkPermission('file_system_manage'), getFileSystemSettings);
+
+router.post('/file_system', protect, checkPermission('file_system_manage'), updateFileSystemSettings);
+router.post('/admin/file_system', protect, checkPermission('file_system_manage'), updateFileSystemSettings);
+router.post('/setup/file-system', protect, checkPermission('file_system_manage'), updateFileSystemSettings);
+router.post('/admin/setup/file-system', protect, checkPermission('file_system_manage'), updateFileSystemSettings);
+router.post('/file_system/activation', protect, checkPermission('file_system_manage'), updateFileSystemActivation);
+router.post('/admin/file_system/activation', protect, checkPermission('file_system_manage'), updateFileSystemActivation);
+router.post('/file_system/test-redis', protect, checkPermission('file_system_manage'), testRedisConnection);
+router.post('/admin/file_system/test-redis', protect, checkPermission('file_system_manage'), testRedisConnection);
+
+// 8. Uploaded Files Management
+router.get('/aiz-uploader/get-uploaded-files', protect, checkPermission(['uploads_view', 'blogs_create', 'blogs_edit', 'settings_edit']), getUploadedFiles);
+router.post('/aiz-uploader/upload', protect, checkPermission(['uploads_create', 'blogs_create', 'blogs_edit', 'settings_edit']), aizUploadMiddleware, uploadFile);
+router.post('/aiz-uploader/get_file_by_ids', protect, checkPermission(['uploads_view', 'blogs_create', 'blogs_edit', 'settings_edit']), getFileByIds);
+router.get('/uploaded-files', protect, checkPermission('uploads_view'), getUploadedFiles);
+router.get('/admin/uploaded-files', protect, checkPermission('uploads_view'), getUploadedFiles);
+router.get('/uploaded-files/info/:id', protect, checkPermission('uploads_view'), fileInfo);
+router.get('/admin/uploaded-files/info/:id', protect, checkPermission('uploads_view'), fileInfo);
+router.delete('/uploaded-files/:id', protect, checkPermission('uploads_delete'), destroyFile);
+router.delete('/admin/uploaded-files/:id', protect, checkPermission('uploads_delete'), destroyFile);
+router.post('/bulk-uploaded-files-delete', protect, checkPermission('uploads_delete'), bulkDeleteFiles);
+router.post('/admin/bulk-uploaded-files-delete', protect, checkPermission('uploads_delete'), bulkDeleteFiles);
+
+// 9. Language & Translation Management
+router.get('/languages', protect, checkPermission('languages_manage'), getAllLanguages);
+router.get('/admin/languages', protect, checkPermission('languages_manage'), getAllLanguages);
+router.get('/languages/:id', protect, checkPermission('languages_manage'), getLanguageById);
+router.get('/admin/languages/:id', protect, checkPermission('languages_manage'), getLanguageById);
+router.post('/languages', protect, checkPermission('languages_manage'), createLanguage);
+router.post('/admin/languages', protect, checkPermission('languages_manage'), createLanguage);
+router.put('/languages/:id', protect, checkPermission('languages_manage'), updateLanguage);
+router.put('/admin/languages/:id', protect, checkPermission('languages_manage'), updateLanguage);
+router.patch('/languages/:id/toggle', protect, checkPermission('languages_manage'), toggleLanguageStatus);
+router.patch('/admin/languages/:id/toggle', protect, checkPermission('languages_manage'), toggleLanguageStatus);
+router.patch('/languages/:id/rtl', protect, checkPermission('languages_manage'), toggleLanguageRtl);
+router.patch('/admin/languages/:id/rtl', protect, checkPermission('languages_manage'), toggleLanguageRtl);
+router.patch('/languages/:id/default', protect, checkPermission('languages_manage'), setDefaultLanguage);
+router.patch('/admin/languages/:id/default', protect, checkPermission('languages_manage'), setDefaultLanguage);
+router.delete('/languages/:id', protect, checkPermission('languages_manage'), deleteLanguage);
+router.delete('/admin/languages/:id', protect, checkPermission('languages_manage'), deleteLanguage);
+router.get('/languages/:id/translations', protect, checkPermission('languages_manage'), getLanguageTranslations);
+router.get('/admin/languages/:id/translations', protect, checkPermission('languages_manage'), getLanguageTranslations);
+router.put('/languages/:id/translations', protect, checkPermission('languages_manage'), updateLanguageTranslations);
+router.put('/admin/languages/:id/translations', protect, checkPermission('languages_manage'), updateLanguageTranslations);
+router.post('/languages/import', protect, checkPermission('languages_manage'), importTranslations);
+router.post('/admin/languages/import', protect, checkPermission('languages_manage'), importTranslations);
+router.get('/languages/:id/export', protect, checkPermission('languages_manage'), exportTranslations);
+router.get('/admin/languages/:id/export', protect, checkPermission('languages_manage'), exportTranslations);
+
+// 10. Staff Management
+router.get('/staffs', protect, checkPermission('staff_view'), getAllStaff);
+router.get('/admin/staffs', protect, checkPermission('staff_view'), getAllStaff);
+router.get('/staff', protect, checkPermission('staff_view'), getAllStaff);
+router.get('/admin/staff', protect, checkPermission('staff_view'), getAllStaff);
+
+router.post('/staffs', protect, checkPermission('staff_create'), validate(createStaffSchema), createStaff);
+router.post('/admin/staffs', protect, checkPermission('staff_create'), validate(createStaffSchema), createStaff);
+router.post('/staff', protect, checkPermission('staff_create'), validate(createStaffSchema), createStaff);
+router.post('/admin/staff', protect, checkPermission('staff_create'), validate(createStaffSchema), createStaff);
+
+router.put('/staffs/:id', protect, checkPermission('staff_edit'), validate(updateStaffSchema), updateStaff);
+router.put('/admin/staffs/:id', protect, checkPermission('staff_edit'), validate(updateStaffSchema), updateStaff);
+router.put('/staff/:id', protect, checkPermission('staff_edit'), validate(updateStaffSchema), updateStaff);
+router.put('/admin/staff/:id', protect, checkPermission('staff_edit'), validate(updateStaffSchema), updateStaff);
+
+router.patch('/staffs/:id/toggle', protect, checkPermission('staff_edit'), toggleStaffStatus);
+router.patch('/admin/staffs/:id/toggle', protect, checkPermission('staff_edit'), toggleStaffStatus);
+router.patch('/staff/:id/toggle', protect, checkPermission('staff_edit'), toggleStaffStatus);
+router.patch('/admin/staff/:id/toggle', protect, checkPermission('staff_edit'), toggleStaffStatus);
+
+router.delete('/staffs/:id', protect, checkPermission('staff_delete'), deleteStaff);
+router.delete('/admin/staffs/:id', protect, checkPermission('staff_delete'), deleteStaff);
+router.delete('/staff/:id', protect, checkPermission('staff_delete'), deleteStaff);
+router.delete('/admin/staff/:id', protect, checkPermission('staff_delete'), deleteStaff);
+
+// 11. Staff Roles & Permissions
+router.get('/roles', protect, checkPermission('roles_manage'), getAllRoles);
+router.get('/admin/roles', protect, checkPermission('roles_manage'), getAllRoles);
+router.get('/admin/staff/permissions', protect, checkPermission('roles_manage'), getAllRoles);
+router.get('/roles/permissions/list', protect, checkPermission('roles_manage'), getAvailablePermissions);
+router.get('/admin/roles/permissions/list', protect, checkPermission('roles_manage'), getAvailablePermissions);
+router.get('/roles/:id', protect, checkPermission('roles_manage'), getRoleById);
+router.get('/admin/roles/:id', protect, checkPermission('roles_manage'), getRoleById);
+router.post('/roles', protect, checkPermission('roles_manage'), validate(createRoleSchema), createRole);
+router.post('/admin/roles', protect, checkPermission('roles_manage'), validate(createRoleSchema), createRole);
+router.put('/roles/:id', protect, checkPermission('roles_manage'), validate(updateRoleSchema), updateRole);
+router.put('/admin/roles/:id', protect, checkPermission('roles_manage'), validate(updateRoleSchema), updateRole);
+router.delete('/roles/:id', protect, checkPermission('roles_manage'), deleteRole);
+router.delete('/admin/roles/:id', protect, checkPermission('roles_manage'), deleteRole);
+
+// 12. Clear Cache Route
+router.post('/clear-cache', protect, checkPermission('cache_clear'), clearAdminCache);
+router.post('/admin/clear-cache', protect, checkPermission('cache_clear'), clearAdminCache);
+router.post('/admin/clear_cache', protect, checkPermission('cache_clear'), clearAdminCache);
+router.post('/cache/clear', protect, checkPermission('cache_clear'), clearAdminCache);
+
+// 13. Website Setup - Homepage Settings
+router.get('/website-settings/homepage', protect, checkPermission(['homepage_settings', 'settings_view']), getHomepageSettings);
+router.get('/admin/website-settings/homepage', protect, checkPermission(['homepage_settings', 'settings_view']), getHomepageSettings);
+router.post('/website-settings/homepage', protect, checkPermission(['homepage_settings', 'settings_edit']), updateWebsiteSettings);
+router.post('/admin/website-settings/homepage', protect, checkPermission(['homepage_settings', 'settings_edit']), updateWebsiteSettings);
+
+// 14. Website Setup - Header Settings
+router.get('/website-settings/header', protect, checkPermission(['header_settings', 'settings_view']), getHeaderSettings);
+router.get('/admin/website-settings/header', protect, checkPermission(['header_settings', 'settings_view']), getHeaderSettings);
+router.post('/website-settings/header', protect, checkPermission(['header_settings', 'settings_edit']), updateWebsiteSettings);
+router.post('/admin/website-settings/header', protect, checkPermission(['header_settings', 'settings_edit']), updateWebsiteSettings);
+
+// 15. Website Setup - Footer Settings
+router.get('/website-settings/footer', protect, checkPermission(['footer_settings', 'settings_view']), getFooterSettings);
+router.get('/admin/website-settings/footer', protect, checkPermission(['footer_settings', 'settings_view']), getFooterSettings);
+router.post('/website-settings/footer', protect, checkPermission(['footer_settings', 'settings_edit']), updateWebsiteSettings);
+router.post('/admin/website-settings/footer', protect, checkPermission(['footer_settings', 'settings_edit']), updateWebsiteSettings);
+
+// 16. Website Setup - Appearance Settings
+router.get('/website-settings/appearance', protect, checkPermission(['appearance_manage', 'settings_view']), getAppearanceSettings);
+router.get('/admin/website-settings/appearance', protect, checkPermission(['appearance_manage', 'settings_view']), getAppearanceSettings);
+router.post('/website-settings/appearance', protect, checkPermission(['appearance_manage', 'settings_edit']), updateWebsiteSettings);
+router.post('/admin/website-settings/appearance', protect, checkPermission(['appearance_manage', 'settings_edit']), updateWebsiteSettings);
+
+// 17. Website Setup - Pages Management
+router.get('/pages', protect, checkPermission(['pages_manage', 'settings_view']), getPages);
+router.get('/admin/pages', protect, checkPermission(['pages_manage', 'settings_view']), getPages);
+router.get('/pages/:id', protect, checkPermission(['pages_manage', 'settings_view']), getPageById);
+router.get('/admin/pages/:id', protect, checkPermission(['pages_manage', 'settings_view']), getPageById);
+router.post('/pages', protect, checkPermission('pages_manage'), createPage);
+router.post('/admin/pages', protect, checkPermission('pages_manage'), createPage);
+router.put('/pages/:id', protect, checkPermission('pages_manage'), updatePage);
+router.put('/admin/pages/:id', protect, checkPermission('pages_manage'), updatePage);
+router.delete('/pages/:id', protect, checkPermission('pages_manage'), deletePage);
+router.delete('/admin/pages/:id', protect, checkPermission('pages_manage'), deletePage);
+
+// 18. Setup & Config - SMTP Settings
+router.get('/setup/smtp', protect, checkPermission('smtp_manage'), getSmtpSettings);
+router.get('/admin/setup/smtp', protect, checkPermission('smtp_manage'), getSmtpSettings);
+router.post('/setup/smtp', protect, checkPermission('smtp_manage'), updateSmtpSettings);
+router.post('/admin/setup/smtp', protect, checkPermission('smtp_manage'), updateSmtpSettings);
+router.post('/setup/smtp/test', protect, checkPermission('smtp_manage'), testSmtpEmail);
+router.post('/admin/setup/smtp/test', protect, checkPermission('smtp_manage'), testSmtpEmail);
+
+// 19. Setup & Config - Feature Activation
+router.get('/setup/features', protect, checkPermission('feature_activation'), getActivationSettings);
+router.get('/admin/setup/features', protect, checkPermission('feature_activation'), getActivationSettings);
+router.post('/setup/features/toggle', protect, checkPermission('feature_activation'), updateActivationSetting);
+router.post('/admin/setup/features/toggle', protect, checkPermission('feature_activation'), updateActivationSetting);
+router.post('/settings/activation', protect, checkPermission('feature_activation'), updateActivationSetting);
+router.post('/admin/settings/activation', protect, checkPermission('feature_activation'), updateActivationSetting);
+
+// 20. Setup & Config - Payment Methods
+router.get('/setup/payment-methods', protect, checkPermission('payment_methods_manage'), getPaymentMethodSettings);
+router.get('/admin/setup/payment-methods', protect, checkPermission('payment_methods_manage'), getPaymentMethodSettings);
+router.post('/setup/payment-methods', protect, checkPermission('payment_methods_manage'), updatePaymentMethodSettings);
+router.post('/admin/setup/payment-methods', protect, checkPermission('payment_methods_manage'), updatePaymentMethodSettings);
+
+// 21. Setup & Config - Google / Third Party Settings
+router.get('/setup/google', protect, checkPermission('google_manage'), getGoogleSettings);
+router.get('/admin/setup/google', protect, checkPermission('google_manage'), getGoogleSettings);
+router.post('/setup/google', protect, checkPermission('google_manage'), updateGoogleSettings);
+router.post('/admin/setup/google', protect, checkPermission('google_manage'), updateGoogleSettings);
+
+// 22. Generic Website Settings & Direct Updates
+router.get('/website-settings', protect, checkPermission('settings_view'), getWebsiteSettings);
+router.get('/admin/website-settings', protect, checkPermission('settings_view'), getWebsiteSettings);
+router.post('/website-settings', protect, checkPermission('settings_edit'), updateWebsiteSettings);
+router.post('/admin/website-settings', protect, checkPermission('settings_edit'), updateWebsiteSettings);
+router.post('/website-settings/update', protect, checkPermission('settings_edit'), updateWebsiteSettings);
+router.post('/admin/website-settings/update', protect, checkPermission('settings_edit'), updateWebsiteSettings);
+router.post('/business_settings/update', protect, checkPermission('settings_edit'), updateWebsiteSettings);
+router.post('/admin/business_settings/update', protect, checkPermission('settings_edit'), updateWebsiteSettings);
+
+// 23. Environment & Legacy Updates
+router.post('/env_key_update', protect, checkPermission('file_system_manage'), env_key_update);
+router.post('/admin/env_key_update', protect, checkPermission('file_system_manage'), env_key_update);
+router.post('/payment_method_update', protect, checkPermission('payment_methods_manage'), payment_method_update);
+router.post('/admin/payment_method_update', protect, checkPermission('payment_methods_manage'), payment_method_update);
+router.post('/google_recaptcha_update', protect, checkPermission('google_manage'), google_recaptcha_update);
+router.post('/admin/google_recaptcha_update', protect, checkPermission('google_manage'), google_recaptcha_update);
+router.post('/google_firebase_update', protect, checkPermission('google_manage'), google_firebase_update);
+router.post('/admin/google_firebase_update', protect, checkPermission('google_manage'), google_firebase_update);
+router.post('/google_file_update', protect, checkPermission('google_manage'), google_file_update);
+router.post('/admin/google_file_update', protect, checkPermission('google_manage'), google_file_update);
+router.get('/google-play', protect, checkPermission('google_manage'), google_play);
+router.get('/admin/google-play', protect, checkPermission('google_manage'), google_play);
+
+// 24. Admin Payment Management & Offline Verifications
+router.get('/payments', protect, authorize('admin', 'staff'), checkPermission('payment_methods_manage'), getAllPayments);
+router.get('/admin/payments', protect, authorize('admin', 'staff'), checkPermission('payment_methods_manage'), getAllPayments);
+router.put('/payments/:id/approve', protect, authorize('admin', 'staff'), checkPermission('payment_methods_manage'), approveManualPayment);
+router.put('/admin/payments/:id/approve', protect, authorize('admin', 'staff'), checkPermission('payment_methods_manage'), approveManualPayment);
+router.put('/payments/:id/reject', protect, authorize('admin', 'staff'), checkPermission('payment_methods_manage'), rejectManualPayment);
+router.put('/admin/payments/:id/reject', protect, authorize('admin', 'staff'), checkPermission('payment_methods_manage'), rejectManualPayment);
 
 export default router;
-

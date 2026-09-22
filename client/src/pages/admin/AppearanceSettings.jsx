@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box,
     Typography,
@@ -8,1307 +8,564 @@ import {
     CircularProgress,
     Stack,
     Switch,
-    FormControlLabel,
     Paper,
+    Grid,
 } from '@mui/material';
-
 import { Save as SaveIcon } from '@mui/icons-material';
-
+import LanguageTabBar from '../../components/common/LanguageTabBar';
 import AizUploaderInput from '../../components/uploader/AizUploaderInput';
 import AizTextEditor from '../../components/editor/AizTextEditor';
-
-import {
-    fetchAppearanceSettingsApi,
-    updateAppearanceSettingsApi,
-} from '../../api/admin.api';
-
+import { fetchAppearanceSettingsApi, updateAppearanceSettingsApi } from '../../api/admin.api';
 import { useLanguage } from '../../context/LanguageContext';
 import { toast } from '../../utils/toast';
 
-
-/* =========================================
-   Common Input Style
-========================================= */
-
 const inputSx = {
     '& .MuiOutlinedInput-root': {
-        minHeight: '64px',
+        minHeight: '52px',
         borderRadius: '6px',
         backgroundColor: '#ffffff',
-
         '& fieldset': {
             borderColor: '#d9dde5',
             borderWidth: '1px',
         },
-
         '&:hover fieldset': {
             borderColor: '#c7ccd5',
         },
-
         '&.Mui-focused fieldset': {
-            borderColor: '#aeb5c0',
-            borderWidth: '1px',
+            borderColor: 'var(--primary-color, #3b82f6)',
+            borderWidth: '1.5px',
         },
     },
-
     '& .MuiInputBase-input': {
-        fontSize: '18px',
-        color: '#707783',
-        padding: '0 24px',
+        fontSize: '15px',
+        color: '#1e293b',
+        padding: '12px 16px',
     },
-
     '& .MuiInputBase-input::placeholder': {
-        color: '#858b98',
+        color: '#94a3b8',
         opacity: 1,
     },
 };
 
-
-/* =========================================
-   Textarea Style
-========================================= */
-
 const textareaSx = {
     ...inputSx,
-
     '& .MuiOutlinedInput-root': {
         minHeight: 'unset',
         borderRadius: '6px',
         backgroundColor: '#ffffff',
-
         '& fieldset': {
             borderColor: '#d9dde5',
             borderWidth: '1px',
         },
-
         '&:hover fieldset': {
             borderColor: '#c7ccd5',
         },
-
         '&.Mui-focused fieldset': {
-            borderColor: '#aeb5c0',
-            borderWidth: '1px',
+            borderColor: 'var(--primary-color, #3b82f6)',
+            borderWidth: '1.5px',
         },
     },
-
     '& .MuiInputBase-input': {
-        fontSize: '18px',
-        color: '#707783',
-        padding: '18px 24px',
-        lineHeight: 1.5,
+        fontSize: '14px',
+        color: '#1e293b',
+        padding: '14px 16px',
+        lineHeight: 1.6,
     },
 };
 
-
-/* =========================================
-   Form Field Row
-========================================= */
-
-const FormFieldRow = ({
-    label,
-    children,
-    helperText,
-    alignItems = 'center',
-}) => {
-    return (
-        <Box
-            sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: '180px minmax(0, 1fr)',
-                },
-                columnGap: {
-                    xs: 0,
-                    sm: 2,
-                },
-                alignItems,
-                width: '100%',
-            }}
-        >
-            <Box
-                sx={{
-                    minWidth: 0,
-                    mb: {
-                        xs: 1,
-                        sm: 0,
-                    },
-                }}
-            >
-                <Typography
-                    sx={{
-                        fontSize: '16px',
-                        fontWeight: 400,
-                        lineHeight: 1.5,
-                        color: '#202431',
-                    }}
-                >
-                    {label}
-                </Typography>
-            </Box>
-
-            <Box
-                sx={{
-                    minWidth: 0,
-                    width: '100%',
-                }}
-            >
-                {children}
-
-                {helperText && (
-                    <Typography
-                        sx={{
-                            fontSize: '13px',
-                            lineHeight: 1.4,
-                            color: '#687385',
-                            mt: 0.75,
-                        }}
-                    >
-                        {helperText}
-                    </Typography>
-                )}
-            </Box>
-        </Box>
-    );
-};
-
-
-/* =========================================
-   Section Header
-========================================= */
-
-const SectionHeader = ({ children }) => {
-    return (
-        <Box
-            sx={{
-                px: {
-                    xs: 2,
-                    sm: 3,
-                },
-                py: 2.25,
-                borderBottom: '1px solid #e1e5ea',
-            }}
-        >
-            <Typography
-                sx={{
-                    fontSize: '18px',
-                    fontWeight: 500,
-                    color: '#202431',
-                }}
-            >
-                {children}
-            </Typography>
-        </Box>
-    );
-};
-
-
-/* =========================================
-   Toggle Row
-========================================= */
-
-const ToggleRow = ({
-    label,
-    checked,
-    onChange,
-}) => {
-    return (
-        <Box
-            sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 2,
-                minHeight: '48px',
-            }}
-        >
-            <Typography
-                sx={{
-                    fontSize: '16px',
-                    color: '#202431',
-                }}
-            >
+const FormFieldRow = ({ label, children, helperText, alignItems = 'center' }) => (
+    <Box
+        sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '220px minmax(0, 1fr)' },
+            columnGap: { xs: 0, sm: 2 },
+            alignItems,
+            width: '100%',
+        }}
+    >
+        <Box sx={{ minWidth: 0, mb: { xs: 0.75, sm: 0 } }}>
+            <Typography sx={{ fontSize: '15px', fontWeight: 500, lineHeight: 1.4, color: '#334155' }}>
                 {label}
             </Typography>
-
-            <Switch
-                checked={checked}
-                onChange={(e) =>
-                    onChange(e.target.checked)
-                }
-            />
         </Box>
-    );
-};
+        <Box sx={{ minWidth: 0, width: '100%' }}>
+            {children}
+            {helperText && (
+                <Typography sx={{ fontSize: '12px', lineHeight: 1.4, color: '#64748b', mt: 0.5 }}>
+                    {helperText}
+                </Typography>
+            )}
+        </Box>
+    </Box>
+);
 
+const SectionHeader = ({ children }) => (
+    <Box sx={{ px: { xs: 2.5, sm: 3, md: 4 }, py: 2, borderBottom: '1px solid #e2e8f0' }}>
+        <Typography sx={{ fontSize: '17px', fontWeight: 600, color: '#0f172a' }}>
+            {children}
+        </Typography>
+    </Box>
+);
 
 const AppearanceSettings = () => {
-    const { t } = useLanguage();
-
+    const { t, currentLang } = useLanguage();
+    const [selectedLang, setSelectedLang] = useState(currentLang || 'en');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-
-    const [alertMessage, setAlertMessage] = useState({
-        type: 'info',
-        text: '',
-    });
+    const [alertMessage, setAlertMessage] = useState({ type: 'info', text: '' });
 
     const [form, setForm] = useState({
         site_name: '',
-        website_name: '',
         site_motto: '',
-
         site_icon: '',
         system_logo_white: '',
         system_logo_black: '',
-
-        primary_color: '#3b82f6',
-        primary_hover_color: '#2563eb',
-        secondary_color: '#64748b',
-
+        header_logo_circle: 'off',
+        footer_logo_circle: 'off',
+        primary_color: '#3bf73e',
+        primary_hover_color: '#94d382',
+        secondary_color: '#de3f7f',
+        secondary_hover_color: '#b92d64',
         meta_title: '',
         meta_description: '',
         meta_keywords: '',
         meta_image: '',
-
         cookies_agreement_text: '',
         show_cookies_agreement: 'off',
-
         show_website_popup: 'off',
         website_popup_content: '',
-
         show_subscribe_form: 'off',
-
         header_script: '',
         footer_script: '',
     });
 
-
-    /* =========================================
-       Load Settings
-    ========================================= */
-
-    useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                setLoading(true);
-
-                const res =
-                    await fetchAppearanceSettingsApi();
-
-                if (res?.success && res.settings) {
-                    setForm((prev) => ({
-                        ...prev,
-                        ...res.settings,
-                    }));
-                }
-            } catch (err) {
-                console.error(
-                    'Failed to load appearance settings:',
-                    err
-                );
-
-                setAlertMessage({
-                    type: 'error',
-                    text: t(
-                        'Failed to load appearance settings'
-                    ),
-                });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadSettings();
-    }, [t]);
-
-
-    /* =========================================
-       Field Change
-    ========================================= */
-
-    const handleFieldChange = (
-        field,
-        value
-    ) => {
-        setForm((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
-
-
-    /* =========================================
-       Submit
-    ========================================= */
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
+    const loadSettings = useCallback(async (lang) => {
         try {
-            setSaving(true);
-
-            setAlertMessage({
-                type: 'info',
-                text: '',
-            });
-
-            await updateAppearanceSettingsApi(
-                form
-            );
-
-            const successMsg = t(
-                'Appearance settings updated successfully',
-                'Appearance settings updated successfully'
-            );
-            setAlertMessage({
-                type: 'success',
-                text: successMsg,
-            });
-            toast.success(successMsg);
+            setLoading(true);
+            const res = await fetchAppearanceSettingsApi(lang);
+            if (res?.success && res.settings) {
+                const s = res.settings;
+                setForm({
+                    site_name: s.site_name || s.website_name || '',
+                    site_motto: s.site_motto || '',
+                    site_icon: s.site_icon || '',
+                    system_logo_white: s.system_logo_white || '',
+                    system_logo_black: s.system_logo_black || '',
+                    header_logo_circle: (s.header_logo_circle === 'on' || s.header_logo_circle === true || s.header_logo_circle === '1' || s.header_logo_circle === 1) ? 'on' : 'off',
+                    footer_logo_circle: (s.footer_logo_circle === 'on' || s.footer_logo_circle === true || s.footer_logo_circle === '1' || s.footer_logo_circle === 1) ? 'on' : 'off',
+                    primary_color: s.primary_color || '#3bf73e',
+                    primary_hover_color: s.primary_hover_color || '#94d382',
+                    secondary_color: s.secondary_color || '#de3f7f',
+                    secondary_hover_color: s.secondary_hover_color || '#b92d64',
+                    meta_title: s.meta_title || '',
+                    meta_description: s.meta_description || '',
+                    meta_keywords: s.meta_keywords || '',
+                    meta_image: s.meta_image || '',
+                    cookies_agreement_text: s.cookies_agreement_text || '',
+                    show_cookies_agreement: (s.show_cookies_agreement === 'on' || s.show_cookies_agreement === true || s.show_cookies_agreement === '1' || s.show_cookies_agreement === 1) ? 'on' : 'off',
+                    show_website_popup: (s.show_website_popup === 'on' || s.show_website_popup === true || s.show_website_popup === '1' || s.show_website_popup === 1) ? 'on' : 'off',
+                    website_popup_content: s.website_popup_content || '',
+                    show_subscribe_form: (s.show_subscribe_form === 'on' || s.show_subscribe_form === true || s.show_subscribe_form === '1' || s.show_subscribe_form === 1) ? 'on' : 'off',
+                    header_script: s.header_script || '',
+                    footer_script: s.footer_script || '',
+                });
+            }
         } catch (err) {
-            console.error(
-                'Failed to update appearance settings:',
-                err
-            );
-
-            const errorMsg =
-                err.response?.data?.message ||
-                t('Failed to update settings', 'Failed to update settings');
+            console.error('Failed to load appearance settings:', err);
             setAlertMessage({
                 type: 'error',
-                text: errorMsg,
+                text: t('Failed to load appearance settings', 'Failed to load appearance settings'),
             });
+        } finally {
+            setLoading(false);
+        }
+    }, [t]);
+
+    useEffect(() => {
+        loadSettings(selectedLang);
+    }, [selectedLang, loadSettings]);
+
+    const handleFieldChange = (field, value) => {
+        setForm(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSubmit = async (e) => {
+        if (e) e.preventDefault();
+        setSaving(true);
+        setAlertMessage({ type: 'info', text: '' });
+
+        try {
+            await updateAppearanceSettingsApi({
+                ...form,
+                lang: selectedLang,
+            });
+
+            const successMsg = t('Appearance settings updated successfully', 'Appearance settings updated successfully');
+            setAlertMessage({ type: 'success', text: successMsg });
+            toast.success(successMsg);
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('website_settings_updated'));
+            }
+        } catch (err) {
+            console.error('Failed to update appearance settings:', err);
+            const errorMsg = err?.response?.data?.message || t('Failed to update appearance settings', 'Failed to update appearance settings');
+            setAlertMessage({ type: 'error', text: errorMsg });
             toast.error(errorMsg);
         } finally {
             setSaving(false);
         }
     };
 
-
-    /* =========================================
-       Loading
-    ========================================= */
-
     if (loading) {
         return (
-            <Box
-                sx={{
-                    minHeight: '400px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}
-            >
-                <CircularProgress />
+            <Box sx={{ minHeight: '300px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <CircularProgress size={32} />
             </Box>
         );
     }
 
-
     return (
-        <Box
-            sx={{
-                maxWidth: '920px',
-                mx: 'auto',
-                px: {
-                    xs: 2,
-                    sm: 3,
-                },
-                py: {
-                    xs: 2,
-                    md: 4,
-                },
-                pb: 6,
-                backgroundColor: '#f7f8fa',
-            }}
-        >
+        <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc', px: { xs: 1.5, sm: 2, md: 3 }, py: { xs: 2, sm: 2.5, md: 3 }, pb: 6 }}>
+            <Box sx={{ width: '100%', maxWidth: '960px', mx: 'auto' }}>
+                <LanguageTabBar
+                    selectedLang={selectedLang}
+                    onLangChange={(lang) => setSelectedLang(lang)}
+                />
 
-            {/* =================================
-                Alert
-            ================================= */}
-
-            {alertMessage.text && (
-                <Alert
-                    severity={alertMessage.type}
-                    onClose={() =>
-                        setAlertMessage({
-                            type: 'info',
-                            text: '',
-                        })
-                    }
-                    sx={{
-                        mb: 2,
-                        borderRadius: '8px',
-                    }}
-                >
-                    {alertMessage.text}
-                </Alert>
-            )}
-
-
-            <form onSubmit={handleSubmit}>
-
-                <Stack spacing={2}>
-
-                    {/* =================================
-                        System Settings
-                    ================================= */}
-
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            border: '1px solid #e1e5ea',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            backgroundColor: '#ffffff',
-                        }}
+                {alertMessage.text && (
+                    <Alert
+                        severity={alertMessage.type}
+                        onClose={() => setAlertMessage({ type: 'info', text: '' })}
+                        sx={{ mb: 2, borderRadius: '8px' }}
                     >
-                        <SectionHeader>
-                            {t('System Settings')}
-                        </SectionHeader>
+                        {alertMessage.text}
+                    </Alert>
+                )}
 
-                        <Stack
-                            spacing={2.5}
-                            sx={{
-                                p: {
-                                    xs: 2,
-                                    sm: 3,
-                                },
-                            }}
-                        >
+                <Box component="form" onSubmit={handleSubmit}>
+                    <Stack spacing={3}>
+                        {/* 1. GENERAL & BRANDING */}
+                        <Paper elevation={0} sx={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+                            <SectionHeader>{t('General & Branding', 'General & Branding')}</SectionHeader>
+                            <Box sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+                                <Stack spacing={2.5}>
+                                    <FormFieldRow label={t('Frontend Website Name', 'Frontend Website Name')}>
+                                        <TextField
+                                            fullWidth
+                                            placeholder={t('Website Name', 'Website Name')}
+                                            value={form.site_name || ''}
+                                            onChange={(e) => handleFieldChange('site_name', e.target.value)}
+                                            sx={inputSx}
+                                        />
+                                    </FormFieldRow>
 
-                            <FormFieldRow
-                                label={t('System Name')}
-                            >
-                                <TextField
-                                    fullWidth
-                                    value={
-                                        form.site_name || ''
-                                    }
-                                    onChange={(e) =>
-                                        handleFieldChange(
-                                            'site_name',
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'System Name'
+                                    <FormFieldRow label={t('Site Motto', 'Site Motto')}>
+                                        <TextField
+                                            fullWidth
+                                            placeholder={t('Site Motto', 'Site Motto')}
+                                            value={form.site_motto || ''}
+                                            onChange={(e) => handleFieldChange('site_motto', e.target.value)}
+                                            sx={inputSx}
+                                        />
+                                    </FormFieldRow>
+
+                                    <FormFieldRow label={t('Site Icon (Favicon)', 'Site Icon (Favicon)')} alignItems="start">
+                                        <AizUploaderInput
+                                            value={form.site_icon}
+                                            onChange={(url) => handleFieldChange('site_icon', url)}
+                                            type="image"
+                                            placeholder={t('Choose file', 'Choose file')}
+                                        />
+                                    </FormFieldRow>
+
+                                    <FormFieldRow label={t('System Logo - White', 'System Logo - White')} alignItems="start">
+                                        <AizUploaderInput
+                                            value={form.system_logo_white}
+                                            onChange={(url) => handleFieldChange('system_logo_white', url)}
+                                            type="image"
+                                            placeholder={t('Choose file', 'Choose file')}
+                                        />
+                                    </FormFieldRow>
+
+                                    <FormFieldRow label={t('System Logo - Black', 'System Logo - Black')} alignItems="start">
+                                        <AizUploaderInput
+                                            value={form.system_logo_black}
+                                            onChange={(url) => handleFieldChange('system_logo_black', url)}
+                                            type="image"
+                                            placeholder={t('Choose file', 'Choose file')}
+                                        />
+                                    </FormFieldRow>
+
+                                    <FormFieldRow
+                                        label={t('Header Logo Circle ?', 'Header Logo Circle ?')}
+                                        helperText={t('Show header logo as a circular badge. Turn off to display full-size rectangular logo.', 'Show header logo as a circular badge. Turn off to display full-size rectangular logo.')}
+                                    >
+                                        <Switch
+                                            checked={form.header_logo_circle === 'on'}
+                                            onChange={(e) => handleFieldChange('header_logo_circle', e.target.checked ? 'on' : 'off')}
+                                            color="primary"
+                                        />
+                                    </FormFieldRow>
+
+                                    <FormFieldRow
+                                        label={t('Footer Logo Circle ?', 'Footer Logo Circle ?')}
+                                        helperText={t('Show footer logo as a circular badge. Turn off to display full-size rectangular logo.', 'Show footer logo as a circular badge. Turn off to display full-size rectangular logo.')}
+                                    >
+                                        <Switch
+                                            checked={form.footer_logo_circle === 'on'}
+                                            onChange={(e) => handleFieldChange('footer_logo_circle', e.target.checked ? 'on' : 'off')}
+                                            color="primary"
+                                        />
+                                    </FormFieldRow>
+                                </Stack>
+                            </Box>
+                        </Paper>
+
+                        {/* 2. THEME COLORS */}
+                        <Paper elevation={0} sx={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+                            <SectionHeader>{t('Theme Colors', 'Theme Colors')}</SectionHeader>
+                            <Box sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+                                <Stack spacing={2.5}>
+                                    <FormFieldRow label={t('Primary Color', 'Primary Color')}>
+                                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                            <input
+                                                type="color"
+                                                value={form.primary_color || '#3b82f6'}
+                                                onChange={(e) => handleFieldChange('primary_color', e.target.value)}
+                                                style={{ width: '48px', height: '48px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', padding: '2px' }}
+                                            />
+                                            <TextField
+                                                value={form.primary_color || ''}
+                                                onChange={(e) => handleFieldChange('primary_color', e.target.value)}
+                                                sx={{ ...inputSx, width: '180px' }}
+                                            />
+                                        </Box>
+                                    </FormFieldRow>
+
+                                    <FormFieldRow label={t('Primary Hover Color', 'Primary Hover Color')}>
+                                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                            <input
+                                                type="color"
+                                                value={form.primary_hover_color || '#1d4ed8'}
+                                                onChange={(e) => handleFieldChange('primary_hover_color', e.target.value)}
+                                                style={{ width: '48px', height: '48px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', padding: '2px' }}
+                                            />
+                                            <TextField
+                                                value={form.primary_hover_color || ''}
+                                                onChange={(e) => handleFieldChange('primary_hover_color', e.target.value)}
+                                                sx={{ ...inputSx, width: '180px' }}
+                                            />
+                                        </Box>
+                                    </FormFieldRow>
+
+                                    <FormFieldRow label={t('Secondary Color', 'Secondary Color')}>
+                                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                            <input
+                                                type="color"
+                                                value={form.secondary_color || '#de3f7f'}
+                                                onChange={(e) => handleFieldChange('secondary_color', e.target.value)}
+                                                style={{ width: '48px', height: '48px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', padding: '2px' }}
+                                            />
+                                            <TextField
+                                                value={form.secondary_color || ''}
+                                                onChange={(e) => handleFieldChange('secondary_color', e.target.value)}
+                                                sx={{ ...inputSx, width: '180px' }}
+                                            />
+                                        </Box>
+                                    </FormFieldRow>
+
+                                    <FormFieldRow label={t('Secondary Hover Color', 'Secondary Hover Color')}>
+                                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                            <input
+                                                type="color"
+                                                value={form.secondary_hover_color || '#b92d64'}
+                                                onChange={(e) => handleFieldChange('secondary_hover_color', e.target.value)}
+                                                style={{ width: '48px', height: '48px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', padding: '2px' }}
+                                            />
+                                            <TextField
+                                                value={form.secondary_hover_color || ''}
+                                                onChange={(e) => handleFieldChange('secondary_hover_color', e.target.value)}
+                                                sx={{ ...inputSx, width: '180px' }}
+                                            />
+                                        </Box>
+                                    </FormFieldRow>
+                                </Stack>
+                            </Box>
+                        </Paper>
+
+                        {/* 3. SEO & META TAGS */}
+                        <Paper elevation={0} sx={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+                            <SectionHeader>{t('SEO & Meta Information', 'SEO & Meta Information')}</SectionHeader>
+                            <Box sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+                                <Stack spacing={2.5}>
+                                    <FormFieldRow label={t('Meta Title', 'Meta Title')}>
+                                        <TextField
+                                            fullWidth
+                                            placeholder={t('Meta Title', 'Meta Title')}
+                                            value={form.meta_title || ''}
+                                            onChange={(e) => handleFieldChange('meta_title', e.target.value)}
+                                            sx={inputSx}
+                                        />
+                                    </FormFieldRow>
+
+                                    <FormFieldRow label={t('Meta Description', 'Meta Description')} alignItems="start">
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            rows={3}
+                                            placeholder={t('Meta Description', 'Meta Description')}
+                                            value={form.meta_description || ''}
+                                            onChange={(e) => handleFieldChange('meta_description', e.target.value)}
+                                            sx={textareaSx}
+                                        />
+                                    </FormFieldRow>
+
+                                    <FormFieldRow label={t('Meta Keywords', 'Meta Keywords')}>
+                                        <TextField
+                                            fullWidth
+                                            placeholder="keyword1, keyword2, keyword3"
+                                            value={form.meta_keywords || ''}
+                                            onChange={(e) => handleFieldChange('meta_keywords', e.target.value)}
+                                            sx={inputSx}
+                                        />
+                                    </FormFieldRow>
+
+                                    <FormFieldRow label={t('Meta Image', 'Meta Image')} alignItems="start">
+                                        <AizUploaderInput
+                                            value={form.meta_image}
+                                            onChange={(url) => handleFieldChange('meta_image', url)}
+                                            type="image"
+                                            placeholder={t('Choose file', 'Choose file')}
+                                        />
+                                    </FormFieldRow>
+                                </Stack>
+                            </Box>
+                        </Paper>
+
+                        {/* 4. COOKIES & POPUP */}
+                        <Paper elevation={0} sx={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+                            <SectionHeader>{t('Cookies & Popup Modal', 'Cookies & Popup Modal')}</SectionHeader>
+                            <Box sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+                                <Stack spacing={2.5}>
+                                    <FormFieldRow label={t('Show Cookies Agreement ?', 'Show Cookies Agreement ?')}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <Switch
+                                                checked={form.show_cookies_agreement === 'on'}
+                                                onChange={(e) => handleFieldChange('show_cookies_agreement', e.target.checked ? 'on' : 'off')}
+                                                color="primary"
+                                            />
+                                        </Box>
+                                    </FormFieldRow>
+
+                                    {form.show_cookies_agreement === 'on' && (
+                                        <FormFieldRow label={t('Cookies Agreement Text', 'Cookies Agreement Text')} alignItems="start">
+                                            <AizTextEditor
+                                                value={form.cookies_agreement_text}
+                                                onChange={(content) => handleFieldChange('cookies_agreement_text', content)}
+                                                placeholder={t('Cookies agreement notice...', 'Cookies agreement notice...')}
+                                                minHeight={120}
+                                            />
+                                        </FormFieldRow>
                                     )}
-                                    sx={inputSx}
-                                />
-                            </FormFieldRow>
 
+                                    <FormFieldRow label={t('Show Website Popup ?', 'Show Website Popup ?')}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <Switch
+                                                checked={form.show_website_popup === 'on'}
+                                                onChange={(e) => handleFieldChange('show_website_popup', e.target.checked ? 'on' : 'off')}
+                                                color="primary"
+                                            />
+                                        </Box>
+                                    </FormFieldRow>
 
-                            <FormFieldRow
-                                label={t(
-                                    'Frontend Website Name'
-                                )}
-                            >
-                                <TextField
-                                    fullWidth
-                                    value={
-                                        form.website_name ||
-                                        ''
-                                    }
-                                    onChange={(e) =>
-                                        handleFieldChange(
-                                            'website_name',
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'Website Name'
+                                    {form.show_website_popup === 'on' && (
+                                        <>
+                                            <FormFieldRow label={t('Website Popup Content', 'Website Popup Content')} alignItems="start">
+                                                <AizTextEditor
+                                                    value={form.website_popup_content}
+                                                    onChange={(content) => handleFieldChange('website_popup_content', content)}
+                                                    placeholder={t('Popup description/announcement...', 'Popup description/announcement...')}
+                                                    minHeight={150}
+                                                />
+                                            </FormFieldRow>
+
+                                            <FormFieldRow label={t('Show Subscribe Form in Popup ?', 'Show Subscribe Form in Popup ?')}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Switch
+                                                        checked={form.show_subscribe_form === 'on'}
+                                                        onChange={(e) => handleFieldChange('show_subscribe_form', e.target.checked ? 'on' : 'off')}
+                                                        color="primary"
+                                                    />
+                                                </Box>
+                                            </FormFieldRow>
+                                        </>
                                     )}
-                                    sx={inputSx}
-                                />
-                            </FormFieldRow>
+                                </Stack>
+                            </Box>
+                        </Paper>
 
+                        {/* 5. CUSTOM SCRIPTS */}
+                        <Paper elevation={0} sx={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+                            <SectionHeader>{t('Custom Header & Footer Scripts', 'Custom Header & Footer Scripts')}</SectionHeader>
+                            <Box sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+                                <Stack spacing={2.5}>
+                                    <FormFieldRow label={t('Header Script (<head>)', 'Header Script (<head>)')} alignItems="start">
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            rows={4}
+                                            placeholder="<script>...</script> or <link ...>"
+                                            value={form.header_script || ''}
+                                            onChange={(e) => handleFieldChange('header_script', e.target.value)}
+                                            sx={textareaSx}
+                                        />
+                                    </FormFieldRow>
 
-                            <FormFieldRow
-                                label={t('Site Motto')}
-                            >
-                                <TextField
-                                    fullWidth
-                                    value={
-                                        form.site_motto || ''
-                                    }
-                                    onChange={(e) =>
-                                        handleFieldChange(
-                                            'site_motto',
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder="Winning is a habit"
-                                    sx={inputSx}
-                                />
-                            </FormFieldRow>
+                                    <FormFieldRow label={t('Footer Script (Before </body>)', 'Footer Script (Before </body>)')} alignItems="start">
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            rows={4}
+                                            placeholder="<script>...</script>"
+                                            value={form.footer_script || ''}
+                                            onChange={(e) => handleFieldChange('footer_script', e.target.value)}
+                                            sx={textareaSx}
+                                        />
+                                    </FormFieldRow>
+                                </Stack>
+                            </Box>
+                        </Paper>
 
-
-                            <FormFieldRow
-                                label={t(
-                                    'Site Icon (Favicon)'
-                                )}
-                                alignItems="flex-start"
-                            >
-                                <AizUploaderInput
-                                    value={
-                                        form.site_icon
-                                    }
-                                    onChange={(url) =>
-                                        handleFieldChange(
-                                            'site_icon',
-                                            url
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'Choose Favicon (32x32)'
-                                    )}
-                                />
-                            </FormFieldRow>
-
-
-                            <FormFieldRow
-                                label={t(
-                                    'System Logo - White'
-                                )}
-                                alignItems="flex-start"
-                            >
-                                <AizUploaderInput
-                                    value={
-                                        form.system_logo_white
-                                    }
-                                    onChange={(url) =>
-                                        handleFieldChange(
-                                            'system_logo_white',
-                                            url
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'Choose White Logo'
-                                    )}
-                                />
-                            </FormFieldRow>
-
-
-                            <FormFieldRow
-                                label={t(
-                                    'System Logo - Black / Dark'
-                                )}
-                                alignItems="flex-start"
-                            >
-                                <AizUploaderInput
-                                    value={
-                                        form.system_logo_black
-                                    }
-                                    onChange={(url) =>
-                                        handleFieldChange(
-                                            'system_logo_black',
-                                            url
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'Choose Dark Logo'
-                                    )}
-                                />
-                            </FormFieldRow>
-
-                        </Stack>
-                    </Paper>
-
-
-                    {/* =================================
-                        Color Settings
-                    ================================= */}
-
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            border: '1px solid #e1e5ea',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            backgroundColor: '#ffffff',
-                        }}
-                    >
-                        <SectionHeader>
-                            {t('Color Settings')}
-                        </SectionHeader>
-
-                        <Stack
-                            spacing={2.5}
-                            sx={{
-                                p: {
-                                    xs: 2,
-                                    sm: 3,
-                                },
-                            }}
-                        >
-
-                            <FormFieldRow
-                                label={t(
-                                    'Primary Color'
-                                )}
-                            >
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        gap: 1.5,
-                                        alignItems:
-                                            'center',
-                                    }}
-                                >
-                                    <Box
-                                        component="input"
-                                        type="color"
-                                        value={
-                                            form.primary_color ||
-                                            '#3b82f6'
-                                        }
-                                        onChange={(e) =>
-                                            handleFieldChange(
-                                                'primary_color',
-                                                e.target.value
-                                            )
-                                        }
-                                        sx={{
-                                            width: '64px',
-                                            height: '64px',
-                                            p: 0.5,
-                                            border:
-                                                '1px solid #d9dde5',
-                                            borderRadius:
-                                                '6px',
-                                            background:
-                                                '#ffffff',
-                                            cursor:
-                                                'pointer',
-                                        }}
-                                    />
-
-                                    <TextField
-                                        fullWidth
-                                        value={
-                                            form.primary_color ||
-                                            ''
-                                        }
-                                        onChange={(e) =>
-                                            handleFieldChange(
-                                                'primary_color',
-                                                e.target.value
-                                            )
-                                        }
-                                        placeholder="#3b82f6"
-                                        sx={inputSx}
-                                    />
-                                </Box>
-                            </FormFieldRow>
-
-
-                            <FormFieldRow
-                                label={t(
-                                    'Primary Hover Color'
-                                )}
-                            >
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        gap: 1.5,
-                                        alignItems:
-                                            'center',
-                                    }}
-                                >
-                                    <Box
-                                        component="input"
-                                        type="color"
-                                        value={
-                                            form.primary_hover_color ||
-                                            '#2563eb'
-                                        }
-                                        onChange={(e) =>
-                                            handleFieldChange(
-                                                'primary_hover_color',
-                                                e.target.value
-                                            )
-                                        }
-                                        sx={{
-                                            width: '64px',
-                                            height: '64px',
-                                            p: 0.5,
-                                            border:
-                                                '1px solid #d9dde5',
-                                            borderRadius:
-                                                '6px',
-                                            background:
-                                                '#ffffff',
-                                            cursor:
-                                                'pointer',
-                                        }}
-                                    />
-
-                                    <TextField
-                                        fullWidth
-                                        value={
-                                            form.primary_hover_color ||
-                                            ''
-                                        }
-                                        onChange={(e) =>
-                                            handleFieldChange(
-                                                'primary_hover_color',
-                                                e.target.value
-                                            )
-                                        }
-                                        placeholder="#2563eb"
-                                        sx={inputSx}
-                                    />
-                                </Box>
-                            </FormFieldRow>
-
-
-                            <FormFieldRow
-                                label={t(
-                                    'Secondary Color'
-                                )}
-                            >
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        gap: 1.5,
-                                        alignItems:
-                                            'center',
-                                    }}
-                                >
-                                    <Box
-                                        component="input"
-                                        type="color"
-                                        value={
-                                            form.secondary_color ||
-                                            '#64748b'
-                                        }
-                                        onChange={(e) =>
-                                            handleFieldChange(
-                                                'secondary_color',
-                                                e.target.value
-                                            )
-                                        }
-                                        sx={{
-                                            width: '64px',
-                                            height: '64px',
-                                            p: 0.5,
-                                            border:
-                                                '1px solid #d9dde5',
-                                            borderRadius:
-                                                '6px',
-                                            background:
-                                                '#ffffff',
-                                            cursor:
-                                                'pointer',
-                                        }}
-                                    />
-
-                                    <TextField
-                                        fullWidth
-                                        value={
-                                            form.secondary_color ||
-                                            ''
-                                        }
-                                        onChange={(e) =>
-                                            handleFieldChange(
-                                                'secondary_color',
-                                                e.target.value
-                                            )
-                                        }
-                                        placeholder="#64748b"
-                                        sx={inputSx}
-                                    />
-                                </Box>
-                            </FormFieldRow>
-
-                        </Stack>
-                    </Paper>
-
-
-                    {/* =================================
-                        Global SEO
-                    ================================= */}
-
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            border: '1px solid #e1e5ea',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            backgroundColor: '#ffffff',
-                        }}
-                    >
-                        <SectionHeader>
-                            {t('Global SEO Settings')}
-                        </SectionHeader>
-
-                        <Stack
-                            spacing={2.5}
-                            sx={{
-                                p: {
-                                    xs: 2,
-                                    sm: 3,
-                                },
-                            }}
-                        >
-
-                            <FormFieldRow
-                                label={t('Meta Title')}
-                            >
-                                <TextField
-                                    fullWidth
-                                    value={
-                                        form.meta_title ||
-                                        ''
-                                    }
-                                    onChange={(e) =>
-                                        handleFieldChange(
-                                            'meta_title',
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'Meta Title'
-                                    )}
-                                    sx={inputSx}
-                                />
-                            </FormFieldRow>
-
-
-                            <FormFieldRow
-                                label={t(
-                                    'Meta Description'
-                                )}
-                                alignItems="flex-start"
-                            >
-                                <TextField
-                                    fullWidth
-                                    multiline
-                                    rows={4}
-                                    value={
-                                        form.meta_description ||
-                                        ''
-                                    }
-                                    onChange={(e) =>
-                                        handleFieldChange(
-                                            'meta_description',
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'Meta Description'
-                                    )}
-                                    sx={textareaSx}
-                                />
-                            </FormFieldRow>
-
-
-                            <FormFieldRow
-                                label={t('Keywords')}
-                            >
-                                <TextField
-                                    fullWidth
-                                    value={
-                                        form.meta_keywords ||
-                                        ''
-                                    }
-                                    onChange={(e) =>
-                                        handleFieldChange(
-                                            'meta_keywords',
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder="blog, tech, articles, lifestyle"
-                                    sx={inputSx}
-                                />
-                            </FormFieldRow>
-
-
-                            <FormFieldRow
-                                label={t('Meta Image')}
-                                alignItems="flex-start"
-                            >
-                                <AizUploaderInput
-                                    value={
-                                        form.meta_image
-                                    }
-                                    onChange={(url) =>
-                                        handleFieldChange(
-                                            'meta_image',
-                                            url
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'Choose Meta Image'
-                                    )}
-                                />
-                            </FormFieldRow>
-
-                        </Stack>
-                    </Paper>
-
-
-                    {/* =================================
-                        Cookies Agreement
-                    ================================= */}
-
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            border: '1px solid #e1e5ea',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            backgroundColor: '#ffffff',
-                        }}
-                    >
-                        <SectionHeader>
-                            {t('Cookies Agreement')}
-                        </SectionHeader>
-
-                        <Stack
-                            spacing={2.5}
-                            sx={{
-                                p: {
-                                    xs: 2,
-                                    sm: 3,
-                                },
-                            }}
-                        >
-
-                            <ToggleRow
-                                label={t(
-                                    'Show Cookies Agreement?'
-                                )}
-                                checked={
-                                    form.show_cookies_agreement ===
-                                    'on' ||
-                                    form.show_cookies_agreement ===
-                                    true
-                                }
-                                onChange={(checked) =>
-                                    handleFieldChange(
-                                        'show_cookies_agreement',
-                                        checked
-                                            ? 'on'
-                                            : 'off'
-                                    )
-                                }
-                            />
-
-
-                            <FormFieldRow
-                                label={t(
-                                    'Cookies Agreement Text'
-                                )}
-                                alignItems="flex-start"
-                            >
-                                <TextField
-                                    fullWidth
-                                    multiline
-                                    rows={4}
-                                    value={
-                                        form.cookies_agreement_text ||
-                                        ''
-                                    }
-                                    onChange={(e) =>
-                                        handleFieldChange(
-                                            'cookies_agreement_text',
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'We use cookies to improve your user experience...'
-                                    )}
-                                    sx={textareaSx}
-                                />
-                            </FormFieldRow>
-
-                        </Stack>
-                    </Paper>
-
-
-                    {/* =================================
-                        Website Popup
-                    ================================= */}
-
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            border: '1px solid #e1e5ea',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            backgroundColor: '#ffffff',
-                        }}
-                    >
-                        <SectionHeader>
-                            {t('Website Popup')}
-                        </SectionHeader>
-
-                        <Stack
-                            spacing={2.5}
-                            sx={{
-                                p: {
-                                    xs: 2,
-                                    sm: 3,
-                                },
-                            }}
-                        >
-
-                            <ToggleRow
-                                label={t(
-                                    'Show website popup?'
-                                )}
-                                checked={
-                                    form.show_website_popup ===
-                                    'on' ||
-                                    form.show_website_popup ===
-                                    true
-                                }
-                                onChange={(checked) =>
-                                    handleFieldChange(
-                                        'show_website_popup',
-                                        checked
-                                            ? 'on'
-                                            : 'off'
-                                    )
-                                }
-                            />
-
-
-                            <FormFieldRow
-                                label={t(
-                                    'Popup content'
-                                )}
-                                alignItems="flex-start"
-                            >
-                                <AizTextEditor
-                                    value={
-                                        form.website_popup_content ||
-                                        ''
-                                    }
-                                    onChange={(val) =>
-                                        handleFieldChange(
-                                            'website_popup_content',
-                                            val
-                                        )
-                                    }
-                                    placeholder={t(
-                                        'Write popup content...'
-                                    )}
-                                />
-                            </FormFieldRow>
-
-
-                            <Box
+                        {/* SAVE BUTTON */}
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 1 }}>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                disabled={saving}
+                                startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon sx={{ fontSize: '18px' }} />}
                                 sx={{
-                                    borderTop:
-                                        '1px solid #e1e5ea',
-                                    pt: 2,
+                                    minWidth: '130px',
+                                    height: '44px',
+                                    px: 3,
+                                    borderRadius: '6px',
+                                    textTransform: 'none',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    color: '#ffffff',
+                                    backgroundColor: 'var(--primary-color, #2563eb)',
+                                    '&:hover': {
+                                        backgroundColor: 'var(--primary-hover-color, #1d4ed8)',
+                                    },
                                 }}
                             >
-                                <ToggleRow
-                                    label={t(
-                                        'Show Subscriber form?'
-                                    )}
-                                    checked={
-                                        form.show_subscribe_form ===
-                                        'on' ||
-                                        form.show_subscribe_form ===
-                                        true
-                                    }
-                                    onChange={(checked) =>
-                                        handleFieldChange(
-                                            'show_subscribe_form',
-                                            checked
-                                                ? 'on'
-                                                : 'off'
-                                        )
-                                    }
-                                />
-                            </Box>
-
-                        </Stack>
-                    </Paper>
-
-
-                    {/* =================================
-                        Custom Scripts
-                    ================================= */}
-
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            border: '1px solid #e1e5ea',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            backgroundColor: '#ffffff',
-                        }}
-                    >
-                        <SectionHeader>
-                            {t('Custom Script')}
-                        </SectionHeader>
-
-                        <Stack
-                            spacing={3}
-                            sx={{
-                                p: {
-                                    xs: 2,
-                                    sm: 3,
-                                },
-                            }}
-                        >
-
-                            <FormFieldRow
-                                label={t(
-                                    'Header custom script - before </head>'
-                                )}
-                                alignItems="flex-start"
-                                helperText={t(
-                                    'Write script with <script> tag'
-                                )}
-                            >
-                                <TextField
-                                    fullWidth
-                                    multiline
-                                    rows={6}
-                                    value={
-                                        form.header_script ||
-                                        ''
-                                    }
-                                    onChange={(e) =>
-                                        handleFieldChange(
-                                            'header_script',
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder={
-                                        '<script>\n...\n</script>'
-                                    }
-                                    sx={{
-                                        ...textareaSx,
-
-                                        '& .MuiInputBase-input': {
-                                            fontFamily:
-                                                'monospace',
-                                            fontSize:
-                                                '15px',
-                                            color:
-                                                '#4b5563',
-                                            padding:
-                                                '18px 24px',
-                                            lineHeight:
-                                                1.6,
-                                        },
-                                    }}
-                                />
-                            </FormFieldRow>
-
-
-                            <FormFieldRow
-                                label={t(
-                                    'Footer custom script - before </body>'
-                                )}
-                                alignItems="flex-start"
-                                helperText={t(
-                                    'Write script with <script> tag'
-                                )}
-                            >
-                                <TextField
-                                    fullWidth
-                                    multiline
-                                    rows={6}
-                                    value={
-                                        form.footer_script ||
-                                        ''
-                                    }
-                                    onChange={(e) =>
-                                        handleFieldChange(
-                                            'footer_script',
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder={
-                                        '<script>\n...\n</script>'
-                                    }
-                                    sx={{
-                                        ...textareaSx,
-
-                                        '& .MuiInputBase-input': {
-                                            fontFamily:
-                                                'monospace',
-                                            fontSize:
-                                                '15px',
-                                            color:
-                                                '#4b5563',
-                                            padding:
-                                                '18px 24px',
-                                            lineHeight:
-                                                1.6,
-                                        },
-                                    }}
-                                />
-                            </FormFieldRow>
-
-                        </Stack>
-                    </Paper>
-
-
-                    {/* =================================
-                        Submit
-                    ================================= */}
-
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            pt: 1,
-                        }}
-                    >
-                        <Button
-                            type="submit"
-                            variant="outlined"
-                            disabled={saving}
-                            startIcon={
-                                saving ? (
-                                    <CircularProgress
-                                        size={18}
-                                    />
-                                ) : (
-                                    <SaveIcon />
-                                )
-                            }
-                            sx={{
-                                minWidth: '120px',
-                                height: '42px',
-                                borderColor: '#f59e0b',
-                                color: '#d97706',
-                                borderRadius: '6px',
-                                textTransform: 'none',
-                                fontSize: '15px',
-                                fontWeight: 500,
-
-                                '&:hover': {
-                                    borderColor:
-                                        '#d97706',
-                                    backgroundColor:
-                                        '#fff7ed',
-                                },
-                            }}
-                        >
-                            {saving
-                                ? t('Updating...')
-                                : t('Update')}
-                        </Button>
-                    </Box>
-
-                </Stack>
-
-            </form>
+                                {saving ? t('Saving...', 'Saving...') : t('Save Settings', 'Save Settings')}
+                            </Button>
+                        </Box>
+                    </Stack>
+                </Box>
+            </Box>
         </Box>
     );
 };
-
 
 export default AppearanceSettings;

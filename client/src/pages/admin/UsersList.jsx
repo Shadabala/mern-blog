@@ -21,7 +21,7 @@ const UsersList = () => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
 
-    const { loginState, user: currentAdmin } = useAuth();
+    const { loginState, user: currentAdmin, hasPermission } = useAuth();
     const navigate = useNavigate();
 
     const loadUsers = async () => {
@@ -197,42 +197,50 @@ const UsersList = () => {
                                                 />
                                             </TableCell>
                                             <TableCell align="right">
-                                                <IconButton
-                                                    size="small"
-                                                    color="info"
-                                                    title="Log in as this User"
-                                                    onClick={() => handleImpersonate(u)}
-                                                    sx={{ color: '#0ea5e9', '&:hover': { bgcolor: '#e0f2fe' } }}
-                                                >
-                                                    <LoginAsIcon fontSize="small" />
-                                                </IconButton>
+                                                {hasPermission('users_impersonate') && (
+                                                    <IconButton
+                                                        size="small"
+                                                        color="info"
+                                                        title="Log in as this User"
+                                                        onClick={() => handleImpersonate(u)}
+                                                        sx={{ color: '#0ea5e9', '&:hover': { bgcolor: '#e0f2fe' } }}
+                                                    >
+                                                        <LoginAsIcon fontSize="small" />
+                                                    </IconButton>
+                                                )}
 
-                                                <IconButton
-                                                    size="small"
-                                                    color="primary"
-                                                    title="Change Role"
-                                                    onClick={() => { setSelectedUser(u); setNewRole(u.role || u.user_type || "user"); setDialogOpen(true); }}
-                                                >
-                                                    <EditIcon fontSize="small" />
-                                                </IconButton>
+                                                {hasPermission('users_edit') && (
+                                                    <>
+                                                        <IconButton
+                                                            size="small"
+                                                            color="primary"
+                                                            title="Change Role"
+                                                            onClick={() => { setSelectedUser(u); setNewRole(u.role || u.user_type || "user"); setDialogOpen(true); }}
+                                                        >
+                                                            <EditIcon fontSize="small" />
+                                                        </IconButton>
 
-                                                <IconButton
-                                                    size="small"
-                                                    color={u.status === "blocked" ? "success" : "warning"}
-                                                    title={u.status === "blocked" ? "Unblock Account" : "Block Account"}
-                                                    onClick={() => handleToggleStatus(u)}
-                                                >
-                                                    {u.status === "blocked" ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
-                                                </IconButton>
+                                                        <IconButton
+                                                            size="small"
+                                                            color={u.status === "blocked" ? "success" : "warning"}
+                                                            title={u.status === "blocked" ? "Unblock Account" : "Block Account"}
+                                                            onClick={() => handleToggleStatus(u)}
+                                                        >
+                                                            {u.status === "blocked" ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
+                                                        </IconButton>
+                                                    </>
+                                                )}
 
-                                                <IconButton
-                                                    size="small"
-                                                    color="error"
-                                                    title="Delete User"
-                                                    onClick={() => handleDeleteUser(u)}
-                                                >
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
+                                                {hasPermission('users_delete') && (
+                                                    <IconButton
+                                                        size="small"
+                                                        color="error"
+                                                        title="Delete User"
+                                                        onClick={() => handleDeleteUser(u)}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))

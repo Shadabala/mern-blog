@@ -1,5 +1,6 @@
 import { useMemo, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useSettings } from '../../context/SettingsContext';
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -30,6 +31,12 @@ const cacheLtr = createCache({
 
 const RTLProvider = ({ children }) => {
     const { isRtl } = useLanguage();
+    const { get_setting } = useSettings();
+
+    const primaryColor = get_setting('primary_color', '#3bf73e');
+    const primaryHoverColor = get_setting('primary_hover_color', '#94d382');
+    const secondaryColor = get_setting('secondary_color', '#de3f7f');
+    const secondaryHoverColor = get_setting('secondary_hover_color', '#b92d64');
 
     useEffect(() => {
         document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
@@ -39,13 +46,43 @@ const RTLProvider = ({ children }) => {
     const theme = useMemo(() => {
         return createTheme({
             direction: isRtl ? 'rtl' : 'ltr',
+            palette: {
+                primary: {
+                    main: primaryColor,
+                    dark: primaryHoverColor,
+                    contrastText: '#ffffff'
+                },
+                secondary: {
+                    main: secondaryColor,
+                    dark: secondaryHoverColor,
+                    contrastText: '#ffffff'
+                }
+            },
             typography: {
                 fontFamily: isRtl
                     ? "'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', sans-serif"
                     : "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif"
+            },
+            components: {
+                MuiButton: {
+                    styleOverrides: {
+                        containedPrimary: {
+                            backgroundColor: primaryColor,
+                            '&:hover': {
+                                backgroundColor: primaryHoverColor
+                            }
+                        },
+                        containedSecondary: {
+                            backgroundColor: secondaryColor,
+                            '&:hover': {
+                                backgroundColor: secondaryHoverColor
+                            }
+                        }
+                    }
+                }
             }
         });
-    }, [isRtl]);
+    }, [isRtl, primaryColor, primaryHoverColor, secondaryColor, secondaryHoverColor]);
 
     return (
         <CacheProvider value={isRtl ? cacheRtl : cacheLtr}>

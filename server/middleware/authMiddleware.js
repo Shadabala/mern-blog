@@ -29,7 +29,7 @@ export const protect = async (req, res, next) => {
             process.env.ACCESS_SECRET_KEY
         );
 
-        const user = await User.findById(decoded.userId || decoded._id).select("-password");
+        const user = await User.findById(decoded.userId || decoded._id).select("-password").populate('role_id');
 
         if (!user) {
             return res.status(401).json({
@@ -78,7 +78,7 @@ export const optionalAuth = async (req, res, next) => {
 
         if (token && token !== "null" && token !== "undefined") {
             const decoded = jwt.verify(token, process.env.ACCESS_SECRET_KEY);
-            const user = await User.findById(decoded.userId || decoded._id).select("-password");
+            const user = await User.findById(decoded.userId || decoded._id).select("-password").populate('role_id');
             if (user && user.status !== 'blocked') {
                 req.user = user;
             }

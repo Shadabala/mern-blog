@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     Card,
     CardContent,
@@ -21,6 +21,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 import { API } from "../../../service/api";
 import { toast } from "../../../utils/toast";
 import { confirmDelete } from "../../../utils/swal";
+import PaymentModal from "../../common/PaymentModal";
 
 const StyledCard = styled(Card)`
     border-radius: 16px;
@@ -73,7 +74,7 @@ const CategoryChip = styled(Chip)`
     backdrop-filter: blur(4px);
     font-weight: 700;
     font-size: 12px;
-    color: #e94560;
+    color: var(--secondary-color, #e94560);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 `;
 
@@ -121,7 +122,7 @@ const Title = styled(Typography)`
     transition: color 0.2s ease;
 
     &:hover {
-        color: #e94560;
+        color: var(--primary-color, #e94560);
     }
 `;
 
@@ -222,6 +223,7 @@ const Post = ({ post, isDashboard = false, onDelete, categories = [] }) => {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { currentLang, translate } = useLanguage();
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
     if (!post) return null;
 
@@ -261,24 +263,9 @@ const Post = ({ post, isDashboard = false, onDelete, categories = [] }) => {
         navigate(`/update/${post._id || post.id}`);
     };
 
-    const handlePayment = async (e) => {
+    const handlePayment = (e) => {
         e.stopPropagation();
-
-        try {
-            toast.info("Connecting to Stripe checkout...");
-            const response = await API.createCheckoutSession({
-                postId: post._id || post.id,
-            });
-
-            if (response.isSuccess && response.data?.url) {
-                window.location.href = response.data.url;
-            } else {
-                toast.error(response.msg || "Failed to initiate payment session. Please try again.");
-            }
-        } catch (error) {
-            console.error("Payment error:", error);
-            toast.error("An error occurred initiating payment. Please try again.");
-        }
+        setPaymentModalOpen(true);
     };
 
     const handleDelete = async (e) => {
@@ -358,7 +345,7 @@ const Post = ({ post, isDashboard = false, onDelete, categories = [] }) => {
                     </MetaItem>
 
                     {!isDashboard && (
-                        <IconButton size="small" sx={{ ml: "auto", color: "#e94560" }}>
+                        <IconButton size="small" sx={{ ml: "auto", color: "var(--primary-color, #e94560)" }}>
                             <ArrowForwardIos sx={{ fontSize: 12 }} />
                         </IconButton>
                     )}
@@ -380,6 +367,21 @@ const Post = ({ post, isDashboard = false, onDelete, categories = [] }) => {
                     </DeleteBtn>
                 </ActionBar>
             )}
+
+            <PaymentModal
+                open={paymentModalOpen}
+                onClose={() => setPaymentModalOpen(false)}
+                item={{
+                    id: post._id || post.id,
+                    title: title,
+                    price: post.price || 10,
+                    type: 'blog_premium'
+                }}
+                onSuccess={() => {
+                    setPaymentModalOpen(false);
+                    // Refresh or update status if needed
+                }}
+            />
         </StyledCard>
     );
 };

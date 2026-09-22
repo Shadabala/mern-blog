@@ -7,7 +7,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RTLProvider from "./components/common/RTLProvider";
 import AppToastContainer from "./components/common/AppToastContainer";
 
-
 // Layouts
 import AdminLayout from "./layouts/AdminLayout";
 
@@ -62,6 +61,7 @@ import PageEdit from "./pages/admin/PageEdit";
 import FeatureActivation from "./pages/admin/FeatureActivation";
 import SmtpSettings from "./pages/admin/SmtpSettings";
 import PaymentMethodsSettings from "./pages/admin/PaymentMethodsSettings";
+import OfflinePayments from "./pages/admin/OfflinePayments";
 import GoogleSettings from "./pages/admin/GoogleSettings";
 
 // Staff Management Pages
@@ -94,52 +94,116 @@ function AppRoutes() {
       {/* Protected Admin & Staff Panel Routes */}
       <Route element={<ProtectedRoute allowedRoles={["admin", "staff"]} />}>
         <Route element={<AdminLayout />}>
+          {/* Dashboard (Open to all admin & staff) */}
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/uploaded-files" element={<UploadedFiles />} />
-          <Route path="/admin/uploaded-files/create" element={<UploadNewFile />} />
-          <Route path="/admin/blogs" element={<BlogList />} />
-          <Route path="/admin/blogs/create" element={<BlogCreate />} />
-          <Route path="/admin/blogs/:id/edit" element={<BlogEdit />} />
-          <Route path="/admin/posts" element={<BlogList />} />
-          <Route path="/admin/posts/create" element={<BlogCreate />} />
-          <Route path="/admin/posts/:id/edit" element={<BlogEdit />} />
-          <Route path="/admin/categories" element={<CategoryList />} />
-          <Route path="/admin/categories/create" element={<CategoryCreate />} />
-          <Route path="/admin/categories/:id/edit" element={<CategoryEdit />} />
-          <Route path="/admin/users" element={<UsersList />} />
-          <Route path="/admin/contacts" element={<ContactInquiries />} />
-          <Route path="/admin/login-history" element={<LoginHistory />} />
-          <Route path="/admin/settings" element={<AppearanceSettings />} />
-          <Route path="/admin/logs" element={<ActivityLogs />} />
-          <Route path="/admin/file_system" element={<FileSystemSettings />} />
+
+          {/* Uploaded Files */}
+          <Route element={<ProtectedRoute requiredPermission="uploads_view" />}>
+            <Route path="/admin/uploaded-files" element={<UploadedFiles />} />
+            <Route path="/admin/uploaded-files/create" element={<UploadNewFile />} />
+          </Route>
+
+          {/* Blogs */}
+          <Route element={<ProtectedRoute requiredPermission="blogs_view" />}>
+            <Route path="/admin/blogs" element={<BlogList />} />
+            <Route path="/admin/posts" element={<BlogList />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="blogs_create" />}>
+            <Route path="/admin/blogs/create" element={<BlogCreate />} />
+            <Route path="/admin/posts/create" element={<BlogCreate />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="blogs_edit" />}>
+            <Route path="/admin/blogs/:id/edit" element={<BlogEdit />} />
+            <Route path="/admin/posts/:id/edit" element={<BlogEdit />} />
+          </Route>
+
+          {/* Categories */}
+          <Route element={<ProtectedRoute requiredPermission="categories_manage" />}>
+            <Route path="/admin/categories" element={<CategoryList />} />
+            <Route path="/admin/categories/create" element={<CategoryCreate />} />
+            <Route path="/admin/categories/:id/edit" element={<CategoryEdit />} />
+          </Route>
+
+          {/* Users */}
+          <Route element={<ProtectedRoute requiredPermission="users_view" />}>
+            <Route path="/admin/users" element={<UsersList />} />
+          </Route>
+
+          {/* Contact Inquiries */}
+          <Route element={<ProtectedRoute requiredPermission="contacts_manage" />}>
+            <Route path="/admin/contacts" element={<ContactInquiries />} />
+          </Route>
+
+          {/* Login History */}
+          <Route element={<ProtectedRoute requiredPermission="login_history_view" />}>
+            <Route path="/admin/login-history" element={<LoginHistory />} />
+          </Route>
+
+          {/* Activity Logs */}
+          <Route element={<ProtectedRoute requiredPermission="logs_view" />}>
+            <Route path="/admin/logs" element={<ActivityLogs />} />
+          </Route>
+
+          {/* File System */}
+          <Route element={<ProtectedRoute requiredPermission="file_system_manage" />}>
+            <Route path="/admin/file_system" element={<FileSystemSettings />} />
+            <Route path="/admin/setup/file-system" element={<FileSystemSettings />} />
+          </Route>
 
           {/* Website Setup Submenu Routes */}
-          <Route path="/admin/website-setup/homepage" element={<HomepageSettings />} />
-          <Route path="/admin/website-setup/header" element={<HeaderSettings />} />
-          <Route path="/admin/website-setup/footer" element={<FooterSettings />} />
-          <Route path="/admin/website-setup/pages" element={<PagesList />} />
-          <Route path="/admin/website-setup/pages/create" element={<PageCreate />} />
-          <Route path="/admin/website-setup/pages/:id/edit" element={<PageEdit />} />
-          <Route path="/admin/website-setup/appearance" element={<AppearanceSettings />} />
+          <Route element={<ProtectedRoute requiredPermission="homepage_settings" />}>
+            <Route path="/admin/website-setup/homepage" element={<HomepageSettings />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="header_settings" />}>
+            <Route path="/admin/website-setup/header" element={<HeaderSettings />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="footer_settings" />}>
+            <Route path="/admin/website-setup/footer" element={<FooterSettings />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="appearance_manage" />}>
+            <Route path="/admin/website-setup/appearance" element={<AppearanceSettings />} />
+            <Route path="/admin/settings" element={<AppearanceSettings />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="pages_manage" />}>
+            <Route path="/admin/website-setup/pages" element={<PagesList />} />
+            <Route path="/admin/website-setup/pages/create" element={<PageCreate />} />
+            <Route path="/admin/website-setup/pages/:id/edit" element={<PageEdit />} />
+          </Route>
 
           {/* Setup & Configuration Submenu Routes */}
-          <Route path="/admin/setup/features" element={<FeatureActivation />} />
-          <Route path="/admin/setup/language" element={<LanguageSettings />} />
-          <Route path="/admin/setup/languages" element={<LanguageSettings />} />
-          <Route path="/admin/setup/languages/create" element={<LanguageCreate />} />
-          <Route path="/admin/setup/language/create" element={<LanguageCreate />} />
-          <Route path="/admin/setup/languages/:id/edit" element={<LanguageEdit />} />
-          <Route path="/admin/setup/language/:id/edit" element={<LanguageEdit />} />
-          <Route path="/admin/setup/file-system" element={<FileSystemSettings />} />
-          <Route path="/admin/setup/smtp" element={<SmtpSettings />} />
-          <Route path="/admin/setup/payment-methods" element={<PaymentMethodsSettings />} />
-          <Route path="/admin/setup/google" element={<GoogleSettings />} />
+          <Route element={<ProtectedRoute requiredPermission="feature_activation" />}>
+            <Route path="/admin/setup/features" element={<FeatureActivation />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="languages_manage" />}>
+            <Route path="/admin/setup/language" element={<LanguageSettings />} />
+            <Route path="/admin/setup/languages" element={<LanguageSettings />} />
+            <Route path="/admin/setup/languages/create" element={<LanguageCreate />} />
+            <Route path="/admin/setup/language/create" element={<LanguageCreate />} />
+            <Route path="/admin/setup/languages/:id/edit" element={<LanguageEdit />} />
+            <Route path="/admin/setup/language/:id/edit" element={<LanguageEdit />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="smtp_manage" />}>
+            <Route path="/admin/setup/smtp" element={<SmtpSettings />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="payment_methods_manage" />}>
+            <Route path="/admin/setup/payment-methods" element={<PaymentMethodsSettings />} />
+            <Route path="/admin/setup/offline-payments" element={<OfflinePayments />} />
+            <Route path="/admin/offline-payments" element={<OfflinePayments />} />
+            <Route path="/admin/payments" element={<OfflinePayments />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="google_manage" />}>
+            <Route path="/admin/setup/google" element={<GoogleSettings />} />
+          </Route>
 
           {/* Staff Submenu Routes */}
-          <Route path="/admin/staff" element={<StaffList />} />
-          <Route path="/admin/staff/all" element={<StaffList />} />
-          <Route path="/admin/staff/permissions" element={<StaffRoles />} />
-          <Route path="/admin/roles" element={<StaffRoles />} />
+          <Route element={<ProtectedRoute requiredPermission="staff_view" />}>
+            <Route path="/admin/staff" element={<StaffList />} />
+            <Route path="/admin/staff/all" element={<StaffList />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="roles_manage" />}>
+            <Route path="/admin/staff/permissions" element={<StaffRoles />} />
+            <Route path="/admin/roles" element={<StaffRoles />} />
+          </Route>
         </Route>
       </Route>
 

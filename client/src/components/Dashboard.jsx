@@ -50,6 +50,7 @@ import Post from './home/post/Post';
 import { useTranslation } from '../i18n/i18n';
 import { toast } from '../utils/toast';
 import PublicLayout from '../layouts/PublicLayout';
+import PaymentModal from './common/PaymentModal';
 
 const HeaderCard = styled(Box)`
     display: flex;
@@ -259,6 +260,8 @@ const Dashboard = () => {
     // Action states
     const [purchasingCatId, setPurchasingCatId] = useState(null);
     const [catSearch, setCatSearch] = useState('');
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [categoryToUnlock, setCategoryToUnlock] = useState(null);
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
@@ -322,21 +325,13 @@ const Dashboard = () => {
         }
     };
 
-    const handleUnlockCategory = async (catId) => {
-        try {
-            setPurchasingCatId(catId);
-            toast.info(t("dashboard.connectingStripe", "Connecting to Stripe checkout..."));
-            const res = await API.createCategoryCheckoutSession({ categoryId: catId });
-            if (res.isSuccess && res.data?.url) {
-                window.location.href = res.data.url;
-            } else {
-                toast.error(res.msg || res.data?.message || t("dashboard.purchaseFailed", "Failed to initiate checkout session"));
-            }
-        } catch (err) {
-            console.error('Purchase error:', err);
-            toast.error("Failed to connect to checkout. Please try again.");
-        } finally {
-            setPurchasingCatId(null);
+    const handleUnlockCategory = (catId) => {
+        const cat = categories.find(c => (c._id || c.id) === catId);
+        if (cat) {
+            setCategoryToUnlock(cat);
+            setPaymentModalOpen(true);
+        } else {
+            toast.error(t("dashboard.purchaseFailed", "Failed to find category"));
         }
     };
 
@@ -787,6 +782,24 @@ const Dashboard = () => {
                             </EmptyState>
                         )}
                     </Box>
+                )}
+
+                {categoryToUnlock && (
+                    <PaymentModal
+                        open={paymentModalOpen}
+                        onClose={() => setPaymentModalOpen(false)}
+                        item={{
+                            id: categoryToUnlock._id || categoryToUnlock.id,
+                            title: categoryToUnlock.name?.en || categoryToUnlock.name || 'Category License',
+                            price: categoryToUnlock.price || 10,
+                            type: 'category_purchase'
+                        }}
+                        onSuccess={() => {
+                            setPaymentModalOpen(false);
+                            // Refresh purchased categories
+                            loadAllData();
+                        }}
+                    />
                 )}
             </Container>
         </PublicLayout>

@@ -46,7 +46,7 @@ const Contact = () => {
 
                     <Stack spacing={2.5} mt={4}>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Box sx={{ width: 44, height: 44, borderRadius: "50%", bgcolor: "#fff0f3", display: "flex", alignItems: "center", justifyContent: "center", color: "#e94560" }}>
+                            <Box sx={{ width: 44, height: 44, borderRadius: "50%", bgcolor: "rgba(59, 247, 62, 0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--primary-color, #e94560)" }}>
                                 <PhoneIcon />
                             </Box>
                             <Box>
@@ -60,7 +60,7 @@ const Contact = () => {
                         </Stack>
 
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Box sx={{ width: 44, height: 44, borderRadius: "50%", bgcolor: "#fff0f3", display: "flex", alignItems: "center", justifyContent: "center", color: "#e94560" }}>
+                            <Box sx={{ width: 44, height: 44, borderRadius: "50%", bgcolor: "rgba(59, 247, 62, 0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--primary-color, #e94560)" }}>
                                 <EmailIcon />
                             </Box>
                             <Box>

@@ -26,13 +26,52 @@ const paymentSchema = new mongoose.Schema(
             default: null,
             index: true
         },
+        paymentMethod: {
+            type: String,
+            enum: ['stripe', 'razorpay', 'paypal', 'manual'],
+            default: 'stripe',
+            index: true
+        },
         stripeSessionId: {
             type: String,
-            required: true,
-            unique: true,
+            default: null,
+            sparse: true,
             index: true
         },
         stripePaymentIntentId: {
+            type: String,
+            default: null
+        },
+        razorpayOrderId: {
+            type: String,
+            default: null,
+            sparse: true,
+            index: true
+        },
+        razorpayPaymentId: {
+            type: String,
+            default: null
+        },
+        razorpaySignature: {
+            type: String,
+            default: null
+        },
+        paypalOrderId: {
+            type: String,
+            default: null,
+            sparse: true,
+            index: true
+        },
+        transactionId: {
+            type: String,
+            default: null,
+            index: true
+        },
+        manualReceipt: {
+            type: String,
+            default: null
+        },
+        manualDetails: {
             type: String,
             default: null
         },

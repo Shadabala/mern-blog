@@ -52,13 +52,13 @@ const About = () => {
                             If you have questions, suggestions, or would like to collaborate on projects, feel free to reach out via email:
                         </Typography>
 
-                        <Stack direction="row" spacing={1} alignItems="center" color="#e94560">
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ color: "var(--primary-color, #e94560)" }}>
                             <EmailIcon />
                             <Link
                                 href="mailto:my.shadabalam@gmail.com?Subject=Blog Inquiry"
                                 target="_blank"
                                 underline="hover"
-                                sx={{ color: "#e94560", fontWeight: 700, fontSize: "1.05rem" }}
+                                sx={{ color: "var(--primary-color, #e94560)", fontWeight: 700, fontSize: "1.05rem" }}
                             >
                                 my.shadabalam@gmail.com
                             </Link>

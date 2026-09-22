@@ -253,7 +253,7 @@ const PaymentHistory = () => {
                                         payment.postId?.title ||
                                         t("payments.deletedPost", "Deleted Post");
                                     const isPostDeleted = !payment.postId && !isCategory;
-                                    const refId = payment.stripePaymentIntentId || payment.stripeSessionId || "N/A";
+                                    const refId = payment.transactionId || payment.razorpayPaymentId || payment.stripePaymentIntentId || payment.stripeSessionId || payment.paypalOrderId || "N/A";
 
                                     return (
                                         <StyledTableRow key={payment._id}>

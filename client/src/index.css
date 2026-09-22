@@ -1,4 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+:root {
+  --primary-color: #3bf73e;
+  --primary-hover-color: #94d382;
+  --secondary-color: #de3f7f;
+  --secondary-hover-color: #b92d64;
+}
 
 body {
   margin: 0;
@@ -12,6 +17,49 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Theme Utilities */
+.theme-primary-bg {
+  background-color: var(--primary-color) !important;
+}
+
+.theme-primary-color {
+  color: var(--primary-color) !important;
+}
+
+.theme-primary-border {
+  border-color: var(--primary-color) !important;
+}
+
+.theme-primary-btn {
+  background-color: var(--primary-color) !important;
+  color: #ffffff !important;
+  transition: background-color 0.2s ease, transform 0.2s ease !important;
+}
+.theme-primary-btn:hover {
+  background-color: var(--primary-hover-color) !important;
+}
+
+.theme-secondary-bg {
+  background-color: var(--secondary-color) !important;
+}
+
+.theme-secondary-color {
+  color: var(--secondary-color) !important;
+}
+
+.theme-secondary-border {
+  border-color: var(--secondary-color) !important;
+}
+
+.theme-secondary-btn {
+  background-color: var(--secondary-color) !important;
+  color: #ffffff !important;
+  transition: background-color 0.2s ease, transform 0.2s ease !important;
+}
+.theme-secondary-btn:hover {
+  background-color: var(--secondary-hover-color) !important;
 }
 
 /* SweetAlert2 Theme Customization */

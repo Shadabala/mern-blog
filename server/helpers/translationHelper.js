@@ -1,8 +1,14 @@
 import Translation from '../models/Translation.js';
 import Language from '../models/Language.js';
+import { registerFlushListener } from '../config/redis.js';
 
 // Fast in-memory cache for translations
 const translationCache = new Map();
+
+// Register listener to clear translation cache on system cache flush
+registerFlushListener(() => {
+    translationCache.clear();
+});
 
 /**
  * Dynamic translate helper function matching Laravel translate($key, $lang)

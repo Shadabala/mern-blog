@@ -191,8 +191,8 @@ export const updateFileSystemActivationApi = async (data) => {
     const response = await api.post('/admin/file_system/activation', data);
     return response.data;
 };
-export const testRedisConnectionApi = async () => {
-    const response = await api.post('/admin/file_system/test-redis');
+export const testRedisConnectionApi = async (data = {}) => {
+    const response = await api.post('/admin/file_system/test-redis', data);
     return response.data;
 };
 
@@ -282,49 +282,52 @@ export const clearAdminCacheApi = async () => {
     return response.data;
 };
 
-// Website Setup - Homepage Settings API
-export const fetchHomepageSettingsApi = async (lang = 'en') => {
-    const response = await api.get('/admin/website-settings/homepage', { params: { lang } });
+// Unified Website Settings API
+export const fetchWebsiteSettingsApi = async (keys = null, lang = 'en') => {
+    const params = { lang };
+    if (keys) {
+        params.keys = Array.isArray(keys) ? keys.join(',') : keys;
+    }
+    const response = await api.get('/admin/website-settings', { params });
     return response.data;
 };
 
-export const updateHomepageSettingsApi = async (data) => {
-    const response = await api.post('/admin/website-settings/homepage', data);
+export const updateWebsiteSettingsApi = async (data) => {
+    const response = await api.post('/admin/website-settings', data);
     return response.data;
 };
 
-// Website Setup - Header Settings API
-export const fetchHeaderSettingsApi = async (lang = 'en') => {
-    const response = await api.get('/admin/website-settings/header', { params: { lang } });
-    return response.data;
-};
+// Aliases routing through unified endpoints
+export const fetchHomepageSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([
+    'home_slider_images', 'home_slider_links', 'home_slider_heading', 'home_slider_text'
+], lang);
+export const updateHomepageSettingsApi = updateWebsiteSettingsApi;
 
-export const updateHeaderSettingsApi = async (data) => {
-    const response = await api.post('/admin/website-settings/header', data);
-    return response.data;
-};
+export const fetchHeaderSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([
+    'header_logo', 'topbar_banner', 'topbar_banner_link', 'helpline_number',
+    'helpine_email', 'helpline_email', 'helpine_whatsapp', 'helpline_whatsapp',
+    'show_language_switcher', 'enable_sticky_header', 'header_nav_menu_text',
+    'header_menu_labels', 'header_menu_links'
+], lang);
+export const updateHeaderSettingsApi = updateWebsiteSettingsApi;
 
-// Website Setup - Footer Settings API
-export const fetchFooterSettingsApi = async (lang = 'en') => {
-    const response = await api.get('/admin/website-settings/footer', { params: { lang } });
-    return response.data;
-};
+export const fetchFooterSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([
+    'footer_logo', 'about_us_description', 'contact_address', 'contact_phone',
+    'contact_email', 'widget_one_title', 'widget_one_labels', 'widget_one_links',
+    'widget_two_title', 'widget_two_labels', 'widget_two_links',
+    'frontend_copyright_text', 'show_social_links', 'facebook_link', 'twitter_link',
+    'instagram_link', 'youtube_link', 'linkedin_link', 'payment_method_images'
+], lang);
+export const updateFooterSettingsApi = updateWebsiteSettingsApi;
 
-export const updateFooterSettingsApi = async (data) => {
-    const response = await api.post('/admin/website-settings/footer', data);
-    return response.data;
-};
-
-// Website Setup - Appearance Settings API
-export const fetchAppearanceSettingsApi = async () => {
-    const response = await api.get('/admin/website-settings/appearance');
-    return response.data;
-};
-
-export const updateAppearanceSettingsApi = async (data) => {
-    const response = await api.post('/admin/website-settings/appearance', data);
-    return response.data;
-};
+export const fetchAppearanceSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([
+    'site_name', 'website_name', 'site_motto', 'site_icon', 'system_logo_white',
+    'system_logo_black', 'primary_color', 'primary_hover_color', 'secondary_color',
+    'meta_title', 'meta_description', 'meta_keywords', 'meta_image',
+    'cookies_agreement_text', 'show_cookies_agreement', 'show_website_popup',
+    'website_popup_content', 'show_subscribe_form', 'header_script', 'footer_script'
+], lang);
+export const updateAppearanceSettingsApi = updateWebsiteSettingsApi;
 
 // Website Setup - Pages Management API
 export const fetchPagesApi = async (lang = 'en') => {
@@ -401,6 +404,20 @@ export const updateGoogleSettingsApi = async (data) => {
     return response.data;
 };
 
+// Payment Management & Offline Verifications API
+export const fetchAdminPaymentsApi = async (params = {}) => {
+    const response = await api.get('/admin/payments', {
+        params: { all: 'true', ...params }
+    });
+    return response.data;
+};
 
+export const approvePaymentApi = async (id) => {
+    const response = await api.put(`/admin/payments/${id}/approve`);
+    return response.data;
+};
 
-
+export const rejectPaymentApi = async (id, reason = '') => {
+    const response = await api.put(`/admin/payments/${id}/reject`, { reason });
+    return response.data;
+};

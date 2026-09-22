@@ -69,19 +69,35 @@ const DEFAULT_PERMISSION_GROUPS = [
         name: 'Website Setup & Settings',
         key: 'settings',
         permissions: [
-            { id: 'settings_view', name: 'View Website Settings' },
-            { id: 'settings_edit', name: 'Update Website Settings' },
-            { id: 'contacts_manage', name: 'Manage Contact Enquiries' },
-            { id: 'logs_view', name: 'View Activity Logs' }
+            { id: 'homepage_settings', name: 'Homepage Settings' },
+            { id: 'header_settings', name: 'Header Settings' },
+            { id: 'footer_settings', name: 'Footer Settings' },
+            { id: 'pages_manage', name: 'Manage Custom Pages' },
+            { id: 'appearance_manage', name: 'Appearance & Theme Settings' },
+            { id: 'settings_view', name: 'View General Settings' },
+            { id: 'settings_edit', name: 'Update General Settings' }
         ]
     },
     {
         name: 'Setup & Configurations',
         key: 'setup',
         permissions: [
-            { id: 'file_system_manage', name: 'File System & S3 Configuration' },
+            { id: 'feature_activation', name: 'Feature Activation' },
             { id: 'languages_manage', name: 'Language & Translation Management' },
+            { id: 'file_system_manage', name: 'File System & S3 Configuration' },
+            { id: 'smtp_manage', name: 'SMTP Email Configuration' },
+            { id: 'payment_methods_manage', name: 'Payment Methods' },
+            { id: 'google_manage', name: 'Google & Third-Party Configuration' },
             { id: 'cache_clear', name: 'Clear Cache' }
+        ]
+    },
+    {
+        name: 'Inquiries & Activity Logs',
+        key: 'logs_inquiries',
+        permissions: [
+            { id: 'contacts_manage', name: 'Manage Contact Enquiries' },
+            { id: 'login_history_view', name: 'View User Login History' },
+            { id: 'logs_view', name: 'View Activity Logs' }
         ]
     }
 ];
@@ -256,7 +272,6 @@ const StaffRoles = () => {
 
                 <Button
                     variant="contained"
-                    color="info"
                     startIcon={<AddIcon />}
                     onClick={handleOpenCreate}
                     sx={{
@@ -264,8 +279,9 @@ const StaffRoles = () => {
                         fontWeight: 600,
                         borderRadius: '20px',
                         px: 2.5,
-                        backgroundColor: '#0ea5e9',
-                        '&:hover': { backgroundColor: '#0284c7' }
+                        backgroundColor: 'var(--primary-color, #0ea5e9)',
+                        '&:hover': { backgroundColor: 'var(--primary-hover-color, #0284c7)' },
+                        color: '#ffffff'
                     }}
                 >
                     {t("Add New Role")}

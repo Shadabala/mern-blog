@@ -32,8 +32,8 @@ const SectionTitle = styled(Typography)`
 const CommentCount = styled('span')`
     font-size: 14px;
     font-weight: 600;
-    background: rgba(233,69,96,0.1);
-    color: #e94560;
+    background: rgba(59, 247, 62, 0.15);
+    color: var(--primary-color, #e94560);
     padding: 2px 10px;
     border-radius: 20px;
 `;
@@ -75,7 +75,7 @@ const CommentField = styled(TextField)`
 
 const PostBtn = styled(Button)`
     margin-top: 10px;
-    background: linear-gradient(135deg, #e94560, #c0392b);
+    background: var(--primary-color, #e94560);
     color: #fff;
     border-radius: 8px;
     text-transform: none;
@@ -83,8 +83,7 @@ const PostBtn = styled(Button)`
     padding: 8px 24px;
     float: right;
     &:hover {
-        background: linear-gradient(135deg, #c0392b, #e94560);
-        box-shadow: 0 4px 15px rgba(233,69,96,0.35);
+        background: var(--primary-hover-color, #c0392b);
     }
 `;
 
@@ -200,7 +199,7 @@ const Comments = ({ post }) => {
     return (
         <Section>
             <SectionTitle>
-                <ChatBubbleOutline sx={{ color: '#e94560' }} />
+                <ChatBubbleOutline sx={{ color: 'var(--primary-color, #e94560)' }} />
                 {t("post.comments", "Comments")}
                 <CommentCount>{comments.length}</CommentCount>
             </SectionTitle>
@@ -238,7 +237,7 @@ const Comments = ({ post }) => {
             ) : (
                 <LoginGate>
                     <GateIcon>
-                        <LockOutlined sx={{ color: '#e94560', fontSize: 28 }} />
+                        <LockOutlined sx={{ color: 'var(--primary-color, #e94560)', fontSize: 28 }} />
                     </GateIcon>
                     <Typography fontWeight={700} fontSize={18} color="#1a1a2e" mb={0.5}>
                         {t("post.joinConversation", "Join the conversation")}
@@ -252,11 +251,12 @@ const Comments = ({ post }) => {
                             startIcon={<LoginOutlined />}
                             onClick={() => navigate('/login')}
                             sx={{
-                                background: 'linear-gradient(135deg, #e94560, #c0392b)',
+                                background: 'var(--primary-color, #e94560)',
+                                color: '#ffffff',
                                 borderRadius: 2,
                                 textTransform: 'none',
                                 fontWeight: 700,
-                                '&:hover': { boxShadow: '0 4px 15px rgba(233,69,96,0.4)' }
+                                '&:hover': { background: 'var(--primary-hover-color, #c0392b)' }
                             }}
                         >
                             {t("post.logIn", "Log In")}

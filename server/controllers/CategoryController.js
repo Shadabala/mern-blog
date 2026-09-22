@@ -2,6 +2,7 @@ import Category from '../models/Category.js';
 import CategoryTranslation from '../models/CategoryTranslation.js';
 import Language from '../models/Language.js';
 import User from '../models/User.js';
+import Payment from '../models/Payment.js';
 import { resolveLanguageCandidates } from '../helpers/translationHelper.js';
 
 /**
@@ -270,6 +271,40 @@ export const categoryGetAll = async (req, res) => {
             .populate('parent_id', 'name slug')
             .sort({ order_level: -1, createdAt: -1 });
 
+        // Calculate paid users count for each category
+        const countMap = {};
+        try {
+            const categoryIds = categories.map(c => c._id);
+            const [paymentStats, userStats] = await Promise.all([
+                Payment.aggregate([
+                    { $match: { status: 'success', categoryId: { $in: categoryIds } } },
+                    { $group: { _id: '$categoryId', uniqueUsers: { $addToSet: '$userId' }, totalPayments: { $sum: 1 } } }
+                ]),
+                User.aggregate([
+                    { $match: { purchased_categories: { $in: categoryIds } } },
+                    { $unwind: '$purchased_categories' },
+                    { $match: { purchased_categories: { $in: categoryIds } } },
+                    { $group: { _id: '$purchased_categories', count: { $sum: 1 } } }
+                ])
+            ]);
+
+            paymentStats.forEach(p => {
+                if (p._id) {
+                    const idStr = p._id.toString();
+                    countMap[idStr] = p.uniqueUsers ? p.uniqueUsers.filter(Boolean).length : p.totalPayments;
+                }
+            });
+
+            userStats.forEach(u => {
+                if (u._id) {
+                    const idStr = u._id.toString();
+                    countMap[idStr] = Math.max(countMap[idStr] || 0, u.count);
+                }
+            });
+        } catch (aggErr) {
+            console.warn('Error calculating category payment stats:', aggErr.message);
+        }
+
         let data = categories.map(cat => {
             const translation = (cat.category_translations || []).find(t => candidates.includes(t.lang?.toLowerCase()));
             const resolvedName = translation?.name || cat.name;
@@ -284,6 +319,8 @@ export const categoryGetAll = async (req, res) => {
                 parent_id: cat.parent_id,
                 order_level: cat.order_level,
                 icon: cat.icon,
+                price: cat.price || 10,
+                paid_users_count: countMap[cat._id.toString()] || 0,
                 meta_title: cat.meta_title,
                 meta_description: cat.meta_description,
                 status: cat.status,

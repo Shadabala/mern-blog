@@ -21,11 +21,13 @@ import {
     fetchRolesApi
 } from "../../api/admin.api";
 import { useLanguage } from "../../context/LanguageContext";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from "../../utils/toast";
 import { confirmDelete } from "../../utils/swal";
 
 const StaffList = () => {
     const { t } = useLanguage();
+    const { hasPermission } = useAuth();
 
     const [staffList, setStaffList] = useState([]);
     const [roles, setRoles] = useState([]);
@@ -198,28 +200,30 @@ const StaffList = () => {
 
     return (
         <Box sx={{ p: { xs: 2, md: 3 } }}>
-            {/* Header matching Laravel base-module backend/staff/staffs/index.blade.php */}
+            {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Typography variant="h5" fontWeight={700} color="#1e293b">
                     {t("All Staffs")}
                 </Typography>
 
-                <Button
-                    variant="contained"
-                    color="info"
-                    startIcon={<AddIcon />}
-                    onClick={handleOpenCreate}
-                    sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        borderRadius: '20px',
-                        px: 2.5,
-                        backgroundColor: '#0ea5e9',
-                        '&:hover': { backgroundColor: '#0284c7' }
-                    }}
-                >
-                    {t("Add New Staff")}
-                </Button>
+                {hasPermission('staff_create') && (
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenCreate}
+                        sx={{
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            borderRadius: '20px',
+                            px: 2.5,
+                            backgroundColor: 'var(--primary-color, #0ea5e9)',
+                            '&:hover': { backgroundColor: 'var(--primary-hover-color, #0284c7)' },
+                            color: '#ffffff'
+                        }}
+                    >
+                        {t("Add New Staff")}
+                    </Button>
+                )}
             </Box>
 
             {alertMessage.text && (
@@ -278,15 +282,13 @@ const StaffList = () => {
                                             {/* Name */}
                                             <TableCell>
                                                 <Box display="flex" alignItems="center" gap={1.5}>
-                                                    <Box sx={{ width: 38, height: 38, borderRadius: '50%', bgcolor: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <StaffIcon sx={{ color: '#6366f1', fontSize: 20 }} />
-                                                    </Box>
+                                                    <StaffIcon sx={{ color: "#0ea5e9" }} />
                                                     <Box>
-                                                        <Typography variant="body2" fontWeight={600} color="#0f172a">
+                                                        <Typography variant="subtitle2" fontWeight={600} color="#1e293b">
                                                             {staff.name}
                                                         </Typography>
                                                         <Typography variant="caption" color="textSecondary">
-                                                            @{staff.username}
+                                                            @{staff.username || "staff"}
                                                         </Typography>
                                                     </Box>
                                                 </Box>
@@ -327,6 +329,7 @@ const StaffList = () => {
                                                 <Switch
                                                     checked={staff.status === "active"}
                                                     onChange={() => handleToggleStatus(staff)}
+                                                    disabled={!hasPermission('staff_edit')}
                                                     color="success"
                                                     size="small"
                                                 />
@@ -335,24 +338,28 @@ const StaffList = () => {
                                             {/* Options */}
                                             <TableCell align="right">
                                                 <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                    <Tooltip title={t("Edit")}>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => handleOpenEdit(staff)}
-                                                            sx={{ color: '#6366f1', bgcolor: '#eef2ff', '&:hover': { bgcolor: '#e0e7ff' } }}
-                                                        >
-                                                            <EditIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title={t("Delete")}>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => handleDeleteStaff(staff)}
-                                                            sx={{ color: '#ef4444', bgcolor: '#fef2f2', '&:hover': { bgcolor: '#fee2e2' } }}
-                                                        >
-                                                            <DeleteIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
+                                                    {hasPermission('staff_edit') && (
+                                                        <Tooltip title={t("Edit")}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => handleOpenEdit(staff)}
+                                                                sx={{ color: '#6366f1', bgcolor: '#eef2ff', '&:hover': { bgcolor: '#e0e7ff' } }}
+                                                            >
+                                                                <EditIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
+                                                    {hasPermission('staff_delete') && (
+                                                        <Tooltip title={t("Delete")}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => handleDeleteStaff(staff)}
+                                                                sx={{ color: '#ef4444', bgcolor: '#fef2f2', '&:hover': { bgcolor: '#fee2e2' } }}
+                                                            >
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
                                                 </Stack>
                                             </TableCell>
                                         </TableRow>

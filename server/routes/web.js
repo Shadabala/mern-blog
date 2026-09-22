@@ -41,9 +41,15 @@ import {
 import {
     createCheckoutSession,
     createCategoryCheckoutSession,
+    createUnifiedCheckoutSession,
+    verifyRazorpayPayment,
+    submitManualPayment,
+    getActivePaymentMethods,
     verifyPaymentSuccess,
     verifyPaymentCancel,
-    getAllPayments
+    getAllPayments,
+    approveManualPayment,
+    rejectManualPayment
 } from '../controllers/PaymentController.js';
 import { aizUploadMiddleware } from '../middleware/uploadMiddleware.js';
 import { protect, authorize, optionalAuth } from '../middleware/authMiddleware.js';
@@ -136,7 +142,17 @@ router.post("/aiz-uploader/upload", protect, aizUploadMiddleware, uploadFile);
 router.get("/aiz-uploader/get-uploaded-files", protect, getUploadedFiles);
 router.post("/aiz-uploader/get_file_by_ids", protect, getFileByIds);
 
-// Stripe Payment Gateway Routes
+// Payment Gateway Routes
+router.get("/api/payment/active-methods", getActivePaymentMethods);
+router.get("/payment/active-methods", getActivePaymentMethods);
+router.post("/api/payment/create-checkout", protect, createUnifiedCheckoutSession);
+router.post("/payment/create-checkout", protect, createUnifiedCheckoutSession);
+router.post("/api/payment/verify-razorpay", protect, verifyRazorpayPayment);
+router.post("/payment/verify-razorpay", protect, verifyRazorpayPayment);
+router.post("/api/payment/submit-manual", protect, submitManualPayment);
+router.post("/payment/submit-manual", protect, submitManualPayment);
+
+// Legacy Stripe Routes (Backward Compatibility)
 router.post("/api/stripe/create-checkout-session", protect, createCheckoutSession);
 router.post("/stripe/create-checkout-session", protect, createCheckoutSession);
 router.post("/api/stripe/create-category-checkout-session", protect, createCategoryCheckoutSession);
@@ -147,5 +163,9 @@ router.get("/verify-cancel", protect, verifyPaymentCancel);
 router.get("/api/verify-cancel", protect, verifyPaymentCancel);
 router.get("/payments", protect, getAllPayments);
 router.get("/api/payments", protect, getAllPayments);
+router.put("/payment/approve/:id", protect, authorize('admin', 'staff'), approveManualPayment);
+router.put("/api/payment/approve/:id", protect, authorize('admin', 'staff'), approveManualPayment);
+router.put("/payment/reject/:id", protect, authorize('admin', 'staff'), rejectManualPayment);
+router.put("/api/payment/reject/:id", protect, authorize('admin', 'staff'), rejectManualPayment);
 
 export default router;

@@ -78,7 +78,7 @@ export const loginUser = async (request, response) => {
                 { username: loginIdentifier },
                 { email: loginIdentifier }
             ]
-        }).select('+password');
+        }).select('+password').populate('role_id');
 
         if (!user) {
             return response.status(400).json({ success: false, message: 'User not found' });
@@ -141,6 +141,12 @@ export const loginUser = async (request, response) => {
             }
 
             const userRole = user.role || user.user_type || 'user';
+            let permissions = [];
+            if (userRole === 'admin') {
+                permissions = ['*'];
+            } else if (userRole === 'staff' && user.role_id?.permissions) {
+                permissions = user.role_id.permissions;
+            }
 
             const payload = {
                 userId: user._id.toString(),
@@ -148,7 +154,7 @@ export const loginUser = async (request, response) => {
                 username: user.username,
                 email: user.email,
                 role: userRole,
-                role_id: user.role_id || null
+                role_id: user.role_id?._id || user.role_id || null
             };
 
             const accessToken = jwt.sign(
@@ -194,8 +200,10 @@ export const loginUser = async (request, response) => {
                     name: user.name,
                     username: user.username,
                     email: user.email,
+                    phone: user.phone || '',
                     role: userRole,
                     role_id: user.role_id,
+                    permissions,
                     status: user.status
                 }
             });
@@ -252,13 +260,20 @@ export const verifyTwoFactor = async (request, response) => {
         }
 
         const userRole = user.role || user.user_type || 'user';
+        let permissions = [];
+        if (userRole === 'admin') {
+            permissions = ['*'];
+        } else if (userRole === 'staff' && user.role_id?.permissions) {
+            permissions = user.role_id.permissions;
+        }
+
         const payload = {
             userId: user._id.toString(),
             name: user.name,
             username: user.username,
             email: user.email,
             role: userRole,
-            role_id: user.role_id || null
+            role_id: user.role_id?._id || user.role_id || null
         };
 
         const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET_KEY, { expiresIn: '15m' });
@@ -295,8 +310,10 @@ export const verifyTwoFactor = async (request, response) => {
                 name: user.name,
                 username: user.username,
                 email: user.email,
+                phone: user.phone || '',
                 role: userRole,
                 role_id: user.role_id,
+                permissions,
                 status: user.status
             }
         });
@@ -598,9 +615,34 @@ export const refreshToken = async (request, response) => {
 
 export const getMe = async (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({ success: false, message: 'Not authenticated' });
+        }
+
+        const userRole = req.user.role || req.user.user_type || 'user';
+        let permissions = [];
+        if (userRole === 'admin') {
+            permissions = ['*'];
+        } else if (userRole === 'staff' && req.user.role_id?.permissions) {
+            permissions = req.user.role_id.permissions;
+        }
+
         res.status(200).json({
             success: true,
-            user: req.user
+            user: {
+                id: req.user._id,
+                _id: req.user._id,
+                name: req.user.name,
+                username: req.user.username,
+                email: req.user.email,
+                phone: req.user.phone || '',
+                role: userRole,
+                role_id: req.user.role_id,
+                permissions,
+                status: req.user.status,
+                twoFactorEnabled: req.user.twoFactorEnabled || false,
+                purchased_categories: req.user.purchased_categories || []
+            }
         });
     } catch (error) {
         res.status(500).json({

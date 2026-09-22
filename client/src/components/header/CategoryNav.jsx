@@ -151,21 +151,21 @@ const CategoryNav = ({ sticky = false }) => {
                                     px: 0.75,
                                     borderRadius: '18px',
                                     background: isActive
-                                        ? 'linear-gradient(135deg, #e94560 0%, #c0392b 100%)'
+                                        ? 'var(--primary-color, #e94560)'
                                         : '#f1f5f9',
                                     color: isActive ? '#ffffff' : '#334155',
                                     border: isActive ? 'none' : '1px solid #e2e8f0',
-                                    boxShadow: isActive ? '0 3px 10px rgba(233, 69, 96, 0.35)' : 'none',
+                                    boxShadow: isActive ? '0 3px 10px rgba(0, 0, 0, 0.15)' : 'none',
                                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                                     flexShrink: 0,
                                     '&:hover': {
                                         background: isActive
-                                            ? 'linear-gradient(135deg, #c0392b 0%, #e94560 100%)'
+                                            ? 'var(--primary-hover-color, #c0392b)'
                                             : '#e2e8f0',
                                         color: isActive ? '#ffffff' : '#0f172a',
                                         transform: 'translateY(-1px)',
                                         boxShadow: isActive
-                                            ? '0 4px 12px rgba(233, 69, 96, 0.45)'
+                                            ? '0 4px 12px rgba(0, 0, 0, 0.2)'
                                             : '0 2px 6px rgba(0, 0, 0, 0.06)'
                                     },
                                     '&:active': {

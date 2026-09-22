@@ -118,15 +118,15 @@ const BlogDetail = () => {
                             '& h1, & h2, & h3, & h4': { my: 2, fontWeight: 700, color: '#0f172a' },
                             '& img': { maxWidth: '100%', height: 'auto', borderRadius: '8px', my: 2 },
                             '& blockquote': {
-                                borderLeft: '4px solid #7c3aed',
+                                borderLeft: '4px solid var(--primary-color, #7c3aed)',
                                 pl: 2,
                                 py: 1,
                                 my: 2,
-                                bgcolor: '#f5f3ff',
+                                bgcolor: 'rgba(59, 247, 62, 0.08)',
                                 borderRadius: '0 8px 8px 0',
                                 fontStyle: 'italic'
                             },
-                            '& a': { color: '#7c3aed', textDecoration: 'underline' },
+                            '& a': { color: 'var(--primary-color, #7c3aed)', textDecoration: 'underline' },
                             '& ul, & ol': { pl: 3, mb: 2 }
                         }}
                         dangerouslySetInnerHTML={{ __html: blog.description || '' }}

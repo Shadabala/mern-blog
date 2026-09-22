@@ -25,6 +25,8 @@ import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../i18n/i18n";
 import { useSettings } from "../context/SettingsContext";
 import LanguageSwitcher from "../components/common/LanguageSwitcher";
+import CookiesAgreementBanner from "../components/common/CookiesAgreementBanner";
+import WebsitePopupModal from "../components/common/WebsitePopupModal";
 
 const PublicLayout = ({ children }) => {
     const { isAuthenticated, user, role, logout } = useAuth();
@@ -45,7 +47,8 @@ const PublicLayout = ({ children }) => {
     };
 
     // Header Settings
-    const headerLogo = get_setting('header_logo');
+    const headerLogo = get_setting('header_logo') || get_setting('system_logo_white') || get_setting('system_logo_black');
+    const headerLogoCircle = get_setting('header_logo_circle', 'off') === 'on' || get_setting('header_logo_circle') === true || get_setting('header_logo_circle') === '1' || get_setting('header_logo_circle') === 1;
     const siteName = get_setting('site_name', get_setting('website_name', 'Home'));
     const topbarBanner = get_setting('topbar_banner');
     const topbarBannerLink = get_setting('topbar_banner_link');
@@ -68,7 +71,8 @@ const PublicLayout = ({ children }) => {
     const hasCustomMenu = Array.isArray(headerMenuLabels) && headerMenuLabels.length > 0;
 
     // Footer Settings
-    const footerLogo = get_setting('footer_logo');
+    const footerLogo = get_setting('footer_logo') || get_setting('system_logo_black') || get_setting('system_logo_white');
+    const footerLogoCircle = get_setting('footer_logo_circle', 'off') === 'on' || get_setting('footer_logo_circle') === true || get_setting('footer_logo_circle') === '1' || get_setting('footer_logo_circle') === 1;
     const aboutDescription = get_setting('about_us_description', 'A modern blog portal to share inspiring ideas, articles, and technical insights.');
     const contactAddress = get_setting('contact_address');
     const contactEmail = get_setting('contact_email', helplineEmail || 'my.shadabalam@gmail.com');
@@ -233,12 +237,12 @@ const PublicLayout = ({ children }) => {
                 >
                     <Container maxWidth="lg">
                         <Toolbar disableGutters sx={{ justifyContent: "space-between", py: 0.5 }}>
-                            {/* Brand Logo - Powered by get_setting('header_logo') with fallback */}
+                            {/* Brand Logo - Circle or Full-size based on header_logo_circle */}
                             <Box
                                 component={RouterLink}
                                 to="/"
                                 sx={{
-                                    display: "flex",
+                                    display: "inline-flex",
                                     alignItems: "center",
                                     textDecoration: "none",
                                     mr: 3,
@@ -246,37 +250,70 @@ const PublicLayout = ({ children }) => {
                                 }}
                             >
                                 {headerLogo ? (
-                                    <Box
-                                        component="img"
-                                        src={uploaded_asset(headerLogo)}
-                                        alt={siteName}
+                                    headerLogoCircle ? (
+                                        <Box
+                                            sx={{
+                                                width: { xs: 40, sm: 46 },
+                                                height: { xs: 40, sm: 46 },
+                                                borderRadius: "50%",
+                                                overflow: "hidden",
+                                                bgcolor: "#ffffff",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                                                border: "2px solid rgba(255, 255, 255, 0.25)",
+                                                flexShrink: 0,
+                                                p: 0.35,
+                                                transition: "transform 0.2s ease",
+                                                "&:hover": { transform: "scale(1.05)" }
+                                            }}
+                                        >
+                                            <Box
+                                                component="img"
+                                                src={uploaded_asset(headerLogo)}
+                                                alt={siteName}
+                                                sx={{
+                                                    width: "100%",
+                                                    height: "100%",
+                                                    borderRadius: "50%",
+                                                    objectFit: "contain",
+                                                    display: "block"
+                                                }}
+                                            />
+                                        </Box>
+                                    ) : (
+                                        <Box
+                                            component="img"
+                                            src={uploaded_asset(headerLogo)}
+                                            alt={siteName}
+                                            sx={{
+                                                maxHeight: { xs: 38, sm: 44 },
+                                                maxWidth: { xs: 160, sm: 220 },
+                                                objectFit: "contain",
+                                                display: "block",
+                                                transition: "transform 0.2s ease",
+                                                "&:hover": { transform: "scale(1.03)" }
+                                            }}
+                                        />
+                                    )
+                                ) : (
+                                    <Typography
+                                        id="public-brand-text"
+                                        variant="h6"
                                         sx={{
-                                            maxHeight: 42,
-                                            maxWidth: { xs: 150, sm: 210 },
-                                            objectFit: "contain",
-                                            display: "block"
+                                            fontWeight: 900,
+                                            fontSize: { xs: "1.1rem", sm: "1.3rem" },
+                                            background: "linear-gradient(90deg, #ff8a80, #f5a623)",
+                                            WebkitBackgroundClip: "text",
+                                            WebkitTextFillColor: "transparent",
+                                            letterSpacing: "0.5px",
+                                            whiteSpace: "nowrap"
                                         }}
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                            const fallback = document.getElementById('public-brand-text');
-                                            if (fallback) fallback.style.display = 'block';
-                                        }}
-                                    />
-                                ) : null}
-                                <Typography
-                                    id="public-brand-text"
-                                    variant="h5"
-                                    sx={{
-                                        fontWeight: 900,
-                                        background: "linear-gradient(90deg, #ff8a80, #f5a623)",
-                                        WebkitBackgroundClip: "text",
-                                        WebkitTextFillColor: "transparent",
-                                        letterSpacing: "1px",
-                                        display: headerLogo ? 'none' : 'block'
-                                    }}
-                                >
-                                    {siteName}
-                                </Typography>
+                                    >
+                                        {siteName}
+                                    </Typography>
+                                )}
                             </Box>
 
                             {/* Navigation Links - Dynamic from header_menu_labels / header_menu_links or defaults */}
@@ -694,17 +731,61 @@ const PublicLayout = ({ children }) => {
                         <Grid item xs={12} md={4}>
                             {footerLogo ? (
                                 <Box
-                                    component="img"
-                                    src={uploaded_asset(footerLogo)}
-                                    alt={siteName}
+                                    component={RouterLink}
+                                    to="/"
                                     sx={{
-                                        maxHeight: 45,
-                                        maxWidth: 200,
-                                        mb: 1.5,
-                                        objectFit: "contain",
-                                        display: "block"
+                                        display: "inline-block",
+                                        textDecoration: "none",
+                                        mb: 2
                                     }}
-                                />
+                                >
+                                    {footerLogoCircle ? (
+                                        <Box
+                                            sx={{
+                                                width: { xs: 50, sm: 58 },
+                                                height: { xs: 50, sm: 58 },
+                                                borderRadius: "50%",
+                                                overflow: "hidden",
+                                                bgcolor: "#ffffff",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+                                                border: "2px solid rgba(255, 255, 255, 0.2)",
+                                                p: 0.4,
+                                                transition: "transform 0.2s ease",
+                                                "&:hover": { transform: "scale(1.05)" }
+                                            }}
+                                        >
+                                            <Box
+                                                component="img"
+                                                src={uploaded_asset(footerLogo)}
+                                                alt={siteName}
+                                                sx={{
+                                                    width: "100%",
+                                                    height: "100%",
+                                                    borderRadius: "50%",
+                                                    objectFit: "contain",
+                                                    display: "block"
+                                                }}
+                                            />
+                                        </Box>
+                                    ) : (
+                                        <Box
+                                            component="img"
+                                            src={uploaded_asset(footerLogo)}
+                                            alt={siteName}
+                                            sx={{
+                                                maxHeight: { xs: 45, sm: 52 },
+                                                maxWidth: { xs: 180, sm: 240 },
+                                                objectFit: "contain",
+                                                display: "block",
+                                                transition: "transform 0.2s ease",
+                                                "&:hover": { transform: "scale(1.03)" }
+                                            }}
+                                        />
+                                    )}
+                                </Box>
                             ) : (
                                 <Typography
                                     variant="h6"
@@ -806,7 +887,7 @@ const PublicLayout = ({ children }) => {
                                                 variant="body2"
                                                 component={isExternal ? "a" : RouterLink}
                                                 {...(isExternal ? { href, target: "_blank", rel: "noopener noreferrer" } : { to: href })}
-                                                sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "#ff8a80" } }}
+                                                sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}
                                             >
                                                 {lbl}
                                             </Typography>
@@ -814,9 +895,9 @@ const PublicLayout = ({ children }) => {
                                     })
                                 ) : (
                                     <>
-                                        <Typography variant="body2" component={RouterLink} to="/" sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "#ff8a80" } }}>Home</Typography>
-                                        <Typography variant="body2" component={RouterLink} to="/about" sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "#ff8a80" } }}>About Us</Typography>
-                                        <Typography variant="body2" component={RouterLink} to="/contact" sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "#ff8a80" } }}>Contact</Typography>
+                                        <Typography variant="body2" component={RouterLink} to="/" sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Home</Typography>
+                                        <Typography variant="body2" component={RouterLink} to="/about" sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>About Us</Typography>
+                                        <Typography variant="body2" component={RouterLink} to="/contact" sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Contact</Typography>
                                     </>
                                 )}
                             </Stack>
@@ -838,7 +919,7 @@ const PublicLayout = ({ children }) => {
                                                 variant="body2"
                                                 component={isExternal ? "a" : RouterLink}
                                                 {...(isExternal ? { href, target: "_blank", rel: "noopener noreferrer" } : { to: href })}
-                                                sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "#ff8a80" } }}
+                                                sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}
                                             >
                                                 {lbl}
                                             </Typography>
@@ -846,9 +927,9 @@ const PublicLayout = ({ children }) => {
                                     })
                                 ) : (
                                     <>
-                                        <Typography variant="body2" sx={{ cursor: "pointer", "&:hover": { color: "#ff8a80" } }}>Privacy Policy</Typography>
-                                        <Typography variant="body2" sx={{ cursor: "pointer", "&:hover": { color: "#ff8a80" } }}>Terms of Service</Typography>
-                                        <Typography variant="body2" sx={{ cursor: "pointer", "&:hover": { color: "#ff8a80" } }}>FAQ</Typography>
+                                        <Typography variant="body2" sx={{ cursor: "pointer", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Privacy Policy</Typography>
+                                        <Typography variant="body2" sx={{ cursor: "pointer", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Terms of Service</Typography>
+                                        <Typography variant="body2" sx={{ cursor: "pointer", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>FAQ</Typography>
                                     </>
                                 )}
                             </Stack>
@@ -911,6 +992,10 @@ const PublicLayout = ({ children }) => {
                     </Typography>
                 </Container>
             </Box>
+
+            {/* Appearance Settings: Cookies Banner & Website Popup */}
+            <CookiesAgreementBanner />
+            <WebsitePopupModal />
         </Box>
     );
 };

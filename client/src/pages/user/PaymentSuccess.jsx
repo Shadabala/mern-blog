@@ -37,7 +37,7 @@ const IconWrapper = styled(Box)(({ status }) => ({
             ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
             : status === "error"
             ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
-            : "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+            : "linear-gradient(135deg, var(--primary-color, #3b82f6) 0%, var(--primary-hover-color, #2563eb) 100%)",
     borderRadius: "50%",
     display: "flex",
     justifyContent: "center",

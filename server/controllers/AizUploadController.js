@@ -64,7 +64,8 @@ const formatFileResponse = (file, req) => {
     const host = req.get('host');
     const baseUrl = `${protocol}://${host}`;
     const cleanFileName = (file.file_name || '').replace(/\\/g, '/');
-    const url = file.external_link || `${baseUrl}/${cleanFileName}`;
+    const localUrl = `${baseUrl}/${cleanFileName}`;
+    const url = file.external_link || localUrl;
 
     return {
         _id: file._id,
@@ -72,6 +73,7 @@ const formatFileResponse = (file, req) => {
         file_original_name: file.file_original_name || 'Unknown',
         file_name: cleanFileName,
         url: url,
+        local_url: localUrl,
         user_id: file.user_id?._id || file.user_id,
         extension: file.extension,
         type: file.type,

@@ -3,27 +3,35 @@ import {
     Box, Card, CardContent, Typography, Button, TextField, Table, TableBody,
     TableCell, TableContainer, TableHead, TableRow, IconButton, Switch,
     CircularProgress, Alert, Pagination, Stack, Tooltip, Dialog, DialogTitle,
-    DialogContent, DialogActions
+    DialogContent, DialogActions, Chip, Avatar
 } from '@mui/material';
 import {
     Add as AddIcon,
     Edit as EditIcon,
     DeleteOutline as DeleteIcon,
-    ArticleOutlined as BlogIcon
+    ArticleOutlined as BlogIcon,
+    Star as PremiumIcon,
+    Group as PeopleIcon,
+    OpenInNew as LaunchIcon,
+    ReceiptLong as ReceiptIcon,
+    ContentCopy as CopyIcon
 } from '@mui/icons-material';
 
 import { useNavigate } from 'react-router-dom';
 import {
     fetchAdminBlogs,
     deleteBlog,
-    toggleBlogStatus
+    toggleBlogStatus,
+    fetchAdminPaymentsApi
 } from '../../api/admin.api';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../utils/toast';
 import { confirmDelete } from '../../utils/swal';
 
 const BlogList = () => {
     const { t, currentLang } = useLanguage();
+    const { hasPermission } = useAuth();
     const navigate = useNavigate();
 
     const [blogs, setBlogs] = useState([]);
@@ -34,6 +42,28 @@ const BlogList = () => {
 
     // Alert toast
     const [alertMessage, setAlertMessage] = useState({ type: 'info', text: '' });
+
+    // Payment History Modal State
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [selectedBlogForPayment, setSelectedBlogForPayment] = useState(null);
+    const [blogPayments, setBlogPayments] = useState([]);
+    const [loadingPayments, setLoadingPayments] = useState(false);
+
+    const handleOpenPaymentHistory = async (blog) => {
+        setSelectedBlogForPayment(blog);
+        setPaymentModalOpen(true);
+        setLoadingPayments(true);
+        try {
+            const blogId = blog._id || blog.id;
+            const res = await fetchAdminPaymentsApi({ postId: blogId });
+            setBlogPayments(Array.isArray(res) ? res : []);
+        } catch (err) {
+            console.error('Failed to load blog payments:', err);
+            toast.error(t('Failed to load payment records for this blog'));
+        } finally {
+            setLoadingPayments(false);
+        }
+    };
 
     const handleOpenCreateModal = () => {
         navigate('/admin/blogs/create');
@@ -125,28 +155,35 @@ const BlogList = () => {
 
     return (
         <Box sx={{ p: { xs: 2, md: 3 } }}>
-            {/* Titlebar matching Laravel base-module backend/blog_system/blog/index.blade.php */}
+            {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
-                <Typography variant="h5" fontWeight={700} color="#1e293b">
-                    {t("All Blogs")}
-                </Typography>
+                <Box>
+                    <Typography variant="h5" fontWeight={700} color="#0f172a">
+                        {t("All Blog Posts")}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                        {t("Manage and publish your blog articles")}
+                    </Typography>
+                </Box>
 
-                <Button
-                    variant="contained"
-                    color="info"
-                    startIcon={<AddIcon />}
-                    onClick={handleOpenCreateModal}
-                    sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        borderRadius: '20px',
-                        px: 2.5,
-                        backgroundColor: '#0ea5e9',
-                        '&:hover': { backgroundColor: '#0284c7' }
-                    }}
-                >
-                    {t("Add New Blog")}
-                </Button>
+                {hasPermission('blogs_create') && (
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenCreateModal}
+                        sx={{
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            borderRadius: '20px',
+                            px: 2.5,
+                            backgroundColor: 'var(--primary-color, #0ea5e9)',
+                            '&:hover': { backgroundColor: 'var(--primary-hover-color, #0284c7)' },
+                            color: '#ffffff'
+                        }}
+                    >
+                        {t("Add New Blog")}
+                    </Button>
+                )}
             </Box>
 
             {alertMessage.text && (
@@ -199,6 +236,7 @@ const BlogList = () => {
                                         <TableCell sx={{ fontWeight: 700 }}>{t("Title")}</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>{t("Category")}</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>{t("Short Description")}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{t("Access / Paid Users")}</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>{t("Status")}</TableCell>
                                         <TableCell align="right" sx={{ fontWeight: 700 }}>{t("Options")}</TableCell>
                                     </TableRow>
@@ -206,7 +244,7 @@ const BlogList = () => {
                                 <TableBody>
                                     {blogs.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                                            <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                                                 <Typography color="textSecondary">
                                                     {t("No blogs found")}
                                                 </Typography>
@@ -260,11 +298,64 @@ const BlogList = () => {
                                                         </Typography>
                                                     </TableCell>
 
+                                                    {/* Access & Paid Users */}
+                                                    <TableCell>
+                                                        <Stack spacing={0.5} alignItems="flex-start">
+                                                            {blog.premium ? (
+                                                                <Chip
+                                                                    icon={<PremiumIcon sx={{ fontSize: '14px !important', color: '#f59e0b !important' }} />}
+                                                                    label={t("Premium ($10)", "Premium ($10)")}
+                                                                    size="small"
+                                                                    sx={{
+                                                                        bgcolor: '#fef3c7',
+                                                                        color: '#b45309',
+                                                                        fontWeight: 700,
+                                                                        fontSize: '0.75rem',
+                                                                        border: '1px solid #fde68a'
+                                                                    }}
+                                                                />
+                                                            ) : (
+                                                                <Chip
+                                                                    label={t("Standard / Free", "Standard / Free")}
+                                                                    size="small"
+                                                                    sx={{
+                                                                        bgcolor: '#f1f5f9',
+                                                                        color: '#64748b',
+                                                                        fontWeight: 700,
+                                                                        fontSize: '0.75rem',
+                                                                        border: '1px solid #e2e8f0'
+                                                                    }}
+                                                                />
+                                                            )}
+                                                            <Tooltip title={t("Click to view paid users & transactions", "Click to view paid users & transactions")}>
+                                                                <Chip
+                                                                    icon={<PeopleIcon sx={{ fontSize: '13px !important' }} />}
+                                                                    label={`${blog.paid_users_count || (blog.premium ? 1 : 0)} ${t("Paid", "Paid")}`}
+                                                                    size="small"
+                                                                    onClick={() => handleOpenPaymentHistory(blog)}
+                                                                    sx={{
+                                                                        bgcolor: (blog.paid_users_count > 0 || blog.premium) ? '#ecfdf5' : '#f8fafc',
+                                                                        color: (blog.paid_users_count > 0 || blog.premium) ? '#059669' : '#94a3b8',
+                                                                        fontWeight: 600,
+                                                                        fontSize: '0.7rem',
+                                                                        cursor: 'pointer',
+                                                                        border: '1px solid transparent',
+                                                                        '&:hover': {
+                                                                            bgcolor: '#d1fae5',
+                                                                            borderColor: '#10b981'
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </Tooltip>
+                                                        </Stack>
+                                                    </TableCell>
+
                                                     {/* Status Toggle Switch */}
                                                     <TableCell>
                                                         <Switch
                                                             checked={Boolean(blog.status === true || blog.status === 1)}
                                                             onChange={() => handleToggleStatus(blog)}
+                                                            disabled={!hasPermission('blogs_edit')}
                                                             color="success"
                                                             size="small"
                                                         />
@@ -273,24 +364,53 @@ const BlogList = () => {
                                                     {/* Options */}
                                                     <TableCell align="right">
                                                         <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                            <Tooltip title={t("Edit")}>
+                                                            {/* 1. View on Website / Frontend */}
+                                                            <Tooltip title={t("View on Frontend / Website", "View on Frontend / Website")}>
                                                                 <IconButton
                                                                     size="small"
-                                                                    onClick={() => handleOpenEditModal(blog)}
-                                                                    sx={{ color: '#6366f1', bgcolor: '#eef2ff', '&:hover': { bgcolor: '#e0e7ff' } }}
+                                                                    onClick={() => window.open(`/blog/${blog._id || blog.id}`, '_blank')}
+                                                                    sx={{ color: '#0284c7', bgcolor: '#e0f2fe', '&:hover': { bgcolor: '#bae6fd' } }}
                                                                 >
-                                                                    <EditIcon fontSize="small" />
+                                                                    <LaunchIcon fontSize="small" />
                                                                 </IconButton>
                                                             </Tooltip>
-                                                            <Tooltip title={t("Delete")}>
+
+                                                            {/* 2. View Payment History & Paid Users */}
+                                                            <Tooltip title={t("Paid Users & Payment History", "Paid Users & Payment History")}>
                                                                 <IconButton
                                                                     size="small"
-                                                                    onClick={() => handleDeleteBlog(blog)}
-                                                                    sx={{ color: '#ef4444', bgcolor: '#fef2f2', '&:hover': { bgcolor: '#fee2e2' } }}
+                                                                    onClick={() => handleOpenPaymentHistory(blog)}
+                                                                    sx={{ color: '#059669', bgcolor: '#ecfdf5', '&:hover': { bgcolor: '#d1fae5' } }}
                                                                 >
-                                                                    <DeleteIcon fontSize="small" />
+                                                                    <ReceiptIcon fontSize="small" />
                                                                 </IconButton>
                                                             </Tooltip>
+
+                                                            {/* 3. Edit */}
+                                                            {hasPermission('blogs_edit') && (
+                                                                <Tooltip title={t("Edit")}>
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        onClick={() => handleOpenEditModal(blog)}
+                                                                        sx={{ color: 'var(--primary-color, #6366f1)', bgcolor: 'rgba(59, 247, 62, 0.12)', '&:hover': { bgcolor: 'rgba(59, 247, 62, 0.2)' } }}
+                                                                    >
+                                                                        <EditIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                            )}
+
+                                                            {/* 4. Delete */}
+                                                            {hasPermission('blogs_delete') && (
+                                                                <Tooltip title={t("Delete")}>
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        onClick={() => handleDeleteBlog(blog)}
+                                                                        sx={{ color: '#ef4444', bgcolor: '#fef2f2', '&:hover': { bgcolor: '#fee2e2' } }}
+                                                                    >
+                                                                        <DeleteIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                            )}
                                                         </Stack>
                                                     </TableCell>
                                                 </TableRow>
@@ -315,6 +435,149 @@ const BlogList = () => {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Modal: Blog Payment History & Paid Users */}
+            <Dialog
+                open={paymentModalOpen}
+                onClose={() => setPaymentModalOpen(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 3 } }}
+            >
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1.5 }}>
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                        <ReceiptIcon sx={{ color: '#059669', fontSize: 26 }} />
+                        <Box>
+                            <Typography variant="h6" fontWeight={800} color="#0f172a">
+                                {t('Paid Users & Payment History', 'Paid Users & Payment History')}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                                {selectedBlogForPayment?.title || ''}
+                            </Typography>
+                        </Box>
+                    </Box>
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => {
+                            setPaymentModalOpen(false);
+                            navigate(`/admin/payments?postId=${selectedBlogForPayment?._id || selectedBlogForPayment?.id}`);
+                        }}
+                        sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 700 }}
+                    >
+                        {t('View in All Payments', 'View in All Payments')}
+                    </Button>
+                </DialogTitle>
+                <DialogContent dividers sx={{ p: 2.5 }}>
+                    {/* Header Summary */}
+                    {selectedBlogForPayment && (
+                        <Box sx={{ p: 2, mb: 2.5, bgcolor: '#f8fafc', borderRadius: 2.5, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                            <Box display="flex" alignItems="center" gap={1.5}>
+                                {selectedBlogForPayment.banner && (
+                                    <img
+                                        src={selectedBlogForPayment.banner}
+                                        alt=""
+                                        style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }}
+                                    />
+                                )}
+                                <Box>
+                                    <Typography variant="subtitle2" fontWeight={700} color="#1e293b">
+                                        {selectedBlogForPayment.title}
+                                    </Typography>
+                                    <Typography variant="caption" color="textSecondary">
+                                        {t('Upgrade Fee:', 'Upgrade Fee:')} <strong>${selectedBlogForPayment.price || 10}</strong>
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            <Box display="flex" gap={2}>
+                                <Box textAlign="center" sx={{ px: 2, py: 1, bgcolor: '#ffffff', borderRadius: 2, border: '1px solid #e2e8f0' }}>
+                                    <Typography variant="caption" color="textSecondary" display="block">{t('Total Paying Users', 'Total Paying Users')}</Typography>
+                                    <Typography variant="h6" fontWeight={800} color="#059669">
+                                        {blogPayments.filter(p => p.status === 'success').length}
+                                    </Typography>
+                                </Box>
+                                <Box textAlign="center" sx={{ px: 2, py: 1, bgcolor: '#ffffff', borderRadius: 2, border: '1px solid #e2e8f0' }}>
+                                    <Typography variant="caption" color="textSecondary" display="block">{t('Total Revenue', 'Total Revenue')}</Typography>
+                                    <Typography variant="h6" fontWeight={800} color="#3b82f6">
+                                        ${blogPayments.filter(p => p.status === 'success').reduce((sum, p) => sum + (Number(p.amount) || 0), 0).toFixed(2)}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Box>
+                    )}
+
+                    {loadingPayments ? (
+                        <Box display="flex" justifyContent="center" py={6}>
+                            <CircularProgress size={32} />
+                        </Box>
+                    ) : blogPayments.length === 0 ? (
+                        <Box textAlign="center" py={6}>
+                            <Typography color="textSecondary" fontWeight={600}>
+                                {t('No payment transactions recorded for this blog yet.', 'No payment transactions recorded for this blog yet.')}
+                            </Typography>
+                        </Box>
+                    ) : (
+                        <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
+                            <Table size="small">
+                                <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 700 }}>{t('User', 'User')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{t('Amount', 'Amount')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{t('Gateway', 'Gateway')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{t('Reference ID', 'Reference ID')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{t('Date', 'Date')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{t('Status', 'Status')}</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {blogPayments.map(p => {
+                                        const uName = p.userId?.name || p.username || 'User';
+                                        const uEmail = p.userId?.email || p.customerEmail || '—';
+                                        const ref = p.transactionId || p.razorpayPaymentId || p.stripeSessionId || p.paypalOrderId || '—';
+
+                                        return (
+                                            <TableRow key={p._id} hover>
+                                                <TableCell>
+                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                        <Avatar src={p.userId?.avatar} sx={{ width: 28, height: 28, fontSize: 12 }}>
+                                                            {uName.charAt(0).toUpperCase()}
+                                                        </Avatar>
+                                                        <Box>
+                                                            <Typography variant="body2" fontWeight={700}>{uName}</Typography>
+                                                            <Typography variant="caption" color="textSecondary">{uEmail}</Typography>
+                                                        </Box>
+                                                    </Stack>
+                                                </TableCell>
+                                                <TableCell sx={{ fontWeight: 800 }}>${Number(p.amount).toFixed(2)}</TableCell>
+                                                <TableCell>
+                                                    <Chip label={p.paymentMethod?.toUpperCase() || 'PAYMENT'} size="small" sx={{ fontWeight: 700, fontSize: '0.68rem' }} />
+                                                </TableCell>
+                                                <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{ref}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                                    {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        label={p.status?.toUpperCase() || 'UNKNOWN'}
+                                                        size="small"
+                                                        color={p.status === 'success' ? 'success' : p.status === 'pending' ? 'warning' : 'error'}
+                                                        sx={{ fontWeight: 700, fontSize: '0.65rem', height: 22 }}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setPaymentModalOpen(false)} sx={{ textTransform: 'none' }}>
+                        {t('Close', 'Close')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

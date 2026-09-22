@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { getCurrentUser, logoutUser } from "../api/auth.api";
 
 const AuthContext = createContext();
@@ -84,6 +84,35 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Checks if current logged in user has a specific permission
+     */
+    const hasPermission = useCallback((permissionKey) => {
+        if (!user) return false;
+        const userRole = user.role || user.user_type || 'user';
+        if (userRole === 'admin') return true;
+        if (userRole !== 'staff') return false;
+
+        const perms = user.permissions || user.role_id?.permissions || [];
+        if (perms.includes('*')) return true;
+        return perms.includes(permissionKey);
+    }, [user]);
+
+    /**
+     * Checks if current logged in user has ANY of the given permissions
+     */
+    const hasAnyPermission = useCallback((permissionKeys = []) => {
+        if (!user) return false;
+        const userRole = user.role || user.user_type || 'user';
+        if (userRole === 'admin') return true;
+        if (userRole !== 'staff') return false;
+
+        const perms = user.permissions || user.role_id?.permissions || [];
+        if (perms.includes('*')) return true;
+        if (!Array.isArray(permissionKeys) || permissionKeys.length === 0) return true;
+        return permissionKeys.some(key => perms.includes(key));
+    }, [user]);
+
     return (
         <AuthContext.Provider
             value={{
@@ -92,7 +121,9 @@ export const AuthProvider = ({ children }) => {
                 isAuthenticated,
                 isLoading,
                 loginState,
-                logout
+                logout,
+                hasPermission,
+                hasAnyPermission
             }}
         >
             {children}
@@ -101,3 +132,4 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+export default AuthContext;

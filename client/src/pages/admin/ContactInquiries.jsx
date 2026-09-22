@@ -294,12 +294,13 @@ const ContactInquiries = () => {
                             disabled={sendingReply}
                             startIcon={sendingReply ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
                             sx={{
-                                bgcolor: '#3b82f6',
-                                '&:hover': { bgcolor: '#2563eb' },
+                                bgcolor: 'var(--primary-color, #3b82f6)',
+                                '&:hover': { bgcolor: 'var(--primary-hover-color, #2563eb)' },
                                 borderRadius: 2,
                                 textTransform: 'none',
                                 fontWeight: 600,
-                                px: 2.5
+                                px: 2.5,
+                                color: '#ffffff'
                             }}
                         >
                             {sendingReply ? t("Sending...") : t("Send Reply")}

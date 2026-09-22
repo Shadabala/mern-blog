@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import Setting from '../models/Setting.js';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { readEnvFile } from '../utils/envHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,74 +39,32 @@ const MIME_TYPES = {
 };
 
 /**
- * Fetch storage settings from DB with fallback to process.env
+ * Fetch storage settings directly from .env file (with process.env fallback)
  */
-export const getStorageConfig = async () => {
-    try {
-        const keys = [
-            'FILESYSTEM_DRIVER',
-            'AWS_ACCESS_KEY_ID',
-            'AWS_SECRET_ACCESS_KEY',
-            'AWS_DEFAULT_REGION',
-            'AWS_BUCKET',
-            'AWS_URL',
-            'BACKBLAZE_ACCESS_KEY_ID',
-            'BACKBLAZE_SECRET_ACCESS_KEY',
-            'BACKBLAZE_DEFAULT_REGION',
-            'BACKBLAZE_BUCKET',
-            'BACKBLAZE_ENDPOINT',
-            'BACKBLAZE_URL'
-        ];
+export const getStorageConfig = () => {
+    const env = readEnvFile();
 
-        const settings = await Setting.find({ key: { $in: keys } });
-        const config = {};
-        settings.forEach((s) => {
-            if (s.key && s.value !== undefined) {
-                config[s.key] = s.value;
-            }
-        });
+    let rawDriver = (env.FILESYSTEM_DRIVER || process.env.FILESYSTEM_DRIVER || 'local').toLowerCase().trim();
+    const driver = (rawDriver === 's3' || rawDriver === 'aws') ? 's3' : rawDriver;
 
-        const driver = (config.FILESYSTEM_DRIVER || process.env.FILESYSTEM_DRIVER || 'local').toLowerCase();
-
-        return {
-            driver,
-            aws: {
-                accessKeyId: config.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '',
-                secretAccessKey: config.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
-                region: config.AWS_DEFAULT_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
-                bucket: config.AWS_BUCKET || process.env.AWS_BUCKET || '',
-                url: config.AWS_URL || process.env.AWS_URL || ''
-            },
-            backblaze: {
-                accessKeyId: config.BACKBLAZE_ACCESS_KEY_ID || process.env.BACKBLAZE_ACCESS_KEY_ID || '',
-                secretAccessKey: config.BACKBLAZE_SECRET_ACCESS_KEY || process.env.BACKBLAZE_SECRET_ACCESS_KEY || '',
-                region: config.BACKBLAZE_DEFAULT_REGION || process.env.BACKBLAZE_DEFAULT_REGION || 'us-east-005',
-                bucket: config.BACKBLAZE_BUCKET || process.env.BACKBLAZE_BUCKET || '',
-                endpoint: config.BACKBLAZE_ENDPOINT || process.env.BACKBLAZE_ENDPOINT || '',
-                url: config.BACKBLAZE_URL || process.env.BACKBLAZE_URL || ''
-            }
-        };
-    } catch (err) {
-        console.error('Error fetching storage config:', err);
-        return {
-            driver: (process.env.FILESYSTEM_DRIVER || 'local').toLowerCase(),
-            aws: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-                region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
-                bucket: process.env.AWS_BUCKET || '',
-                url: process.env.AWS_URL || ''
-            },
-            backblaze: {
-                accessKeyId: process.env.BACKBLAZE_ACCESS_KEY_ID || '',
-                secretAccessKey: process.env.BACKBLAZE_SECRET_ACCESS_KEY || '',
-                region: process.env.BACKBLAZE_DEFAULT_REGION || 'us-east-005',
-                bucket: process.env.BACKBLAZE_BUCKET || '',
-                endpoint: process.env.BACKBLAZE_ENDPOINT || '',
-                url: process.env.BACKBLAZE_URL || ''
-            }
-        };
-    }
+    return {
+        driver,
+        aws: {
+            accessKeyId: (env.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '').trim(),
+            secretAccessKey: (env.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '').trim(),
+            region: (env.AWS_DEFAULT_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1').trim(),
+            bucket: (env.AWS_BUCKET || process.env.AWS_BUCKET || '').trim(),
+            url: (env.AWS_URL || process.env.AWS_URL || '').trim()
+        },
+        backblaze: {
+            accessKeyId: (env.BACKBLAZE_ACCESS_KEY_ID || process.env.BACKBLAZE_ACCESS_KEY_ID || '').trim(),
+            secretAccessKey: (env.BACKBLAZE_SECRET_ACCESS_KEY || process.env.BACKBLAZE_SECRET_ACCESS_KEY || '').trim(),
+            region: (env.BACKBLAZE_DEFAULT_REGION || process.env.BACKBLAZE_DEFAULT_REGION || 'us-east-005').trim(),
+            bucket: (env.BACKBLAZE_BUCKET || process.env.BACKBLAZE_BUCKET || '').trim(),
+            endpoint: (env.BACKBLAZE_ENDPOINT || process.env.BACKBLAZE_ENDPOINT || '').trim(),
+            url: (env.BACKBLAZE_URL || process.env.BACKBLAZE_URL || '').trim()
+        }
+    };
 };
 
 /**
@@ -119,18 +77,19 @@ export const getStorageConfig = async () => {
  * @param {string} baseUrl - Base URL of the API server, e.g. "http://localhost:5000"
  */
 export const uploadToStorage = async (file, relativePath, ext, baseUrl) => {
-    const config = await getStorageConfig();
-    const isCloud = config.driver === 's3' || config.driver === 'aws' || config.driver === 'backblaze';
-    const localDiskPath = path.join(publicDir, relativePath);
+    const config = getStorageConfig();
+    const cleanRelativePath = relativePath.replace(/\\/g, '/');
+    const localDiskPath = path.join(publicDir, cleanRelativePath);
 
-    if (isCloud) {
+    // 1. S3 Cloud Storage Handler
+    if (config.driver === 's3' || config.driver === 'aws' || config.driver === 'backblaze') {
         const isBackblaze = config.driver === 'backblaze';
         const targetConfig = isBackblaze ? config.backblaze : config.aws;
 
         if (targetConfig.bucket && targetConfig.accessKeyId && targetConfig.secretAccessKey) {
             try {
                 const s3ClientConfig = {
-                    region: targetConfig.region,
+                    region: targetConfig.region || 'us-east-1',
                     credentials: {
                         accessKeyId: targetConfig.accessKeyId,
                         secretAccessKey: targetConfig.secretAccessKey
@@ -149,14 +108,14 @@ export const uploadToStorage = async (file, relativePath, ext, baseUrl) => {
 
                 const putCommand = new PutObjectCommand({
                     Bucket: targetConfig.bucket,
-                    Key: relativePath.replace(/\\/g, '/'),
+                    Key: cleanRelativePath,
                     Body: fileBuffer,
                     ContentType: mimeType
                 });
 
                 await s3Client.send(putCommand);
 
-                // Unlink temporary local copy matching Laravel unlink(base_path('public/') . $path)
+                // Unlink temporary local file after successful cloud upload
                 if (fs.existsSync(localDiskPath)) {
                     try {
                         fs.unlinkSync(localDiskPath);
@@ -168,30 +127,29 @@ export const uploadToStorage = async (file, relativePath, ext, baseUrl) => {
                 // Construct public URL
                 let cloudUrl = '';
                 if (targetConfig.url) {
-                    cloudUrl = `${targetConfig.url.replace(/\/$/, '')}/${relativePath.replace(/\\/g, '/')}`;
+                    cloudUrl = `${targetConfig.url.replace(/\/$/, '')}/${cleanRelativePath}`;
                 } else if (isBackblaze) {
-                    cloudUrl = `https://${targetConfig.bucket}.s3.${targetConfig.region}.backblazeb2.com/${relativePath.replace(/\\/g, '/')}`;
+                    cloudUrl = `https://${targetConfig.bucket}.s3.${targetConfig.region}.backblazeb2.com/${cleanRelativePath}`;
                 } else {
-                    cloudUrl = `https://${targetConfig.bucket}.s3.${targetConfig.region}.amazonaws.com/${relativePath.replace(/\\/g, '/')}`;
+                    cloudUrl = `https://${targetConfig.bucket}.s3.${targetConfig.region}.amazonaws.com/${cleanRelativePath}`;
                 }
 
                 return {
-                    driver: config.driver,
-                    fileName: relativePath.replace(/\\/g, '/'),
+                    driver: 's3',
+                    fileName: cleanRelativePath,
                     url: cloudUrl,
                     externalLink: cloudUrl
                 };
             } catch (cloudErr) {
-                console.error(`Error uploading to ${config.driver} cloud storage:`, cloudErr);
-                // Fall back to local storage if cloud upload fails
+                console.error(`Error uploading to ${config.driver.toUpperCase()} cloud storage:`, cloudErr.message);
+                console.warn('Falling back to local storage.');
             }
         } else {
-            console.warn(`${config.driver.toUpperCase()} storage is active but credentials or bucket are not configured. Falling back to local storage.`);
+            console.warn(`FILESYSTEM_DRIVER is set to '${config.driver}', but AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET) are incomplete in .env. Falling back to local storage.`);
         }
     }
 
-    // Default: Local disk storage
-    const cleanRelativePath = relativePath.replace(/\\/g, '/');
+    // 2. Default Local Disk Storage Handler
     const localUrl = `${baseUrl.replace(/\/$/, '')}/${cleanRelativePath}`;
 
     return {
@@ -211,7 +169,7 @@ export const uploadToStorage = async (file, relativePath, ext, baseUrl) => {
 export const deleteFromStorage = async (uploadDoc) => {
     if (!uploadDoc) return;
 
-    const config = await getStorageConfig();
+    const config = getStorageConfig();
     const fileName = (uploadDoc.file_name || '').replace(/\\/g, '/');
     const isCloudFile = Boolean(
         uploadDoc.external_link ||
@@ -228,7 +186,7 @@ export const deleteFromStorage = async (uploadDoc) => {
 
             if (targetConfig.bucket && targetConfig.accessKeyId && targetConfig.secretAccessKey) {
                 const s3ClientConfig = {
-                    region: targetConfig.region,
+                    region: targetConfig.region || 'us-east-1',
                     credentials: {
                         accessKeyId: targetConfig.accessKeyId,
                         secretAccessKey: targetConfig.secretAccessKey
@@ -263,4 +221,60 @@ export const deleteFromStorage = async (uploadDoc) => {
             }
         }
     }
+};
+
+/**
+ * Retrieve file stream from cloud storage (S3 / Backblaze)
+ *
+ * @param {string} relativePath - e.g. "uploads/all/<filename>"
+ * @returns {Promise<{ stream: any, contentType: string, contentLength: number } | null>}
+ */
+export const getFileStreamFromStorage = async (relativePath) => {
+    const config = getStorageConfig();
+    const cleanKey = (relativePath || '').replace(/\\/g, '/').replace(/^\/+/, '');
+    const isCloud = config.driver === 's3' || config.driver === 'aws' || config.driver === 'backblaze';
+    const targetConfig = (config.driver === 'backblaze') ? config.backblaze : config.aws;
+
+    if (!targetConfig.bucket || !targetConfig.accessKeyId || !targetConfig.secretAccessKey) {
+        return null;
+    }
+
+    try {
+        const s3ClientConfig = {
+            region: targetConfig.region || 'us-east-1',
+            credentials: {
+                accessKeyId: targetConfig.accessKeyId,
+                secretAccessKey: targetConfig.secretAccessKey
+            }
+        };
+
+        if (config.driver === 'backblaze' && targetConfig.endpoint) {
+            s3ClientConfig.endpoint = targetConfig.endpoint.startsWith('http')
+                ? targetConfig.endpoint
+                : `https://${targetConfig.endpoint}`;
+        }
+
+        const s3Client = new S3Client(s3ClientConfig);
+        const command = new GetObjectCommand({
+            Bucket: targetConfig.bucket,
+            Key: cleanKey
+        });
+
+        const response = await s3Client.send(command);
+        return {
+            stream: response.Body,
+            contentType: response.ContentType,
+            contentLength: response.ContentLength
+        };
+    } catch (err) {
+        console.warn(`Could not get cloud stream for ${cleanKey}:`, err.message);
+        return null;
+    }
+};
+
+export default {
+    getStorageConfig,
+    uploadToStorage,
+    deleteFromStorage,
+    getFileStreamFromStorage
 };

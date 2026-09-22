@@ -30,6 +30,9 @@ import {
     fetchFileInfoApi
 } from '../../api/admin.api';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+
+const BACKEND_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
 
 const formatBytes = (bytes) => {
     if (!bytes || bytes === 0) return '0 Bytes';
@@ -55,7 +58,11 @@ const FileBox = styled(Box)(({ theme }) => ({
 
 const UploadedFiles = () => {
     const { t } = useLanguage();
+    const { hasPermission } = useAuth();
     const navigate = useNavigate();
+
+    const canCreate = hasPermission('uploads_create');
+    const canDelete = hasPermission('uploads_delete');
 
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -215,15 +222,17 @@ const UploadedFiles = () => {
                     {t("uploader.allUploadedFiles", "All uploaded files")}
                 </Typography>
 
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<UploadIcon />}
-                    onClick={() => navigate('/admin/uploaded-files/create')}
-                    sx={{ textTransform: 'none', fontWeight: 600, px: 2.5, borderRadius: '8px' }}
-                >
-                    {t("uploader.uploadNewFile", "Upload New File")}
-                </Button>
+                {canCreate && (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<UploadIcon />}
+                        onClick={() => navigate('/admin/uploaded-files/create')}
+                        sx={{ textTransform: 'none', fontWeight: 600, px: 2.5, borderRadius: '8px' }}
+                    >
+                        {t("uploader.uploadNewFile", "Upload New File")}
+                    </Button>
+                )}
             </Box>
 
             {/* Main Content Card */}
@@ -242,17 +251,19 @@ const UploadedFiles = () => {
                 >
                     {/* Bulk Action */}
                     <Box display="flex" alignItems="center" gap={1.5}>
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            size="small"
-                            onClick={handleBulkDelete}
-                            disabled={selectedIds.length === 0}
-                            startIcon={<DeleteIcon />}
-                            sx={{ textTransform: 'none', fontWeight: 600 }}
-                        >
-                            {t("uploader.deleteSelection", "Delete selection")} ({selectedIds.length})
-                        </Button>
+                        {canDelete && (
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                onClick={handleBulkDelete}
+                                disabled={selectedIds.length === 0}
+                                startIcon={<DeleteIcon />}
+                                sx={{ textTransform: 'none', fontWeight: 600 }}
+                            >
+                                {t("uploader.deleteSelection", "Delete selection")} ({selectedIds.length})
+                            </Button>
+                        )}
                     </Box>
 
                     {/* Right Filters */}
@@ -303,7 +314,7 @@ const UploadedFiles = () => {
                 {/* Card Body with Files Grid */}
                 <CardContent sx={{ p: 3 }}>
                     {/* Select All Checkbox */}
-                    {files.length > 0 && (
+                    {files.length > 0 && canDelete && (
                         <Box mb={2}>
                             <FormControlLabel
                                 control={
@@ -327,14 +338,16 @@ const UploadedFiles = () => {
                             <Typography variant="h6" color="textSecondary">
                                 {t("uploader.noFilesFound", "No files found")}
                             </Typography>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                sx={{ mt: 2 }}
-                                onClick={() => navigate('/admin/uploaded-files/create')}
-                            >
-                                {t("uploader.uploadNow", "Upload Now")}
-                            </Button>
+                            {canCreate && (
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    sx={{ mt: 2 }}
+                                    onClick={() => navigate('/admin/uploaded-files/create')}
+                                >
+                                    {t("uploader.uploadNow", "Upload Now")}
+                                </Button>
+                            )}
                         </Box>
                     ) : (
                         <Box
@@ -360,14 +373,16 @@ const UploadedFiles = () => {
                                         </Box>
 
                                         {/* Checkbox */}
-                                        <Box position="absolute" top={6} left={6} zIndex={2}>
-                                            <Checkbox
-                                                size="small"
-                                                checked={isChecked}
-                                                onChange={() => handleSelectOne(fileId)}
-                                                sx={{ p: 0.5, backgroundColor: 'rgba(255, 255, 255, 0.85)', borderRadius: '4px' }}
-                                            />
-                                        </Box>
+                                        {canDelete && (
+                                            <Box position="absolute" top={6} left={6} zIndex={2}>
+                                                <Checkbox
+                                                    size="small"
+                                                    checked={isChecked}
+                                                    onChange={() => handleSelectOne(fileId)}
+                                                    sx={{ p: 0.5, backgroundColor: 'rgba(255, 255, 255, 0.85)', borderRadius: '4px' }}
+                                                />
+                                            </Box>
+                                        )}
 
                                         {/* Thumbnail Preview */}
                                         <Box
@@ -390,6 +405,12 @@ const UploadedFiles = () => {
                                                     src={file.url}
                                                     alt={file.file_original_name}
                                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    onError={(e) => {
+                                                        const fallback = file.local_url || (file.file_name ? `${BACKEND_BASE}/${file.file_name}` : null);
+                                                        if (fallback && e.currentTarget.src !== fallback) {
+                                                            e.currentTarget.src = fallback;
+                                                        }
+                                                    }}
                                                 />
                                             ) : file.type === 'video' ? (
                                                 <VideoIcon sx={{ fontSize: 52, color: '#64748b' }} />
@@ -467,10 +488,12 @@ const UploadedFiles = () => {
                         {t("uploader.copyLink", "Copy Link")}
                     </MenuItem>
                 )}
-                <MenuItem onClick={handleDeleteSingle} sx={{ fontSize: '0.875rem', color: '#ef4444' }}>
-                    <DeleteIcon fontSize="small" sx={{ mr: 1.5 }} />
-                    {t("uploader.delete", "Delete")}
-                </MenuItem>
+                {canDelete && (
+                    <MenuItem onClick={handleDeleteSingle} sx={{ fontSize: '0.875rem', color: '#ef4444' }}>
+                        <DeleteIcon fontSize="small" sx={{ mr: 1.5 }} />
+                        {t("uploader.delete", "Delete")}
+                    </MenuItem>
+                )}
             </Menu>
 
             {/* File Info Details Modal */}
@@ -516,6 +539,12 @@ const UploadedFiles = () => {
                                         src={fileDetails.url}
                                         alt={fileDetails.file_original_name}
                                         style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                                        onError={(e) => {
+                                            const fallback = fileDetails.local_url || (fileDetails.file_name ? `${BACKEND_BASE}/${fileDetails.file_name}` : null);
+                                            if (fallback && e.currentTarget.src !== fallback) {
+                                                e.currentTarget.src = fallback;
+                                            }
+                                        }}
                                     />
                                 ) : (
                                     <FileIcon sx={{ fontSize: 72, color: '#94a3b8' }} />

@@ -2,6 +2,7 @@ import Blog from '../models/Blog.js';
 import BlogTranslation from '../models/BlogTranslation.js';
 import Category from '../models/Category.js';
 import User from '../models/User.js';
+import Payment from '../models/Payment.js';
 import { resolveLanguageCandidates } from '../helpers/translationHelper.js';
 
 // Helper to make clean slug
@@ -533,6 +534,23 @@ export const blogGetAll = async (req, res) => {
             })
             .populate('blog_translations');
 
+        // Aggregate payment stats for returned blogs
+        const blogPaidMap = {};
+        try {
+            const blogIds = blogs.map(b => b._id);
+            const blogPaymentStats = await Payment.aggregate([
+                { $match: { status: 'success', postId: { $in: blogIds } } },
+                { $group: { _id: '$postId', count: { $sum: 1 }, uniqueUsers: { $addToSet: '$userId' } } }
+            ]);
+            blogPaymentStats.forEach(bp => {
+                if (bp._id) {
+                    blogPaidMap[bp._id.toString()] = bp.uniqueUsers ? bp.uniqueUsers.filter(Boolean).length : bp.count;
+                }
+            });
+        } catch (aggErr) {
+            console.warn('Error calculating blog payment stats:', aggErr.message);
+        }
+
         const formattedBlogs = blogs.map(b => {
             const translation = (b.blog_translations || []).find(t => candidates.includes(t.lang?.toLowerCase()));
 
@@ -548,6 +566,8 @@ export const blogGetAll = async (req, res) => {
             const resolvedMetaTitle = translation?.meta_title || b.meta_title;
             const resolvedMetaDesc = translation?.meta_description || b.meta_description;
             const resolvedMetaKeywords = translation?.meta_keywords || b.meta_keywords;
+
+            const paidCount = blogPaidMap[b._id.toString()] || (b.premium ? 1 : 0);
 
             return {
                 _id: b._id,
@@ -575,6 +595,7 @@ export const blogGetAll = async (req, res) => {
                 published: Boolean(b.status === 1 || b.status === true || b.status === 'true' || b.status === '1'),
                 premium: !!b.premium,
                 price: b.price || 10,
+                paid_users_count: paidCount,
                 username: b.username,
                 created_at: b.createdAt,
                 createdDate: b.createdAt,

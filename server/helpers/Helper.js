@@ -1,17 +1,31 @@
 import WebsiteSetting from '../models/WebsiteSetting.js';
 import Upload from '../models/Upload.js';
+import {
+    cacheGet,
+    cacheSet,
+    cacheDel,
+    cacheFlush,
+    registerFlushListener
+} from '../config/redis.js';
 
 // In-memory cache for settings & uploaded assets with 24-hour default TTL (86400 seconds)
 const cacheStore = new Map();
 
+// Register listener to clear local memory when cache is flushed system-wide
+registerFlushListener(() => {
+    cacheStore.clear();
+    uploadMemoryCache.clear();
+});
+
 /**
- * Cache remember utility (mimicking Laravel Cache::remember)
+ * Cache remember utility (supporting Redis & In-Memory fallback)
  * @param {string} key
  * @param {number} ttlSeconds
  * @param {Function} callback
  * @returns {Promise<any>}
  */
 export const cacheRemember = async (key, ttlSeconds = 86400, callback) => {
+    // 1. Check local fast memory store
     const cached = cacheStore.get(key);
     const now = Date.now();
 
@@ -19,11 +33,29 @@ export const cacheRemember = async (key, ttlSeconds = 86400, callback) => {
         return cached.data;
     }
 
+    // 2. Check Redis cache if enabled/active
+    try {
+        const redisVal = await cacheGet(key);
+        if (redisVal !== null && redisVal !== undefined) {
+            cacheStore.set(key, {
+                data: redisVal,
+                expiry: now + ttlSeconds * 1000
+            });
+            return redisVal;
+        }
+    } catch {
+        // Fall back to callback
+    }
+
+    // 3. Resolve fresh data from callback
     const data = await callback();
-    cacheStore.set(key, {
-        data,
-        expiry: now + ttlSeconds * 1000
-    });
+    if (data !== undefined && data !== null) {
+        cacheStore.set(key, {
+            data,
+            expiry: now + ttlSeconds * 1000
+        });
+        await cacheSet(key, data, ttlSeconds).catch(() => {});
+    }
 
     return data;
 };
@@ -32,16 +64,20 @@ export const cacheRemember = async (key, ttlSeconds = 86400, callback) => {
  * Clear specific key or entire cache (mimicking Laravel Artisan::call('cache:clear'))
  * @param {string} [key]
  */
-export const clearCache = (key = null) => {
+export const clearCache = async (key = null) => {
     if (key) {
         cacheStore.delete(key);
+        await cacheDel(key).catch(() => {});
     } else {
         cacheStore.clear();
+        uploadMemoryCache.clear();
+        await cacheFlush().catch(() => {});
     }
 };
 
-export const clearSettingsCache = () => {
+export const clearSettingsCache = async () => {
     cacheStore.delete('website_settings');
+    await cacheDel('website_settings').catch(() => {});
 };
 
 /**

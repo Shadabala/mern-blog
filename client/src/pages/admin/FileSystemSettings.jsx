@@ -55,7 +55,8 @@ const FileSystemSettings = () => {
             const data = await fetchFileSystemSettings();
             if (data?.success && data.settings) {
                 const s = data.settings;
-                setDriver(s.FILESYSTEM_DRIVER || "local");
+                const rawDriver = (s.FILESYSTEM_DRIVER || "local").toLowerCase();
+                setDriver(rawDriver === "s3" || rawDriver === "aws" ? "s3" : "local");
 
                 setAwsSettings({
                     AWS_ACCESS_KEY_ID: s.AWS_ACCESS_KEY_ID || "",
@@ -132,7 +133,7 @@ const FileSystemSettings = () => {
     const handleTestRedis = async () => {
         setTestingRedis(true);
         try {
-            const res = await testRedisConnectionApi();
+            const res = await testRedisConnectionApi(redisSettings);
             if (res?.success) {
                 const msg = res.message || t("Redis connected successfully");
                 setAlertMessage({ type: "success", text: msg });
@@ -301,8 +302,8 @@ const FileSystemSettings = () => {
                                 <FormControlLabel
                                     control={
                                         <Radio
-                                            checked={driver === "aws"}
-                                            onChange={() => handleDriverChange("aws")}
+                                            checked={driver === "s3" || driver === "aws"}
+                                            onChange={() => handleDriverChange("s3")}
                                             sx={{ color: "#6366f1", "&.Mui-checked": { color: "#6366f1" } }}
                                         />
                                     }

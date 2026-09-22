@@ -78,7 +78,7 @@ const PagesList = () => {
             {/* Titlebar */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box display="flex" alignItems="center" gap={1.5}>
-                    <PageIcon sx={{ color: '#6366f1', fontSize: 32 }} />
+                    <PageIcon sx={{ color: 'var(--primary-color, #6366f1)', fontSize: 32 }} />
                     <Typography variant="h5" fontWeight={700} color="#1e293b">
                         {t("Website Pages")}
                     </Typography>
@@ -89,12 +89,13 @@ const PagesList = () => {
                     startIcon={<AddIcon />}
                     onClick={() => navigate('/admin/website-setup/pages/create')}
                     sx={{
-                        bgcolor: '#0ea5e9',
-                        '&:hover': { bgcolor: '#0284c7' },
+                        bgcolor: 'var(--primary-color, #0ea5e9)',
+                        '&:hover': { bgcolor: 'var(--primary-hover-color, #0284c7)' },
                         borderRadius: '20px',
                         textTransform: 'none',
                         fontWeight: 600,
-                        px: 2.5
+                        px: 2.5,
+                        color: '#ffffff'
                     }}
                 >
                     {t("Add New Page")}
@@ -157,19 +158,19 @@ const PagesList = () => {
                                                 <TableCell align="right">
                                                     <Stack direction="row" spacing={1} justifyContent="flex-end">
                                                         <Tooltip title={t("Edit Page")}>
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={() => {
-                                                                    if (p.type === 'home_page') {
-                                                                        navigate('/admin/website-setup/homepage');
-                                                                    } else {
-                                                                        navigate(`/admin/website-setup/pages/${p._id}/edit`);
-                                                                    }
-                                                                }}
-                                                                sx={{ color: '#6366f1', bgcolor: '#eef2ff', '&:hover': { bgcolor: '#e0e7ff' } }}
-                                                            >
-                                                                <EditIcon fontSize="small" />
-                                                            </IconButton>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => {
+                                                                        if (p.type === 'home_page') {
+                                                                            navigate('/admin/website-setup/homepage');
+                                                                        } else {
+                                                                            navigate(`/admin/website-setup/pages/${p._id}/edit`);
+                                                                        }
+                                                                    }}
+                                                                    sx={{ color: 'var(--primary-color, #6366f1)', bgcolor: 'rgba(59, 247, 62, 0.12)', '&:hover': { bgcolor: 'rgba(59, 247, 62, 0.2)' } }}
+                                                                >
+                                                                    <EditIcon fontSize="small" />
+                                                                </IconButton>
                                                         </Tooltip>
 
                                                         {p.type === 'custom_page' && (

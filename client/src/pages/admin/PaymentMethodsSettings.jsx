@@ -8,11 +8,13 @@ import {
     PaymentOutlined as PaymentIcon
 } from '@mui/icons-material';
 
+import { useNavigate } from 'react-router-dom';
 import { fetchPaymentMethodsApi, updatePaymentMethodsApi } from '../../api/admin.api';
 import { useLanguage } from '../../context/LanguageContext';
 import { toast } from '../../utils/toast';
 
 const PaymentMethodsSettings = () => {
+    const navigate = useNavigate();
     const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -25,6 +27,9 @@ const PaymentMethodsSettings = () => {
         RAZORPAY_KEY: '',
         RAZORPAY_SECRET: '',
         razorpay_payment: 0,
+        PAYPAL_CLIENT_ID: '',
+        PAYPAL_CLIENT_SECRET: '',
+        paypal_payment: 0,
         manual_payment_1_name: 'Bank Transfer / Wire',
         manual_payment_1_instruction: 'Please transfer funds to Account #123456 and email the receipt.',
         manual_payment_1_status: 1
@@ -190,6 +195,48 @@ const PaymentMethodsSettings = () => {
                     </Card>
                 </Grid>
 
+                {/* PayPal Card */}
+                <Grid item xs={12} md={6}>
+                    <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', height: '100%' }}>
+                        <CardHeader
+                            title={t("PayPal Credential")}
+                            titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
+                            action={
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={Boolean(Number(form.paypal_payment) === 1 || form.paypal_payment === true)}
+                                            onChange={(e) => handleFieldChange('paypal_payment', e.target.checked ? 1 : 0)}
+                                            color="success"
+                                        />
+                                    }
+                                    label={t("Active")}
+                                />
+                            }
+                            sx={{ borderBottom: '1px solid #f1f5f9', pb: 1.5 }}
+                        />
+                        <CardContent>
+                            <Stack spacing={2.5}>
+                                <TextField
+                                    label={t("PayPal Client ID")}
+                                    value={form.PAYPAL_CLIENT_ID || ''}
+                                    onChange={(e) => handleFieldChange('PAYPAL_CLIENT_ID', e.target.value)}
+                                    fullWidth
+                                    size="small"
+                                />
+                                <TextField
+                                    label={t("PayPal Client Secret")}
+                                    type="password"
+                                    value={form.PAYPAL_CLIENT_SECRET || ''}
+                                    onChange={(e) => handleFieldChange('PAYPAL_CLIENT_SECRET', e.target.value)}
+                                    fullWidth
+                                    size="small"
+                                />
+                            </Stack>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
                 {/*  Manual / Offline Payment */}
                 <Grid item xs={12} md={6}>
                     <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0' }}>
@@ -227,6 +274,18 @@ const PaymentMethodsSettings = () => {
                                     onChange={(e) => handleFieldChange('manual_payment_1_instruction', e.target.value)}
                                     fullWidth
                                 />
+
+                                <Box display="flex" justifyContent="flex-start" pt={1}>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        color="warning"
+                                        onClick={() => navigate('/admin/setup/offline-payments')}
+                                        sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
+                                    >
+                                        📋 {t("Review Offline Payments & Verify", "Review Offline Payments & Verify")}
+                                    </Button>
+                                </Box>
                             </Stack>
                         </CardContent>
                     </Card>
