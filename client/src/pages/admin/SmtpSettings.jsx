@@ -280,12 +280,24 @@ const SmtpSettings = () => {
                                     <Box display="flex" justifyContent="flex-end" pt={1}>
                                         <Button
                                             type="submit"
-                                            variant="contained"
+                                            variant="outlined"
+                                            className="btn-outline-primary"
                                             disabled={saving}
                                             startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
                                             sx={{
-                                                bgcolor: '#3b82f6',
-                                                '&:hover': { bgcolor: '#2563eb' },
+                                                color: "var(--primary-color, #2563eb)",
+                                                borderColor: "var(--primary-color, #2563eb)",
+                                                backgroundColor: "transparent",
+                                                '&:hover': {
+                                                    color: '#ffffff',
+                                                    backgroundColor: 'var(--primary-color, #2563eb)',
+                                                    borderColor: 'var(--primary-color, #2563eb)'
+                                                },
+                                                '&:disabled': {
+                                                    color: 'var(--primary-color, #2563eb)',
+                                                    borderColor: 'var(--primary-color, #2563eb)',
+                                                    opacity: 0.6
+                                                },
                                                 borderRadius: 2,
                                                 textTransform: 'none',
                                                 fontWeight: 600,
@@ -325,12 +337,24 @@ const SmtpSettings = () => {
                                         />
                                         <Button
                                             type="submit"
-                                            variant="contained"
+                                            variant="outlined"
+                                            className="btn-outline-primary"
                                             disabled={testing}
                                             startIcon={testing ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
                                             sx={{
-                                                bgcolor: '#0ea5e9',
-                                                '&:hover': { bgcolor: '#0284c7' },
+                                                color: "var(--primary-color, #2563eb)",
+                                                borderColor: "var(--primary-color, #2563eb)",
+                                                backgroundColor: "transparent",
+                                                '&:hover': {
+                                                    color: '#ffffff',
+                                                    backgroundColor: 'var(--primary-color, #2563eb)',
+                                                    borderColor: 'var(--primary-color, #2563eb)'
+                                                },
+                                                '&:disabled': {
+                                                    color: 'var(--primary-color, #2563eb)',
+                                                    borderColor: 'var(--primary-color, #2563eb)',
+                                                    opacity: 0.6
+                                                },
                                                 textTransform: 'none',
                                                 fontWeight: 600,
                                                 whiteSpace: 'nowrap',

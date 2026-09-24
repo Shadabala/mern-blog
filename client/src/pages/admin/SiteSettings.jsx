@@ -134,10 +134,31 @@ const SiteSettings = () => {
                     <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
                         <Button
                             type="submit"
-                            variant="contained"
+                            variant="outlined"
+                            className="btn-outline-primary"
                             size="large"
                             startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
                             disabled={saving}
+                            sx={{
+                                color: "var(--primary-color, #2563eb)",
+                                borderColor: "var(--primary-color, #2563eb)",
+                                backgroundColor: "transparent",
+                                "&:hover": {
+                                    color: "#ffffff",
+                                    backgroundColor: "var(--primary-color, #2563eb)",
+                                    borderColor: "var(--primary-color, #2563eb)"
+                                },
+                                "&:disabled": {
+                                    color: "var(--primary-color, #2563eb)",
+                                    borderColor: "var(--primary-color, #2563eb)",
+                                    opacity: 0.6
+                                },
+                                textTransform: "none",
+                                fontWeight: 600,
+                                px: 3,
+                                py: 1.2,
+                                borderRadius: "8px"
+                            }}
                         >
                             Save Settings
                         </Button>

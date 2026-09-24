@@ -301,6 +301,12 @@ export const updateWebsiteSettingsApi = async (data) => {
 export const fetchHomepageSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([
     'home_slider_images', 'home_slider_links', 'home_slider_heading', 'home_slider_text'
 ], lang);
+export const fetchContactPageSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([
+    'contact_page_phone', 'contact_whatsapp', 'contact_email', 'contact_address', 'contact_hours', 'contact_page_slider_heading', 'contact_page_slider_text', 'contact_page_main_heading', 'contact_page_main_text', 'contact_page_info_heading', 'contact_page_info_text', 'contact_page_form_heading', 'contact_page_form_text'
+], lang);
+export const fetchAboutPageSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([
+    'about_page_banner_heading', 'about_page_banner_description', 'about_page_main_heading', 'about_page_main_description'
+], lang);
 export const updateHomepageSettingsApi = updateWebsiteSettingsApi;
 
 export const fetchHeaderSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([

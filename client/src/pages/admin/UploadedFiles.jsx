@@ -300,10 +300,21 @@ const UploadedFiles = () => {
                             />
                             <Button
                                 type="submit"
-                                variant="contained"
-                                color="primary"
+                                variant="outlined"
+                                className="btn-outline-primary"
                                 size="small"
-                                sx={{ textTransform: 'none', px: 2 }}
+                                sx={{
+                                    color: "var(--primary-color, #2563eb)",
+                                    borderColor: "var(--primary-color, #2563eb)",
+                                    backgroundColor: "transparent",
+                                    '&:hover': {
+                                        color: '#ffffff',
+                                        backgroundColor: 'var(--primary-color, #2563eb)',
+                                        borderColor: 'var(--primary-color, #2563eb)'
+                                    },
+                                    textTransform: 'none',
+                                    px: 2
+                                }}
                             >
                                 {t("uploader.search", "Search")}
                             </Button>

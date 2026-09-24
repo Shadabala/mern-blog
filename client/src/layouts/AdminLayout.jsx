@@ -153,8 +153,6 @@ const AdminLayout = () => {
     }, [rawMenuItems, hasPermission]);
 
     const adminLogo = get_setting('system_logo_white') || get_setting('header_logo');
-    const adminSiteName = get_setting('site_name', get_setting('website_name', 'KA$H'));
-    const adminSiteMotto = get_setting('site_motto', 'Winning is a habit');
 
     const drawer = (
         <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#1f242d", color: "#e9ecef" }}>
@@ -184,7 +182,6 @@ const AdminLayout = () => {
                                 justifyContent: "center",
                                 boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
                                 border: "2px solid rgba(255, 255, 255, 0.2)",
-                                mb: 1.2,
                                 mx: "auto",
                                 p: 0.4,
                                 transition: "transform 0.2s ease",
@@ -194,7 +191,7 @@ const AdminLayout = () => {
                             <Box
                                 component="img"
                                 src={uploaded_asset(adminLogo)}
-                                alt={adminSiteName}
+                                alt="Logo"
                                 sx={{
                                     width: "100%",
                                     height: "100%",
@@ -204,45 +201,12 @@ const AdminLayout = () => {
                                 }}
                             />
                         </Box>
-                        <Typography
-                            variant="subtitle1"
-                            fontWeight={800}
-                            color="#ffffff"
-                            letterSpacing="0.5px"
-                            noWrap
-                            sx={{ maxWidth: "100%", textAlign: "center" }}
-                        >
-                            {adminSiteName}
-                        </Typography>
-                        {adminSiteMotto && (
-                            <Typography
-                                variant="caption"
-                                display="block"
-                                sx={{
-                                    color: "#adb5bd",
-                                    fontSize: "0.72rem",
-                                    fontWeight: 500,
-                                    fontStyle: "italic",
-                                    textAlign: "center",
-                                    maxWidth: "90%",
-                                    lineHeight: 1.3,
-                                    mt: 0.2
-                                }}
-                            >
-                                {adminSiteMotto}
-                            </Typography>
-                        )}
                     </Box>
                 ) : (
                     <Box component={RouterLink} to="/admin/dashboard" sx={{ textDecoration: "none", width: "100%", textAlign: "center" }}>
                         <Typography variant="h5" fontWeight={900} color="#FFC107" letterSpacing="1px" sx={{ fontFamily: "sans-serif", display: "inline-flex", alignItems: "center", gap: 0.5, direction: "ltr" }}>
-                            {adminSiteName}
+                            Admin
                         </Typography>
-                        {adminSiteMotto && (
-                            <Typography variant="caption" display="block" sx={{ color: "#adb5bd", fontSize: "0.7rem", fontWeight: 600, fontStyle: "italic", letterSpacing: "0.5px", mt: 0.3 }}>
-                                {adminSiteMotto}
-                            </Typography>
-                        )}
                     </Box>
                 )}
             </Box>

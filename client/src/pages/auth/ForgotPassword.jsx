@@ -115,7 +115,8 @@ const ForgotPassword = () => {
                     <Button
                         type="submit"
                         fullWidth
-                        variant="contained"
+                        variant="outlined"
+                        className="btn-outline-primary"
                         size="large"
                         disabled={loading}
                         sx={{ mt: 2 }}
@@ -138,7 +139,8 @@ const ForgotPassword = () => {
                     <Button
                         type="submit"
                         fullWidth
-                        variant="contained"
+                        variant="outlined"
+                        className="btn-outline-primary"
                         size="large"
                         disabled={loading}
                         sx={{ mt: 2 }}
@@ -171,7 +173,8 @@ const ForgotPassword = () => {
                     <Button
                         type="submit"
                         fullWidth
-                        variant="contained"
+                        variant="outlined"
+                        className="btn-outline-primary"
                         size="large"
                         disabled={loading}
                         sx={{ mt: 2 }}

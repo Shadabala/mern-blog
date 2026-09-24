@@ -431,7 +431,7 @@ const AizTextEditor = ({
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>
                     <Button onClick={() => setLinkDialogOpen(false)}>{t("editor.cancel", "Cancel")}</Button>
-                    <Button variant="contained" onClick={handleInsertLink}>{t("editor.insert", "Insert")}</Button>
+                    <Button variant="outlined" className="btn-outline-primary" onClick={handleInsertLink}>{t("editor.insert", "Insert")}</Button>
                 </DialogActions>
             </Dialog>
 

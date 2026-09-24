@@ -72,6 +72,25 @@ const RTLProvider = ({ children }) => {
                                 backgroundColor: primaryHoverColor
                             }
                         },
+                        outlinedPrimary: {
+                            color: primaryColor,
+                            borderColor: primaryColor,
+                            backgroundColor: 'transparent',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            '&:hover': {
+                                color: '#ffffff',
+                                backgroundColor: primaryColor,
+                                borderColor: primaryColor,
+                                boxShadow: `0 4px 12px ${primaryColor}33`
+                            },
+                            '&:disabled': {
+                                color: primaryColor,
+                                borderColor: primaryColor,
+                                opacity: 0.6,
+                                backgroundColor: 'transparent'
+                            }
+                        },
                         containedSecondary: {
                             backgroundColor: secondaryColor,
                             '&:hover': {

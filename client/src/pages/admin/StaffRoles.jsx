@@ -492,10 +492,26 @@ const StaffRoles = () => {
                         </Button>
                         <Button
                             type="submit"
-                            variant="contained"
-                            color="primary"
+                            variant="outlined"
+                            className="btn-outline-primary"
                             disabled={saving}
-                            sx={{ px: 3, fontWeight: 600 }}
+                            sx={{
+                                color: "var(--primary-color, #2563eb)",
+                                borderColor: "var(--primary-color, #2563eb)",
+                                backgroundColor: "transparent",
+                                '&:hover': {
+                                    color: '#ffffff',
+                                    backgroundColor: 'var(--primary-color, #2563eb)',
+                                    borderColor: 'var(--primary-color, #2563eb)'
+                                },
+                                '&:disabled': {
+                                    color: 'var(--primary-color, #2563eb)',
+                                    borderColor: 'var(--primary-color, #2563eb)',
+                                    opacity: 0.6
+                                },
+                                px: 3,
+                                fontWeight: 600
+                            }}
                         >
                             {saving ? <CircularProgress size={20} color="inherit" /> : t("Save")}
                         </Button>

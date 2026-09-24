@@ -41,6 +41,45 @@ code {
   background-color: var(--primary-hover-color) !important;
 }
 
+/* Button Outline Primary - identical to Contact Page Form Submit Button */
+.btn-outline-primary,
+button.btn-outline-primary,
+.MuiButton-root.btn-outline-primary {
+  color: var(--primary-color, #2563eb) !important;
+  border: 1px solid var(--primary-color, #2563eb) !important;
+  background-color: transparent !important;
+  transition: all 0.2s ease-in-out !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+}
+
+.btn-outline-primary:hover,
+button.btn-outline-primary:hover,
+.MuiButton-root.btn-outline-primary:hover {
+  color: #ffffff !important;
+  background-color: var(--primary-color, #2563eb) !important;
+  border-color: var(--primary-color, #2563eb) !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+}
+
+.btn-outline-primary:disabled,
+button.btn-outline-primary:disabled,
+.MuiButton-root.btn-outline-primary.Mui-disabled,
+.btn-outline-primary.Mui-disabled {
+  color: var(--primary-color, #2563eb) !important;
+  border-color: var(--primary-color, #2563eb) !important;
+  opacity: 0.6 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.btn-outline-primary .MuiSvgIcon-root,
+button.btn-outline-primary .MuiSvgIcon-root,
+.btn-outline-primary .MuiCircularProgress-root,
+button.btn-outline-primary .MuiCircularProgress-root {
+  color: inherit !important;
+}
+
 .theme-secondary-bg {
   background-color: var(--secondary-color) !important;
 }

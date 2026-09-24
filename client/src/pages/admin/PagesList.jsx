@@ -9,7 +9,8 @@ import {
     Add as AddIcon,
     Edit as EditIcon,
     DeleteOutline as DeleteIcon,
-    DescriptionOutlined as PageIcon
+    DescriptionOutlined as PageIcon,
+    Launch as LaunchIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -153,27 +154,60 @@ const PagesList = () => {
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#64748b', fontSize: '0.85rem' }}>
-                                                    /{p.slug}
+                                                    <Typography
+                                                        component="a"
+                                                        href={p.type === 'home_page' ? '/' : `/${p.slug}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        sx={{
+                                                            color: '#0284c7',
+                                                            textDecoration: 'none',
+                                                            fontWeight: 500,
+                                                            '&:hover': { textDecoration: 'underline' }
+                                                        }}
+                                                    >
+                                                        {p.type === 'home_page' ? `${window.location.origin}` : `${window.location.origin}/${p.slug}`}
+                                                    </Typography>
                                                 </TableCell>
                                                 <TableCell align="right">
                                                     <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                        <Tooltip title={t("Edit Page")}>
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={() => {
-                                                                        if (p.type === 'home_page') {
-                                                                            navigate('/admin/website-setup/homepage');
-                                                                        } else {
-                                                                            navigate(`/admin/website-setup/pages/${p._id}/edit`);
-                                                                        }
-                                                                    }}
-                                                                    sx={{ color: 'var(--primary-color, #6366f1)', bgcolor: 'rgba(59, 247, 62, 0.12)', '&:hover': { bgcolor: 'rgba(59, 247, 62, 0.2)' } }}
-                                                                >
-                                                                    <EditIcon fontSize="small" />
-                                                                </IconButton>
+                                                        {/* 1. View on Frontend / Website */}
+                                                        <Tooltip title={t("View on Frontend / Website", "View on Frontend / Website")}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => window.open(p.type === 'home_page' ? '/' : `/${p.slug}`, '_blank')}
+                                                                sx={{ color: '#0284c7', bgcolor: '#e0f2fe', '&:hover': { bgcolor: '#bae6fd' } }}
+                                                            >
+                                                                <LaunchIcon fontSize="small" />
+                                                            </IconButton>
                                                         </Tooltip>
 
-                                                        {p.type === 'custom_page' && (
+                                                        {/* 2. Edit Page */}
+                                                        <Tooltip title={t("Edit Page")}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => {
+                                                                    if (p.type === 'home_page') {
+                                                                        navigate('/admin/website-setup/homepage');
+                                                                    }
+                                                                    else if (p.slug === 'contact') {
+                                                                        navigate('/admin/website-setup/contact');
+                                                                    }
+                                                                    else if (p.slug === 'about') {
+                                                                        navigate('/admin/website-setup/about');
+                                                                    }
+                                                                    else {
+                                                                        navigate(`/admin/website-setup/pages/${p._id}/edit`);
+                                                                    }
+                                                                }}
+                                                                sx={{ color: 'var(--primary-color, #6366f1)', bgcolor: 'rgba(59, 247, 62, 0.12)', '&:hover': { bgcolor: 'rgba(59, 247, 62, 0.2)' } }}
+                                                            >
+                                                                <EditIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+
+                                                        {/* 3. Delete */}
+                                                        {p.type === 'custom_page' && p.slug !== 'about' && p.slug !== 'contact' && (
                                                             <Tooltip title={t("Delete")}>
                                                                 <IconButton
                                                                     size="small"

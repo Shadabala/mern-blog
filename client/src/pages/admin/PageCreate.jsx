@@ -76,7 +76,7 @@ const PageCreate = () => {
     };
 
     return (
-        <Box sx={{ maxWidth: '1000px', mx: 'auto', p: { xs: 2, md: 3 }, pb: 6 }}>
+        <Box sx={{ maxWidth: '1200px', mx: 'auto', pb: 6, px: { xs: 1.5, sm: 2, md: 3 } }}>
             {/* Header & Breadcrumb */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Box>
@@ -120,11 +120,13 @@ const PageCreate = () => {
                 <Stack spacing={3}>
                     {/* Page Content Card */}
                     <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                        <CardHeader
-                            title={t("Page Content")}
-                            titleTypographyProps={{ variant: 'subtitle1', fontWeight: 700 }}
-                            sx={{ borderBottom: '1px solid #f1f5f9', pb: 2 }}
-                        />
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <Box>
+                                <Typography variant="subtitle1" fontWeight={700} color="#1e293b">
+                                    {t("Page Content", "Page Content")}
+                                </Typography>
+                            </Box>
+                        </Box>
                         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                             <Stack spacing={2.5}>
                                 {/* Title */}
@@ -276,12 +278,24 @@ const PageCreate = () => {
                     <Box display="flex" justifyContent="flex-end" pt={1}>
                         <Button
                             type="submit"
-                            variant="contained"
+                            variant="outlined"
+                            className="btn-outline-primary"
                             disabled={saving}
                             startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
                             sx={{
-                                bgcolor: '#3b82f6',
-                                '&:hover': { bgcolor: '#2563eb' },
+                                color: "var(--primary-color, #2563eb)",
+                                borderColor: "var(--primary-color, #2563eb)",
+                                backgroundColor: "transparent",
+                                '&:hover': {
+                                    color: '#ffffff',
+                                    backgroundColor: 'var(--primary-color, #2563eb)',
+                                    borderColor: 'var(--primary-color, #2563eb)'
+                                },
+                                '&:disabled': {
+                                    color: 'var(--primary-color, #2563eb)',
+                                    borderColor: 'var(--primary-color, #2563eb)',
+                                    opacity: 0.6
+                                },
                                 borderRadius: 2,
                                 textTransform: 'none',
                                 fontWeight: 700,

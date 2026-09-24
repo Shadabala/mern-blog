@@ -73,19 +73,6 @@ const CommentField = styled(TextField)`
     }
 `;
 
-const PostBtn = styled(Button)`
-    margin-top: 10px;
-    background: var(--primary-color, #e94560);
-    color: #fff;
-    border-radius: 8px;
-    text-transform: none;
-    font-weight: 700;
-    padding: 8px 24px;
-    float: right;
-    &:hover {
-        background: var(--primary-hover-color, #c0392b);
-    }
-`;
 
 /* ── Login gate ── */
 const LoginGate = styled(Box)`
@@ -230,7 +217,22 @@ const Comments = ({ post }) => {
                             error={Boolean(textError)}
                             helperText={textError}
                         />
-                        <PostBtn onClick={addComment}>{t("post.postComment", "Post Comment")}</PostBtn>
+                        <Button
+                            variant="outlined"
+                            className="btn-outline-primary"
+                            onClick={addComment}
+                            sx={{
+                                mt: 1.5,
+                                float: 'right',
+                                textTransform: 'none',
+                                fontWeight: 700,
+                                px: 3,
+                                py: 1,
+                                borderRadius: 2
+                            }}
+                        >
+                            {t("post.postComment", "Post Comment")}
+                        </Button>
                         <Box sx={{ clear: 'both' }} />
                     </InputBlock>
                 </InputRow>

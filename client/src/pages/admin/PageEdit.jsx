@@ -319,12 +319,24 @@ const PageEdit = () => {
                     <Box display="flex" justifyContent="flex-end" pt={1}>
                         <Button
                             type="submit"
-                            variant="contained"
+                            variant="outlined"
+                            className="btn-outline-primary"
                             disabled={saving}
                             startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
                             sx={{
-                                bgcolor: '#10b981',
-                                '&:hover': { bgcolor: '#059669' },
+                                color: "var(--primary-color, #2563eb)",
+                                borderColor: "var(--primary-color, #2563eb)",
+                                backgroundColor: "transparent",
+                                '&:hover': {
+                                    color: '#ffffff',
+                                    backgroundColor: 'var(--primary-color, #2563eb)',
+                                    borderColor: 'var(--primary-color, #2563eb)'
+                                },
+                                '&:disabled': {
+                                    color: 'var(--primary-color, #2563eb)',
+                                    borderColor: 'var(--primary-color, #2563eb)',
+                                    opacity: 0.6
+                                },
                                 borderRadius: 2,
                                 textTransform: 'none',
                                 fontWeight: 700,

@@ -139,18 +139,29 @@ const WebsitePopupModal = () => {
                                 />
                                 <Button
                                     type="submit"
-                                    variant="contained"
+                                    variant="outlined"
+                                    className="btn-outline-primary"
                                     disabled={subscribing}
                                     endIcon={<SendIcon sx={{ fontSize: 16 }} />}
                                     sx={{
-                                        bgcolor: 'var(--primary-color, #3b82f6)',
-                                        '&:hover': { bgcolor: 'var(--primary-hover-color, #2563eb)' },
+                                        color: "var(--primary-color, #2563eb)",
+                                        borderColor: "var(--primary-color, #2563eb)",
+                                        backgroundColor: "transparent",
+                                        '&:hover': {
+                                            color: '#ffffff',
+                                            backgroundColor: 'var(--primary-color, #2563eb)',
+                                            borderColor: 'var(--primary-color, #2563eb)'
+                                        },
+                                        '&:disabled': {
+                                            color: 'var(--primary-color, #2563eb)',
+                                            borderColor: 'var(--primary-color, #2563eb)',
+                                            opacity: 0.6
+                                        },
                                         borderRadius: 2,
                                         px: 3,
                                         textTransform: 'none',
                                         fontWeight: 700,
-                                        whiteSpace: 'nowrap',
-                                        color: '#ffffff'
+                                        whiteSpace: 'nowrap'
                                     }}
                                 >
                                     {t("Subscribe", "Subscribe")}

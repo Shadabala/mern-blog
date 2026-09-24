@@ -211,8 +211,22 @@ const ContactInquiries = () => {
                                                     onChange={() => handleSelectOne(c._id)}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{c.name}</TableCell>
-                                            <TableCell sx={{ color: '#475569' }}>{c.email}</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                                {c.name}
+                                                {c.company && (
+                                                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontWeight: 400 }}>
+                                                        {c.company}
+                                                    </Typography>
+                                                )}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#475569' }}>
+                                                <Typography variant="body2" sx={{ color: '#1e293b' }}>{c.email}</Typography>
+                                                {c.phone && (
+                                                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                                                        {c.phone}
+                                                    </Typography>
+                                                )}
+                                            </TableCell>
                                             <TableCell sx={{ color: '#334155', fontWeight: 500 }}>{c.subject}</TableCell>
                                             <TableCell sx={{ maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>
                                                 {c.message}
@@ -290,17 +304,28 @@ const ContactInquiries = () => {
                         </Button>
                         <Button
                             type="submit"
-                            variant="contained"
+                            variant="outlined"
+                            className="btn-outline-primary"
                             disabled={sendingReply}
                             startIcon={sendingReply ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
                             sx={{
-                                bgcolor: 'var(--primary-color, #3b82f6)',
-                                '&:hover': { bgcolor: 'var(--primary-hover-color, #2563eb)' },
+                                color: "var(--primary-color, #2563eb)",
+                                borderColor: "var(--primary-color, #2563eb)",
+                                backgroundColor: "transparent",
+                                '&:hover': {
+                                    color: '#ffffff',
+                                    backgroundColor: 'var(--primary-color, #2563eb)',
+                                    borderColor: 'var(--primary-color, #2563eb)'
+                                },
+                                '&:disabled': {
+                                    color: 'var(--primary-color, #2563eb)',
+                                    borderColor: 'var(--primary-color, #2563eb)',
+                                    opacity: 0.6
+                                },
                                 borderRadius: 2,
                                 textTransform: 'none',
                                 fontWeight: 600,
-                                px: 2.5,
-                                color: '#ffffff'
+                                px: 2.5
                             }}
                         >
                             {sendingReply ? t("Sending...") : t("Send Reply")}

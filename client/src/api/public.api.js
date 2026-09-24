@@ -28,3 +28,14 @@ export const fetchPublicHomepageSettings = async (lang = 'en') => {
     const response = await api.get("/public/website-settings/homepage", { params: { lang } });
     return response.data;
 };
+
+export const fetchPublicPageBySlug = async (slug, lang = 'en') => {
+    const response = await api.get(`/page/${slug}`, { params: { lang } });
+    return response.data;
+};
+
+export const submitContactForm = async (data) => {
+    const response = await api.post('/public/contact', data);
+    return response.data;
+};
+

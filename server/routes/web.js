@@ -31,6 +31,7 @@ import { getPublicSettings } from '../controllers/SettingController.js';
 import { newComment, getComments, deleteComment } from '../controllers/CommentController.js';
 import { getHomepageSettings, getHeaderSettings, getWebsiteSettings } from '../controllers/WebsiteSettingController.js';
 import { getPublicPageBySlug } from '../controllers/PageController.js';
+import { createPublicContact } from '../controllers/ContactController.js';
 import { getActiveLanguages, getTranslationsByCode, syncMissingKeys } from '../controllers/LanguageController.js';
 import {
     getUploadedFiles,
@@ -79,6 +80,10 @@ router.get('/public/languages', getActiveLanguages);
 router.get('/public/languages/translations/:code', getTranslationsByCode);
 router.post('/public/languages/sync-keys', syncMissingKeys);
 
+// Public Contact Form Submissions
+router.post('/public/contact', createPublicContact);
+router.post('/contact/submit', createPublicContact);
+
 
 
 // Auth Routes (Signup, Login, Logout, Forgot Password, Refresh Token)
@@ -105,6 +110,12 @@ router.get("/categories", categoryGetAll);
 router.get("/public/categories", categoryGetAll);
 router.get("/user/purchased-categories", protect, getUserPurchasedCategories);
 router.get("/categories/purchased", protect, getUserPurchasedCategories);
+
+// Public Dynamic Custom Pages (created in admin panel)
+router.get("/page/:slug", getPublicPageBySlug);
+router.get("/public/page/:slug", getPublicPageBySlug);
+router.get("/pages/:slug", getPublicPageBySlug);
+router.get("/api/page/:slug", getPublicPageBySlug);
 
 // Public & User Blog Routes (matching Laravel base-module)
 router.get("/blog/:id", optionalAuth, blogGetById);

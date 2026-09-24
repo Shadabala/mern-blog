@@ -496,7 +496,8 @@ const HeaderSettings = () => {
                             <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2, borderTop: '1px solid #e2e8f0' }}>
                                 <Button
                                     type="submit"
-                                    variant="contained"
+                                    variant="outlined"
+                                    className="btn-outline-primary"
                                     disabled={saving}
                                     startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon sx={{ fontSize: '18px' }} />}
                                     sx={{
@@ -507,11 +508,19 @@ const HeaderSettings = () => {
                                         textTransform: 'none',
                                         fontSize: '14px',
                                         fontWeight: 600,
-                                        color: '#ffffff',
-                                        backgroundColor: 'var(--primary-color, #2563eb)',
+                                        color: 'var(--primary-color, #2563eb)',
+                                        borderColor: 'var(--primary-color, #2563eb)',
+                                        backgroundColor: 'transparent',
                                         '&:hover': {
-                                            backgroundColor: 'var(--primary-hover-color, #1d4ed8)',
+                                            color: '#ffffff',
+                                            backgroundColor: 'var(--primary-color, #2563eb)',
+                                            borderColor: 'var(--primary-color, #2563eb)'
                                         },
+                                        '&:disabled': {
+                                            color: 'var(--primary-color, #2563eb)',
+                                            borderColor: 'var(--primary-color, #2563eb)',
+                                            opacity: 0.6
+                                        }
                                     }}
                                 >
                                     {saving ? t('Saving...', 'Saving...') : t('Save Settings', 'Save Settings')}

@@ -376,4 +376,16 @@ router.put('/admin/payments/:id/approve', protect, authorize('admin', 'staff'), 
 router.put('/payments/:id/reject', protect, authorize('admin', 'staff'), checkPermission('payment_methods_manage'), rejectManualPayment);
 router.put('/admin/payments/:id/reject', protect, authorize('admin', 'staff'), checkPermission('payment_methods_manage'), rejectManualPayment);
 
+// 25. Website Setup - Custom Pages Management
+router.get('/pages', protect, checkPermission('pages_manage'), getPages);
+router.get('/admin/pages', protect, checkPermission('pages_manage'), getPages);
+router.get('/pages/:id', protect, checkPermission('pages_manage'), getPageById);
+router.get('/admin/pages/:id', protect, checkPermission('pages_manage'), getPageById);
+router.post('/pages', protect, checkPermission('pages_manage'), createPage);
+router.post('/admin/pages', protect, checkPermission('pages_manage'), createPage);
+router.put('/pages/:id', protect, checkPermission('pages_manage'), updatePage);
+router.put('/admin/pages/:id', protect, checkPermission('pages_manage'), updatePage);
+router.delete('/pages/:id', protect, checkPermission('pages_manage'), deletePage);
+router.delete('/admin/pages/:id', protect, checkPermission('pages_manage'), deletePage);
+
 export default router;

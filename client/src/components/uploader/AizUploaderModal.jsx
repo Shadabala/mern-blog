@@ -491,8 +491,8 @@ const AizUploaderModal = ({
                         {t("uploader.cancel", "Cancel")}
                     </Button>
                     <Button
-                        variant="contained"
-                        color="primary"
+                        variant="outlined"
+                        className="btn-outline-primary"
                         onClick={handleAddSelected}
                         disabled={selectedFiles.length === 0}
                         sx={{ textTransform: 'none', fontWeight: 600 }}

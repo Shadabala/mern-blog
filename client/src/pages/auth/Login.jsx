@@ -36,14 +36,24 @@ const Wrapper = styled(Box)`
 
 const LoginButton = styled(Button)`
     text-transform: none;
-    background: #FB641B;
-    color: #fff;
+    background: transparent;
+    color: var(--primary-color, #2563eb);
+    border: 1px solid var(--primary-color, #2563eb);
     height: 48px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 0.95rem;
     &:hover {
-        background: #e25510;
+        background: var(--primary-color, #2563eb);
+        color: #ffffff;
+        border-color: var(--primary-color, #2563eb);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+    &:disabled {
+        color: var(--primary-color, #2563eb);
+        border-color: var(--primary-color, #2563eb);
+        opacity: 0.6;
+        background: transparent;
     }
 `;
 
@@ -270,7 +280,7 @@ const Login = () => {
 
                             {apiError && <Alert severity="error">{apiError}</Alert>}
 
-                            <LoginButton type="submit" variant="contained" disabled={loading}>
+                            <LoginButton type="submit" variant="outlined" className="btn-outline-primary" disabled={loading}>
                                 {loading ? <CircularProgress size={22} color="inherit" /> : 'Login'}
                             </LoginButton>
 
@@ -335,7 +345,7 @@ const Login = () => {
                                 </Button>
                             </Box>
 
-                            <LoginButton type="submit" variant="contained" disabled={loading || otp.length !== 6}>
+                            <LoginButton type="submit" variant="outlined" className="btn-outline-primary" disabled={loading || otp.length !== 6}>
                                 {loading ? <CircularProgress size={22} color="inherit" /> : 'Verify & Continue'}
                             </LoginButton>
 

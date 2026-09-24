@@ -273,7 +273,7 @@ const UsersList = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleRoleUpdate}>Save Changes</Button>
+                    <Button variant="outlined" className="btn-outline-primary" onClick={handleRoleUpdate}>Save Changes</Button>
                 </DialogActions>
             </Dialog>
         </Box>

@@ -880,6 +880,7 @@ const CategoryEdit = () => {
                                     <Button
                                         type="submit"
                                         variant="outlined"
+                                        className="btn-outline-primary"
                                         disabled={saving}
                                         startIcon={
                                             saving ? (
@@ -890,23 +891,23 @@ const CategoryEdit = () => {
                                             minWidth: '76px',
                                             height: '42px',
                                             px: 2,
-                                            borderRadius: '4px',
+                                            borderRadius: '6px',
                                             textTransform: 'none',
                                             fontSize: '14px',
-                                            fontWeight: 400,
-                                            color: '#f59e0b',
-                                            borderColor: '#f59e0b',
-
+                                            fontWeight: 600,
+                                            color: 'var(--primary-color, #2563eb)',
+                                            borderColor: 'var(--primary-color, #2563eb)',
+                                            backgroundColor: 'transparent',
                                             '&:hover': {
-                                                borderColor: '#d97706',
-                                                backgroundColor:
-                                                    'rgba(245, 158, 11, 0.05)',
+                                                color: '#ffffff',
+                                                backgroundColor: 'var(--primary-color, #2563eb)',
+                                                borderColor: 'var(--primary-color, #2563eb)'
                                             },
-
-                                            '&.Mui-disabled': {
-                                                color: '#c7cbd1',
-                                                borderColor: '#d9dde5',
-                                            },
+                                            '&:disabled': {
+                                                color: 'var(--primary-color, #2563eb)',
+                                                borderColor: 'var(--primary-color, #2563eb)',
+                                                opacity: 0.6
+                                            }
                                         }}
                                     >
                                         {saving

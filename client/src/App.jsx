@@ -15,6 +15,8 @@ import Home from "./pages/public/Home";
 import BlogDetail from "./pages/public/BlogDetail";
 import About from "./pages/public/About";
 import Contact from "./pages/public/Contact";
+import DynamicPage from "./pages/public/DynamicPage";
+import NotFound from "./pages/public/NotFound";
 
 // Auth Pages
 import Login from "./pages/auth/Login";
@@ -50,6 +52,8 @@ import UploadNewFile from "./pages/admin/UploadNewFile";
 
 // Website Setup Pages
 import HomepageSettings from "./pages/admin/HomepageSettings";
+import AboutPageSettings from "./pages/admin/AboutPageSettings";
+import ContactPageSettings from "./pages/admin/ContactPageSettings";
 import HeaderSettings from "./pages/admin/HeaderSettings";
 import FooterSettings from "./pages/admin/FooterSettings";
 import AppearanceSettings from "./pages/admin/AppearanceSettings";
@@ -77,6 +81,8 @@ function AppRoutes() {
       <Route path="/contact" element={<Contact />} />
       <Route path="/blog/:id" element={<BlogDetail />} />
       <Route path="/details/:id" element={<BlogDetail />} />
+      <Route path="/page/:slug" element={<DynamicPage />} />
+      <Route path="/404" element={<NotFound />} />
 
       {/* User Dashboard & Stripe Payment Routes */}
       <Route path="/dashboard" element={<Dashboard />} />
@@ -154,6 +160,12 @@ function AppRoutes() {
           <Route element={<ProtectedRoute requiredPermission="homepage_settings" />}>
             <Route path="/admin/website-setup/homepage" element={<HomepageSettings />} />
           </Route>
+          <Route element={<ProtectedRoute requiredPermission="contact_settings" />}>
+            <Route path="/admin/website-setup/contact" element={<ContactPageSettings />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="about_settings" />}>
+            <Route path="/admin/website-setup/about" element={<AboutPageSettings />} />
+          </Route>
           <Route element={<ProtectedRoute requiredPermission="header_settings" />}>
             <Route path="/admin/website-setup/header" element={<HeaderSettings />} />
           </Route>
@@ -207,8 +219,11 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Dynamic Root Custom Page Route (e.g. /privacy-policy, /terms-conditions, /mortgage-buyout-dubai) */}
+      <Route path="/:slug" element={<DynamicPage />} />
+
+      {/* 404 Not Found Fallback */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

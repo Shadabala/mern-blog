@@ -404,7 +404,25 @@ export const getPublicPageBySlug = async (req, res) => {
         const defaultLang = await getDefaultLanguageCode();
         const currentLang = requestedLang || defaultLang;
 
-        const page = await Page.findOne({ slug, status: true });
+        if (!slug) {
+            return res.status(404).json({
+                success: false,
+                message: 'Page not found'
+            });
+        }
+
+        const isMongoId = /^[0-9a-fA-F]{24}$/.test(slug);
+        const page = await Page.findOne({
+            $and: [
+                {
+                    $or: isMongoId ? [{ slug }, { _id: slug }] : [{ slug }]
+                },
+                {
+                    $or: [{ status: true }, { status: 1 }, { status: { $exists: false } }]
+                }
+            ]
+        });
+
         if (!page) {
             return res.status(404).json({
                 success: false,
@@ -420,13 +438,18 @@ export const getPublicPageBySlug = async (req, res) => {
         return res.status(200).json({
             success: true,
             page: {
+                _id: page._id,
+                id: page._id,
                 title: pageTranslation?.title || page.title,
-                content: pageTranslation?.content !== undefined ? pageTranslation.content : page.content,
-                meta_title: page.meta_title,
-                meta_description: page.meta_description,
-                keywords: page.keywords,
-                meta_image: page.meta_image,
-                slug: page.slug
+                content: pageTranslation?.content !== undefined && pageTranslation?.content !== null ? pageTranslation.content : (page.content || ''),
+                meta_title: pageTranslation?.meta_title || page.meta_title || pageTranslation?.title || page.title,
+                meta_description: pageTranslation?.meta_description || page.meta_description || '',
+                keywords: page.keywords || '',
+                meta_image: page.meta_image || '',
+                slug: page.slug,
+                type: page.type,
+                createdAt: page.createdAt,
+                updatedAt: page.updatedAt
             }
         });
     } catch (error) {
