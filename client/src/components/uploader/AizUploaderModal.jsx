@@ -397,6 +397,11 @@ const AizUploaderModal = ({
                                                             component="img"
                                                             src={file.url}
                                                             alt={file.file_original_name}
+                                                            onError={(e) => {
+                                                                if (file.local_url && e.currentTarget.src !== file.local_url) {
+                                                                    e.currentTarget.src = file.local_url;
+                                                                }
+                                                            }}
                                                             sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                         />
                                                     ) : file.type === 'video' ? (

@@ -65,7 +65,13 @@ const formatFileResponse = (file, req) => {
     const baseUrl = `${protocol}://${host}`;
     const cleanFileName = (file.file_name || '').replace(/\\/g, '/');
     const localUrl = `${baseUrl}/${cleanFileName}`;
-    const url = file.external_link || localUrl;
+
+    // Direct S3/Backblaze bucket URLs return 403 Forbidden if the bucket is private.
+    // In that case, use localUrl which streams securely through the backend proxy.
+    let url = file.external_link || localUrl;
+    if (file.external_link && (file.external_link.includes('.amazonaws.com/') || file.external_link.includes('.backblazeb2.com/'))) {
+        url = localUrl;
+    }
 
     return {
         _id: file._id,

@@ -49,10 +49,16 @@ app.use(['/uploads', '/public/uploads'], async (req, res, next) => {
     }
 
     try {
-        const cleanKey = ('uploads' + req.path).replace(/\\/g, '/');
+        let subPath = req.path.replace(/^\/+/, '');
+        if (!subPath.startsWith('uploads/')) {
+            subPath = 'uploads/' + subPath;
+        }
+        subPath = subPath.replace(/^uploads\/uploads\//, 'uploads/');
+        const cleanKey = subPath.replace(/\\/g, '/');
+
         const streamResult = await getFileStreamFromStorage(cleanKey);
 
-        if (streamResult && streamResult.stream) {
+        if (streamResult && streamResult.buffer) {
             if (streamResult.contentType) {
                 res.setHeader('Content-Type', streamResult.contentType);
             }
@@ -61,20 +67,19 @@ app.use(['/uploads', '/public/uploads'], async (req, res, next) => {
             }
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
 
-            // Save to local disk cache in background so subsequent requests are served instantly by express.static
+            // Save to local disk cache so subsequent requests are served instantly by express.static
             try {
                 const localCachePath = path.join(__dirname, 'public', cleanKey);
                 const localCacheDir = path.dirname(localCachePath);
                 if (!fs.existsSync(localCacheDir)) {
                     fs.mkdirSync(localCacheDir, { recursive: true });
                 }
-                const writeStream = fs.createWriteStream(localCachePath);
-                streamResult.stream.pipe(writeStream);
+                fs.writeFileSync(localCachePath, streamResult.buffer);
             } catch {
                 // Ignore background cache write errors
             }
 
-            return streamResult.stream.pipe(res);
+            return res.send(streamResult.buffer);
         }
         return next();
     } catch (err) {

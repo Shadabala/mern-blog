@@ -37,8 +37,8 @@ const UppyUploader = ({
             uppyRef.current = null;
         }
 
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-        const uploadEndpoint = `${API_URL}/api/aiz-uploader/upload`;
+        const baseApi = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
+        const uploadEndpoint = `${baseApi}/api/aiz-uploader/upload`;
 
         const effectiveAllowedTypes = allowedFileTypes || (
             type === 'image'

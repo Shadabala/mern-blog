@@ -362,10 +362,28 @@ const AdminLayout = () => {
         try {
             setClearingCache(true);
             const res = await clearAdminCacheApi();
-            alertSuccess(
+            await alertSuccess(
                 t("admin.cacheCleared", "Cache Cleared!"),
                 res.data?.message || res?.message || t("admin.cacheClearedSuccess", "Cache cleared successfully!")
             );
+
+            // Clear browser caches and execute a true hard refresh
+            if ('caches' in window) {
+                try {
+                    const cacheNames = await window.caches.keys();
+                    await Promise.all(cacheNames.map(name => window.caches.delete(name)));
+                } catch (cacheErr) {
+                    console.warn("Could not delete browser caches:", cacheErr);
+                }
+            }
+
+            // Force hard refresh bypassing cache
+            const targetUrl = new URL(window.location.href);
+            targetUrl.searchParams.set('_h', Date.now().toString());
+            window.location.replace(targetUrl.toString());
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 100);
         } catch (err) {
             toast.error(err.response?.data?.message || t("admin.cacheClearFailed", "Failed to clear cache"));
         } finally {

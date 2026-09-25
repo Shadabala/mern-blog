@@ -115,16 +115,10 @@ export const uploadToStorage = async (file, relativePath, ext, baseUrl) => {
 
                 await s3Client.send(putCommand);
 
-                // Unlink temporary local file after successful cloud upload
-                if (fs.existsSync(localDiskPath)) {
-                    try {
-                        fs.unlinkSync(localDiskPath);
-                    } catch (unlinkErr) {
-                        console.warn('Could not unlink local temp file after cloud upload:', unlinkErr.message);
-                    }
-                }
-
                 // Construct public URL
+                // If custom AWS_URL / BACKBLAZE_URL (e.g. CloudFront CDN) is specified, use it directly.
+                // Otherwise use local streaming proxy URL so browser won't get 403 Forbidden from private S3 bucket.
+                const localUrl = `${baseUrl.replace(/\/$/, '')}/${cleanRelativePath}`;
                 let cloudUrl = '';
                 if (targetConfig.url) {
                     cloudUrl = `${targetConfig.url.replace(/\/$/, '')}/${cleanRelativePath}`;
@@ -134,10 +128,12 @@ export const uploadToStorage = async (file, relativePath, ext, baseUrl) => {
                     cloudUrl = `https://${targetConfig.bucket}.s3.${targetConfig.region}.amazonaws.com/${cleanRelativePath}`;
                 }
 
+                const finalUrl = targetConfig.url ? cloudUrl : localUrl;
+
                 return {
                     driver: 's3',
                     fileName: cleanRelativePath,
-                    url: cloudUrl,
+                    url: finalUrl,
                     externalLink: cloudUrl
                 };
             } catch (cloudErr) {
@@ -261,10 +257,14 @@ export const getFileStreamFromStorage = async (relativePath) => {
         });
 
         const response = await s3Client.send(command);
+        const byteArray = await response.Body.transformToByteArray();
+        const buffer = Buffer.from(byteArray);
+
         return {
+            buffer,
             stream: response.Body,
             contentType: response.ContentType,
-            contentLength: response.ContentLength
+            contentLength: response.ContentLength || buffer.length
         };
     } catch (err) {
         console.warn(`Could not get cloud stream for ${cleanKey}:`, err.message);

@@ -4,6 +4,28 @@ import { Close as CloseIcon } from '@mui/icons-material';
 import AizUploaderModal from './AizUploaderModal';
 import { useLanguage } from '../../context/LanguageContext';
 
+const BACKEND_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
+
+const resolvePreviewUrl = (raw) => {
+    if (!raw) return '';
+    const str = String(raw).trim();
+    if (str.includes('.amazonaws.com/')) {
+        const after = str.split('.amazonaws.com/')[1];
+        if (after) {
+            return `${BACKEND_BASE}/${after.replace(/^\/?(public\/)?/, '')}`;
+        }
+    }
+    if (str.includes('.backblazeb2.com/')) {
+        const after = str.split('.backblazeb2.com/')[1];
+        if (after) {
+            return `${BACKEND_BASE}/${after.replace(/^\/?(public\/)?/, '')}`;
+        }
+    }
+    if (str.startsWith('http://') || str.startsWith('https://')) return str;
+    const clean = str.replace(/\\/g, '/').replace(/^\/?(public\/)?/, '');
+    return `${BACKEND_BASE}/${clean}`;
+};
+
 const UploadTriggerBar = styled(Paper)(({ theme }) => ({
     display: 'flex',
     alignItems: 'stretch',
@@ -114,8 +136,9 @@ const AizUploaderInput = ({
             {selectedList.length > 0 && (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1.5 }}>
                     {selectedList.map((item, idx) => {
-                        const url = typeof item === 'object' ? (item.url || item.file_name) : item;
-                        const filename = String(url).split('/').pop() || 'file';
+                        const rawUrl = typeof item === 'object' ? (item.url || item.file_name) : item;
+                        const previewSrc = resolvePreviewUrl(rawUrl);
+                        const filename = String(rawUrl).split('/').pop() || 'file';
                         return (
                             <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>
                                 <Box
@@ -134,7 +157,7 @@ const AizUploaderInput = ({
                                     }}
                                 >
                                     <img
-                                        src={url}
+                                        src={previewSrc}
                                         alt="preview"
                                         style={{ width: '100%', height: '70px', objectFit: 'cover', borderRadius: '4px' }}
                                         onError={(e) => { e.target.style.display = 'none'; }}

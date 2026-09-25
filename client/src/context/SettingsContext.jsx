@@ -26,7 +26,24 @@ export const uploaded_asset = (idOrPath) => {
     const str = String(idOrPath).trim();
     if (!str || str === 'null' || str === 'undefined') return null;
 
-    // Already a full external URL
+    // Direct S3/Backblaze bucket URLs are private and return 403 Forbidden.
+    // Route them through the backend streaming proxy.
+    if (str.includes('.amazonaws.com/')) {
+        const afterDomain = str.split('.amazonaws.com/')[1];
+        if (afterDomain) {
+            const cleanPath = afterDomain.replace(/^\/?(public\/)?/, '');
+            return `${BACKEND_BASE}/${cleanPath}`;
+        }
+    }
+    if (str.includes('.backblazeb2.com/')) {
+        const afterDomain = str.split('.backblazeb2.com/')[1];
+        if (afterDomain) {
+            const cleanPath = afterDomain.replace(/^\/?(public\/)?/, '');
+            return `${BACKEND_BASE}/${cleanPath}`;
+        }
+    }
+
+    // Already a full external URL (e.g. CloudFront, custom CDN, external link)
     if (str.startsWith('http://') || str.startsWith('https://')) {
         return str;
     }
