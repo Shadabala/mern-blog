@@ -16,7 +16,7 @@ import {
     Add as AddIcon,
     Close as CloseIcon,
     Facebook as FacebookIcon,
-    Twitter as TwitterIcon,
+    X as XIcon,
     Instagram as InstagramIcon,
     YouTube as YoutubeIcon,
     LinkedIn as LinkedinIcon,
@@ -100,6 +100,7 @@ const FooterSettings = () => {
     const [form, setForm] = useState({
         footer_logo: '',
         footer_logo_circle: 'off',
+        footer_bg_color: '#fff',
         about_us_description: '',
         contact_address: '',
         contact_phone: '',
@@ -114,6 +115,7 @@ const FooterSettings = () => {
         show_social_links: 'on',
         facebook_link: '',
         twitter_link: '',
+        x_link: '',
         instagram_link: '',
         youtube_link: '',
         linkedin_link: '',
@@ -129,6 +131,7 @@ const FooterSettings = () => {
                 setForm({
                     footer_logo: s.footer_logo || '',
                     footer_logo_circle: (s.footer_logo_circle === 'on' || s.footer_logo_circle === '1' || s.footer_logo_circle === true) ? 'on' : 'off',
+                    footer_bg_color: s.footer_bg_color || '#fff',
                     about_us_description: s.about_us_description || '',
                     contact_address: s.contact_address || '',
                     contact_phone: s.contact_phone || '',
@@ -142,7 +145,8 @@ const FooterSettings = () => {
                     frontend_copyright_text: s.frontend_copyright_text || '',
                     show_social_links: (s.show_social_links === 'on' || s.show_social_links === true || s.show_social_links === '1' || s.show_social_links === 1) ? 'on' : 'off',
                     facebook_link: s.facebook_link || '',
-                    twitter_link: s.twitter_link || '',
+                    twitter_link: s.x_link || s.twitter_link || '',
+                    x_link: s.x_link || s.twitter_link || '',
                     instagram_link: s.instagram_link || '',
                     youtube_link: s.youtube_link || '',
                     linkedin_link: s.linkedin_link || '',
@@ -278,6 +282,24 @@ const FooterSettings = () => {
                                             onChange={(e) => handleFieldChange('footer_logo_circle', e.target.checked ? 'on' : 'off')}
                                             color="primary"
                                         />
+                                    </FormFieldRow>
+
+
+                                    <FormFieldRow label={t('Header Background Color', 'Header Background Color')}>
+                                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                            <input
+                                                type="color"
+                                                value={form.footer_bg_color && /^#[0-9A-Fa-f]{6}$/.test(form.footer_bg_color) ? form.footer_bg_color : '#ffffff'}
+                                                onChange={(e) => handleFieldChange('footer_bg_color', e.target.value)}
+                                                style={{ width: '48px', height: '48px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', padding: '2px' }}
+                                            />
+                                            <TextField
+                                                value={form.footer_bg_color || ''}
+                                                placeholder="#ffffff"
+                                                onChange={(e) => handleFieldChange('footer_bg_color', e.target.value)}
+                                                sx={{ ...inputSx, width: '180px' }}
+                                            />
+                                        </Box>
                                     </FormFieldRow>
 
                                     <FormFieldRow label={t('About Us Description', 'About Us Description')} alignItems="start">
@@ -484,12 +506,15 @@ const FooterSettings = () => {
                                                 />
                                             </FormFieldRow>
 
-                                            <FormFieldRow label={t('Twitter / X Link', 'Twitter / X Link')}>
+                                            <FormFieldRow label={t('X Link', 'X Link')}>
                                                 <TextField
                                                     fullWidth
                                                     placeholder="https://x.com/..."
-                                                    value={form.twitter_link || ''}
-                                                    onChange={(e) => handleFieldChange('twitter_link', e.target.value)}
+                                                    value={form.x_link || form.twitter_link || ''}
+                                                    onChange={(e) => {
+                                                        handleFieldChange('x_link', e.target.value);
+                                                        handleFieldChange('twitter_link', e.target.value);
+                                                    }}
                                                     sx={inputSx}
                                                 />
                                             </FormFieldRow>

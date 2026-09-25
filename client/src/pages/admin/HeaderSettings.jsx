@@ -108,6 +108,8 @@ const HeaderSettings = () => {
             'header_nav_menu_text',
             'header_menu_labels',
             'header_menu_links',
+            'top_bar_bg_color',
+            'header_bg_color'
         ],
         header_logo: '',
         header_logo_circle: 'off',
@@ -121,6 +123,8 @@ const HeaderSettings = () => {
         header_nav_menu_text: 'light',
         header_menu_labels: [],
         header_menu_links: [],
+        top_bar_bg_color: '#111827',
+        header_bg_color: '#ffffff'
     };
 
     const [form, setForm] = useState(initialFormState);
@@ -145,6 +149,9 @@ const HeaderSettings = () => {
                     header_nav_menu_text: s.header_nav_menu_text || 'light',
                     header_menu_labels: Array.isArray(s.header_menu_labels) ? s.header_menu_labels : [],
                     header_menu_links: Array.isArray(s.header_menu_links) ? s.header_menu_links : [],
+                    top_bar_bg_color: s.top_bar_bg_color || '#111827',
+                    header_bg_color: s.header_bg_color || '#ffffff'
+
                 });
             }
         } catch (err) {
@@ -370,6 +377,40 @@ const HeaderSettings = () => {
 
                             {/* NAVIGATION SECTION */}
                             <SectionHeader>{t('Navigation', 'Navigation')}</SectionHeader>
+
+                            <FormFieldRow label={t('Top Bar Background Color', 'Top Bar Background Color')}>
+                                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                    <input
+                                        type="color"
+                                        value={form.top_bar_bg_color && /^#[0-9A-Fa-f]{6}$/.test(form.top_bar_bg_color) ? form.top_bar_bg_color : '#111827'}
+                                        onChange={(e) => handleFieldChange('top_bar_bg_color', e.target.value)}
+                                        style={{ width: '48px', height: '48px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', padding: '2px' }}
+                                    />
+                                    <TextField
+                                        value={form.top_bar_bg_color || ''}
+                                        placeholder="#111827"
+                                        onChange={(e) => handleFieldChange('top_bar_bg_color', e.target.value)}
+                                        sx={{ ...inputSx, width: '180px' }}
+                                    />
+                                </Box>
+                            </FormFieldRow>
+
+                            <FormFieldRow label={t('Header Background Color', 'Header Background Color')}>
+                                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                                    <input
+                                        type="color"
+                                        value={form.header_bg_color && /^#[0-9A-Fa-f]{6}$/.test(form.header_bg_color) ? form.header_bg_color : '#ffffff'}
+                                        onChange={(e) => handleFieldChange('header_bg_color', e.target.value)}
+                                        style={{ width: '48px', height: '48px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', padding: '2px' }}
+                                    />
+                                    <TextField
+                                        value={form.header_bg_color || ''}
+                                        placeholder="#ffffff"
+                                        onChange={(e) => handleFieldChange('header_bg_color', e.target.value)}
+                                        sx={{ ...inputSx, width: '180px' }}
+                                    />
+                                </Box>
+                            </FormFieldRow>
 
                             {/* MENU TEXT COLOR */}
                             <FormFieldRow label={t('Header Nav Menu Text Color', 'Header Nav Menu Text Color')} alignItems="start">

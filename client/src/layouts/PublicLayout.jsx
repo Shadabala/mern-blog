@@ -15,7 +15,7 @@ import {
     Email as EmailIcon,
     WhatsApp as WhatsAppIcon,
     Facebook as FacebookIcon,
-    Twitter as TwitterIcon,
+    X as XIcon,
     Instagram as InstagramIcon,
     YouTube as YouTubeIcon,
     LinkedIn as LinkedInIcon
@@ -27,6 +27,29 @@ import { useSettings } from "../context/SettingsContext";
 import LanguageSwitcher from "../components/common/LanguageSwitcher";
 import CookiesAgreementBanner from "../components/common/CookiesAgreementBanner";
 import WebsitePopupModal from "../components/common/WebsitePopupModal";
+
+const isLightColor = (color) => {
+    if (!color || typeof color !== 'string') return false;
+    const clean = color.trim().toLowerCase();
+    if (clean === '#fff' || clean === '#ffffff' || clean === 'white') return true;
+    if (clean.startsWith('#')) {
+        const hex = clean.replace('#', '');
+        let r = 0, g = 0, b = 0;
+        if (hex.length === 3) {
+            r = parseInt(hex[0] + hex[0], 16);
+            g = parseInt(hex[1] + hex[1], 16);
+            b = parseInt(hex[2] + hex[2], 16);
+        } else if (hex.length === 6) {
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
+        } else {
+            return false;
+        }
+        return (r * 299 + g * 587 + b * 114) / 1000 > 165;
+    }
+    return false;
+};
 
 const PublicLayout = ({ children }) => {
     const { isAuthenticated, user, role, logout } = useAuth();
@@ -53,17 +76,26 @@ const PublicLayout = ({ children }) => {
     const topbarBanner = get_setting('topbar_banner');
     const topbarBannerLink = get_setting('topbar_banner_link');
     const helplineNumber = get_setting('helpline_number');
-    const helplineEmail = get_setting('helpine_email');
-    const helplineWhatsapp = get_setting('helpine_whatsapp');
+    const helplineEmail = get_setting('helpine_email') || get_setting('helpline_email');
+    const helplineWhatsapp = get_setting('helpine_whatsapp') || get_setting('helpline_whatsapp');
     const showLanguageSwitcher = get_setting('show_language_switcher', 'on') !== 'off';
     const enableStickyHeader = get_setting('enable_sticky_header', 'on') !== 'off';
     const headerNavMenuText = get_setting('header_nav_menu_text', 'light');
 
-    const menuTextColor = headerNavMenuText === "dark" ? "#333333" : "#ffffff";
+    // Dynamic Topbar and Header Background Colors
+    const top_bar_bg_color = get_setting('top_bar_bg_color');
+    const header_bg_color = get_setting('header_bg_color');
 
-    const menuHoverColor = headerNavMenuText === "dark" ? "#000000" : "#ffffff";
+    const topBarBgColor = top_bar_bg_color || '#0f172a';
+    const headerBgColor = header_bg_color || 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
 
-    const menuHoverBg = headerNavMenuText === "dark" ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.15)";
+    const isTopBarLight = isLightColor(topBarBgColor);
+    const isHeaderLight = headerNavMenuText === "dark" || isLightColor(headerBgColor);
+
+    const menuTextColor = isHeaderLight ? "#1e293b" : "#ffffff";
+    const menuHoverColor = isHeaderLight ? "#0f172a" : "#ffffff";
+    const menuHoverBg = isHeaderLight ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.15)";
+    const menuActiveBg = isHeaderLight ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.15)";
 
     const headerMenuLabels = get_setting('header_menu_labels');
     const headerMenuLinks = get_setting('header_menu_links');
@@ -73,22 +105,13 @@ const PublicLayout = ({ children }) => {
     // Footer Settings
     const footerLogo = get_setting('footer_logo') || get_setting('system_logo_black') || get_setting('system_logo_white');
     const footerLogoCircle = get_setting('footer_logo_circle', 'off') === 'on' || get_setting('footer_logo_circle') === true || get_setting('footer_logo_circle') === '1' || get_setting('footer_logo_circle') === 1;
-    const aboutDescription = get_setting('about_us_description', 'A modern blog portal to share inspiring ideas, articles, and technical insights.');
+    const aboutDescription = get_setting('about_us_description');
     const contactAddress = get_setting('contact_address');
     const contactEmail = get_setting('contact_email', helplineEmail || 'my.shadabalam@gmail.com');
     const contactPhone = get_setting('contact_phone', helplineNumber || '+91 9807770015');
-    // stripHtml
-    // Remove HTML tags from text
-    const stripHtml = (html) => {
-        if (!html) return "";
+    const footer_bg_color = get_setting('footer_bg_color') || 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
 
-        const div = document.createElement("div");
-        div.innerHTML = html;
-
-        return div.textContent || div.innerText || "";
-    };
-
-    const copyrightText = stripHtml(get_setting('frontend_copyright_text'));
+    const copyrightText = get_setting('frontend_copyright_text');
 
     const showSocialLinks = get_setting('show_social_links', 'on') !== 'off';
 
@@ -152,12 +175,12 @@ const PublicLayout = ({ children }) => {
                 {(helplineNumber || helplineEmail || helplineWhatsapp) && (
                     <Box
                         sx={{
-                            bgcolor: '#0f172a',
-                            color: 'rgba(255, 255, 255, 0.75)',
+                            bgcolor: topBarBgColor,
+                            color: isTopBarLight ? '#475569' : 'rgba(255, 255, 255, 0.75)',
                             fontSize: '0.78rem',
                             py: 0.6,
                             px: 2,
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
+                            borderBottom: isTopBarLight ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.06)'
                         }}
                     >
                         <Container maxWidth="lg">
@@ -173,10 +196,10 @@ const PublicLayout = ({ children }) => {
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: 0.6,
-                                                '&:hover': { color: '#ffffff' }
+                                                '&:hover': { color: isTopBarLight ? '#0f172a' : '#ffffff' }
                                             }}
                                         >
-                                            <EmailIcon sx={{ fontSize: 14, color: '#ff8a80' }} />
+                                            <EmailIcon sx={{ fontSize: 14, color: isTopBarLight ? '#ef4444' : '#ff8a80' }} />
                                             <span>{helplineEmail}</span>
                                         </Box>
                                     )}
@@ -190,10 +213,10 @@ const PublicLayout = ({ children }) => {
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: 0.6,
-                                                '&:hover': { color: '#ffffff' }
+                                                '&:hover': { color: isTopBarLight ? '#0f172a' : '#ffffff' }
                                             }}
                                         >
-                                            <PhoneIcon sx={{ fontSize: 14, color: '#6ee7b7' }} />
+                                            <PhoneIcon sx={{ fontSize: 14, color: isTopBarLight ? '#059669' : '#6ee7b7' }} />
                                             <span>{helplineNumber}</span>
                                         </Box>
                                     )}
@@ -207,7 +230,7 @@ const PublicLayout = ({ children }) => {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             sx={{
-                                                color: '#25D366',
+                                                color: isTopBarLight ? '#16a34a' : '#25D366',
                                                 fontWeight: 600,
                                                 textDecoration: 'none',
                                                 display: 'flex',
@@ -231,8 +254,9 @@ const PublicLayout = ({ children }) => {
                     position="static"
                     elevation={0}
                     sx={{
-                        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-                        borderBottom: "1px solid rgba(255, 255, 255, 0.08)"
+                        background: headerBgColor,
+                        backgroundColor: (headerBgColor.startsWith('#') || headerBgColor.startsWith('rgb')) ? headerBgColor : undefined,
+                        borderBottom: isHeaderLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)"
                     }}
                 >
                     <Container maxWidth="lg">
@@ -697,14 +721,14 @@ const PublicLayout = ({ children }) => {
                                         variant="outlined"
                                         size="small"
                                         sx={{
-                                            color: "#ffffff",
-                                            borderColor: "rgba(255, 255, 255, 0.4)",
+                                            color: menuTextColor,
+                                            borderColor: isHeaderLight ? "rgba(0, 0, 0, 0.25)" : "rgba(255, 255, 255, 0.4)",
                                             borderRadius: 20,
                                             px: 2.5,
                                             py: 0.5,
                                             textTransform: "none",
                                             fontWeight: 600,
-                                            "&:hover": { borderColor: "#ffffff", bgcolor: "rgba(255, 255, 255, 0.1)" }
+                                            "&:hover": { borderColor: menuTextColor, bgcolor: menuHoverBg }
                                         }}
                                     >
                                         {t("navbar.signIn", "Sign In")}
@@ -712,7 +736,7 @@ const PublicLayout = ({ children }) => {
                                 )}
 
                                 {/* Language Selector - Controlled by show_language_switcher */}
-                                {showLanguageSwitcher && <LanguageSwitcher variant="dark" />}
+                                {showLanguageSwitcher && <LanguageSwitcher variant={isHeaderLight ? "light" : "dark"} />}
                             </Stack>
                         </Toolbar>
                     </Container>
@@ -724,159 +748,101 @@ const PublicLayout = ({ children }) => {
             </Box>
 
             {/* Footer - Powered by get_setting */}
-            <Box component="footer" sx={{ py: 6, bgcolor: "#0b192c", color: "rgba(255, 255, 255, 0.7)", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+            <Box component="footer" sx={{
+                py: { xs: 3, md: 3.5 },
+                background: footer_bg_color,
+                backgroundColor: (footer_bg_color.startsWith('#') || footer_bg_color.startsWith('rgb')) ? footer_bg_color : undefined,
+                borderBottom: isHeaderLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)"
+            }}>
                 <Container maxWidth="lg">
-                    <Grid container spacing={4} mb={4}>
-                        {/* Column 1: Footer Logo & About Description */}
-                        <Grid item xs={12} md={4}>
-                            {footerLogo ? (
-                                <Box
-                                    component={RouterLink}
-                                    to="/"
-                                    sx={{
-                                        display: "inline-block",
-                                        textDecoration: "none",
-                                        mb: 2
-                                    }}
-                                >
-                                    {footerLogoCircle ? (
-                                        <Box
-                                            sx={{
-                                                width: { xs: 50, sm: 58 },
-                                                height: { xs: 50, sm: 58 },
-                                                borderRadius: "50%",
-                                                overflow: "hidden",
-                                                bgcolor: "#ffffff",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
-                                                border: "2px solid rgba(255, 255, 255, 0.2)",
-                                                p: 0.4,
-                                                transition: "transform 0.2s ease",
-                                                "&:hover": { transform: "scale(1.05)" }
-                                            }}
-                                        >
+                    <Grid container spacing={3} mb={2.5} alignItems="flex-start" justifyContent="space-between">
+                        {/* Left Side: Logo & Content side-by-side */}
+                        <Grid item xs={12} md={5}>
+                            <Stack direction="row" spacing={2.5} alignItems="center">
+                                {(headerLogo || footerLogo) ? (
+                                    <Box
+                                        component={RouterLink}
+                                        to="/"
+                                        sx={{
+                                            display: "inline-block",
+                                            textDecoration: "none",
+                                            flexShrink: 0
+                                        }}
+                                    >
+                                        {(headerLogoCircle || footerLogoCircle) ? (
+                                            <Box
+                                                sx={{
+                                                    width: { xs: 48, sm: 54 },
+                                                    height: { xs: 48, sm: 54 },
+                                                    borderRadius: "50%",
+                                                    overflow: "hidden",
+                                                    bgcolor: "#ffffff",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                                                    border: "2px solid rgba(255, 255, 255, 0.2)",
+                                                    p: 0.3,
+                                                    transition: "transform 0.2s ease",
+                                                    "&:hover": { transform: "scale(1.05)" }
+                                                }}
+                                            >
+                                                <Box
+                                                    component="img"
+                                                    src={uploaded_asset(headerLogo || footerLogo)}
+                                                    alt={siteName}
+                                                    sx={{
+                                                        width: "100%",
+                                                        height: "100%",
+                                                        borderRadius: "50%",
+                                                        objectFit: "contain",
+                                                        display: "block"
+                                                    }}
+                                                />
+                                            </Box>
+                                        ) : (
                                             <Box
                                                 component="img"
-                                                src={uploaded_asset(footerLogo)}
+                                                src={uploaded_asset(headerLogo || footerLogo)}
                                                 alt={siteName}
                                                 sx={{
-                                                    width: "100%",
-                                                    height: "100%",
-                                                    borderRadius: "50%",
+                                                    maxHeight: { xs: 40, sm: 48 },
+                                                    maxWidth: 160,
                                                     objectFit: "contain",
-                                                    display: "block"
+                                                    display: "block",
+                                                    transition: "transform 0.2s ease",
+                                                    "&:hover": { transform: "scale(1.03)" }
                                                 }}
                                             />
-                                        </Box>
-                                    ) : (
-                                        <Box
-                                            component="img"
-                                            src={uploaded_asset(footerLogo)}
-                                            alt={siteName}
-                                            sx={{
-                                                maxHeight: { xs: 45, sm: 52 },
-                                                maxWidth: { xs: 180, sm: 240 },
-                                                objectFit: "contain",
-                                                display: "block",
-                                                transition: "transform 0.2s ease",
-                                                "&:hover": { transform: "scale(1.03)" }
-                                            }}
-                                        />
-                                    )}
-                                </Box>
-                            ) : (
-                                <Typography
-                                    variant="h6"
-                                    fontWeight={900}
-                                    sx={{
-                                        background: "linear-gradient(90deg, #ff8a80, #f5a623)",
-                                        WebkitBackgroundClip: "text",
-                                        WebkitTextFillColor: "transparent",
-                                        mb: 1.5
-                                    }}
-                                >
-                                    {siteName}
-                                </Typography>
-                            )}
-                            <Typography variant="body2" sx={{ maxWidth: 320, lineHeight: 1.6, mb: 2 }}>
-                                {aboutDescription}
-                            </Typography>
+                                        )}
+                                    </Box>
+                                ) : (
+                                    <Typography
+                                        variant="h6"
+                                        fontWeight={900}
+                                        sx={{
+                                            background: "linear-gradient(90deg, #ff8a80, #f5a623)",
+                                            WebkitBackgroundClip: "text",
+                                            WebkitTextFillColor: "transparent",
+                                            flexShrink: 0
+                                        }}
+                                    >
+                                        {siteName}
+                                    </Typography>
+                                )}
 
-                            {/* Social Icons Strip */}
-                            {showSocialLinks && (
-                                <Stack direction="row" spacing={1.5} alignItems="center">
-                                    {get_setting('facebook_link') && (
-                                        <IconButton
-                                            component="a"
-                                            href={get_setting('facebook_link')}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            size="small"
-                                            sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#1877F2" } }}
-                                        >
-                                            <FacebookIcon fontSize="small" />
-                                        </IconButton>
-                                    )}
-                                    {get_setting('twitter_link') && (
-                                        <IconButton
-                                            component="a"
-                                            href={get_setting('twitter_link')}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            size="small"
-                                            sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#1DA1F2" } }}
-                                        >
-                                            <TwitterIcon fontSize="small" />
-                                        </IconButton>
-                                    )}
-                                    {get_setting('instagram_link') && (
-                                        <IconButton
-                                            component="a"
-                                            href={get_setting('instagram_link')}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            size="small"
-                                            sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#E4405F" } }}
-                                        >
-                                            <InstagramIcon fontSize="small" />
-                                        </IconButton>
-                                    )}
-                                    {get_setting('youtube_link') && (
-                                        <IconButton
-                                            component="a"
-                                            href={get_setting('youtube_link')}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            size="small"
-                                            sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#CD201F" } }}
-                                        >
-                                            <YouTubeIcon fontSize="small" />
-                                        </IconButton>
-                                    )}
-                                    {get_setting('linkedin_link') && (
-                                        <IconButton
-                                            component="a"
-                                            href={get_setting('linkedin_link')}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            size="small"
-                                            sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#0A66C2" } }}
-                                        >
-                                            <LinkedInIcon fontSize="small" />
-                                        </IconButton>
-                                    )}
-                                </Stack>
-                            )}
+                                <Typography variant="body2" sx={{ lineHeight: 1.5, fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.75)" }}>
+                                    <div dangerouslySetInnerHTML={{ __html: aboutDescription }} />
+                                </Typography>
+                            </Stack>
                         </Grid>
 
-                        {/* Column 2: Widget One / Quick Links */}
-                        <Grid item xs={6} sm={4} md={2.5}>
-                            <Typography variant="subtitle2" fontWeight={700} color="#ffffff" gutterBottom>
-                                {widgetOneTitle || "Navigation"}
+                        {/* Quick Links */}
+                        <Grid item xs={6} sm={4} md={2}>
+                            <Typography variant="subtitle2" fontWeight={700} color="#ffffff" sx={{ mb: 1.2 }}>
+                                {widgetOneTitle || "Quick Links"}
                             </Typography>
-                            <Stack spacing={1}>
+                            <Stack spacing={0.6}>
                                 {Array.isArray(widgetOneLabels) && widgetOneLabels.length > 0 ? (
                                     widgetOneLabels.map((lbl, idx) => {
                                         const href = (Array.isArray(widgetOneLinks) && widgetOneLinks[idx]) ? widgetOneLinks[idx] : '/';
@@ -887,7 +853,7 @@ const PublicLayout = ({ children }) => {
                                                 variant="body2"
                                                 component={isExternal ? "a" : RouterLink}
                                                 {...(isExternal ? { href, target: "_blank", rel: "noopener noreferrer" } : { to: href })}
-                                                sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}
+                                                sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}
                                             >
                                                 {lbl}
                                             </Typography>
@@ -895,20 +861,20 @@ const PublicLayout = ({ children }) => {
                                     })
                                 ) : (
                                     <>
-                                        <Typography variant="body2" component={RouterLink} to="/" sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Home</Typography>
-                                        <Typography variant="body2" component={RouterLink} to="/about" sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>About Us</Typography>
-                                        <Typography variant="body2" component={RouterLink} to="/contact" sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Contact</Typography>
+                                        <Typography variant="body2" component={RouterLink} to="/" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Home</Typography>
+                                        <Typography variant="body2" component={RouterLink} to="/contact" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Contact Us</Typography>
+                                        <Typography variant="body2" component={RouterLink} to="/about" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>About Us</Typography>
                                     </>
                                 )}
                             </Stack>
                         </Grid>
 
-                        {/* Column 3: Widget Two / Support & Legal */}
-                        <Grid item xs={6} sm={4} md={2.5}>
-                            <Typography variant="subtitle2" fontWeight={700} color="#ffffff" gutterBottom>
-                                {widgetTwoTitle || "Support & Legal"}
+                        {/* Supports */}
+                        <Grid item xs={6} sm={4} md={2}>
+                            <Typography variant="subtitle2" fontWeight={700} color="#ffffff" sx={{ mb: 1.2 }}>
+                                {widgetTwoTitle || "Supports"}
                             </Typography>
-                            <Stack spacing={1}>
+                            <Stack spacing={0.6}>
                                 {Array.isArray(widgetTwoLabels) && widgetTwoLabels.length > 0 ? (
                                     widgetTwoLabels.map((lbl, idx) => {
                                         const href = (Array.isArray(widgetTwoLinks) && widgetTwoLinks[idx]) ? widgetTwoLinks[idx] : '#';
@@ -919,7 +885,7 @@ const PublicLayout = ({ children }) => {
                                                 variant="body2"
                                                 component={isExternal ? "a" : RouterLink}
                                                 {...(isExternal ? { href, target: "_blank", rel: "noopener noreferrer" } : { to: href })}
-                                                sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}
+                                                sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", textDecoration: "none", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}
                                             >
                                                 {lbl}
                                             </Typography>
@@ -927,22 +893,22 @@ const PublicLayout = ({ children }) => {
                                     })
                                 ) : (
                                     <>
-                                        <Typography variant="body2" sx={{ cursor: "pointer", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Privacy Policy</Typography>
-                                        <Typography variant="body2" sx={{ cursor: "pointer", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Terms of Service</Typography>
-                                        <Typography variant="body2" sx={{ cursor: "pointer", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>FAQ</Typography>
+                                        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", cursor: "pointer", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Privacy Policy</Typography>
+                                        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", cursor: "pointer", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Terms Conditions</Typography>
+                                        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", cursor: "pointer", "&:hover": { color: "var(--primary-color, #ff8a80)" } }}>Faqs</Typography>
                                     </>
                                 )}
                             </Stack>
                         </Grid>
 
-                        {/* Column 4: Contact Info */}
-                        <Grid item xs={12} sm={4} md={3}>
-                            <Typography variant="subtitle2" fontWeight={700} color="#ffffff" gutterBottom>
+                        {/* Contact Info */}
+                        <Grid item xs={12} sm={4} md={2.5}>
+                            <Typography variant="subtitle2" fontWeight={700} color="#ffffff" sx={{ mb: 1.2 }}>
                                 Contact Info
                             </Typography>
-                            <Stack spacing={0.8}>
+                            <Stack spacing={0.5}>
                                 {contactAddress && (
-                                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)" }}>
+                                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem" }}>
                                         {contactAddress}
                                     </Typography>
                                 )}
@@ -951,7 +917,7 @@ const PublicLayout = ({ children }) => {
                                         variant="body2"
                                         component="a"
                                         href={`mailto:${contactEmail}`}
-                                        sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "#ffffff" } }}
+                                        sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", textDecoration: "none", wordBreak: "break-all", "&:hover": { color: "#ffffff" } }}
                                     >
                                         {contactEmail}
                                     </Typography>
@@ -961,7 +927,7 @@ const PublicLayout = ({ children }) => {
                                         variant="body2"
                                         component="a"
                                         href={`tel:${contactPhone}`}
-                                        sx={{ color: "rgba(255,255,255,0.7)", textDecoration: "none", "&:hover": { color: "#ffffff" } }}
+                                        sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", textDecoration: "none", "&:hover": { color: "#ffffff" } }}
                                     >
                                         {contactPhone}
                                     </Typography>
@@ -970,7 +936,7 @@ const PublicLayout = ({ children }) => {
 
                             {/* Payment method images if configured */}
                             {Array.isArray(paymentMethodImages) && paymentMethodImages.length > 0 && (
-                                <Box sx={{ mt: 2 }}>
+                                <Box sx={{ mt: 1.5 }}>
                                     <Stack direction="row" spacing={1} flexWrap="wrap">
                                         {paymentMethodImages.map((img, i) => (
                                             <Box
@@ -978,7 +944,7 @@ const PublicLayout = ({ children }) => {
                                                 component="img"
                                                 src={uploaded_asset(img)}
                                                 alt="Payment method"
-                                                sx={{ height: 24, borderRadius: 1, bgcolor: '#ffffff', p: 0.3 }}
+                                                sx={{ height: 22, borderRadius: 1, bgcolor: '#ffffff', p: 0.3 }}
                                             />
                                         ))}
                                     </Stack>
@@ -987,9 +953,88 @@ const PublicLayout = ({ children }) => {
                         </Grid>
                     </Grid>
 
-                    <Typography variant="body2" align="center" pt={4} sx={{ borderTop: "1px solid rgba(255, 255, 255, 0.08)", fontSize: "0.85rem" }}>
-                        {copyrightText}
-                    </Typography>
+                    {/* Bottom Bar: Copyright and Social Links in ONE line */}
+                    <Box
+                        sx={{
+                            pt: 2,
+                            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                            display: "flex",
+                            flexDirection: { xs: "column", sm: "row" },
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 1.5
+                        }}
+                    >
+                        <Typography variant="body2" sx={{ fontSize: "0.825rem", color: "rgba(255, 255, 255, 0.6)" }}>
+                            <div dangerouslySetInnerHTML={{ __html: copyrightText || '' }} />
+                        </Typography>
+
+                        {showSocialLinks && (
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                                {get_setting('facebook_link') && (
+                                    <IconButton
+                                        component="a"
+                                        href={get_setting('facebook_link')}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        size="small"
+                                        sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#1877F2" } }}
+                                    >
+                                        <FacebookIcon fontSize="small" />
+                                    </IconButton>
+                                )}
+                                {(get_setting('x_link') || get_setting('twitter_link')) && (
+                                    <IconButton
+                                        component="a"
+                                        href={get_setting('x_link') || get_setting('twitter_link')}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        size="small"
+                                        aria-label="X"
+                                        sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#ffffff" } }}
+                                    >
+                                        <XIcon fontSize="small" />
+                                    </IconButton>
+                                )}
+                                {get_setting('instagram_link') && (
+                                    <IconButton
+                                        component="a"
+                                        href={get_setting('instagram_link')}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        size="small"
+                                        sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#E4405F" } }}
+                                    >
+                                        <InstagramIcon fontSize="small" />
+                                    </IconButton>
+                                )}
+                                {get_setting('youtube_link') && (
+                                    <IconButton
+                                        component="a"
+                                        href={get_setting('youtube_link')}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        size="small"
+                                        sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#CD201F" } }}
+                                    >
+                                        <YouTubeIcon fontSize="small" />
+                                    </IconButton>
+                                )}
+                                {get_setting('linkedin_link') && (
+                                    <IconButton
+                                        component="a"
+                                        href={get_setting('linkedin_link')}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        size="small"
+                                        sx={{ color: "rgba(255,255,255,0.7)", '&:hover': { color: "#0A66C2" } }}
+                                    >
+                                        <LinkedInIcon fontSize="small" />
+                                    </IconButton>
+                                )}
+                            </Stack>
+                        )}
+                    </Box>
                 </Container>
             </Box>
 

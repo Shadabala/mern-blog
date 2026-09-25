@@ -26,17 +26,22 @@ const PageWrapper = styled(Box)`
 const HeroContainer = styled(Box)`
     position: relative;
     overflow: hidden;
-    min-height: 380px;
+    min-height: 240px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     color: #fff;
-    padding: 70px 24px 50px;
+    padding: 38px 24px 32px;
+
+    @media (max-width: 900px) {
+        min-height: 210px;
+        padding: 30px 20px 28px;
+    }
 
     @media (max-width: 600px) {
-        padding: 50px 16px 36px;
-        min-height: 320px;
+        min-height: 180px;
+        padding: 22px 14px 22px;
     }
 `;
 
@@ -67,18 +72,18 @@ const HeroContent = styled(Box)`
     position: relative;
     z-index: 2;
     text-align: center;
-    max-width: 850px;
+    max-width: 760px;
     width: 100%;
     margin: 0 auto;
 `;
 
 const HeroTitle = styled(Typography)`
-    font-size: clamp(30px, 4.5vw, 56px);
-    font-weight: 900;
+    font-size: clamp(22px, 3.2vw, 38px);
+    font-weight: 800;
     color: #ffffff;
     line-height: 1.25;
-    margin-bottom: 14px;
-    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+    margin-bottom: 8px;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
 
     & span.gradient-word {
         background: linear-gradient(90deg, #ffffff 0%, #ff8a9e 100%);
@@ -86,19 +91,25 @@ const HeroTitle = styled(Typography)`
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
+
+    @media (max-width: 600px) {
+        font-size: clamp(18px, 5vw, 24px);
+        margin-bottom: 6px;
+    }
 `;
 
 const HeroSub = styled(Typography)`
     color: rgba(255, 255, 255, 0.88);
-    font-size: clamp(15px, 2vw, 19px);
-    max-width: 620px;
-    margin: 0 auto 24px;
-    line-height: 1.6;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+    font-size: clamp(13px, 1.4vw, 15px);
+    max-width: 580px;
+    margin: 0 auto 14px;
+    line-height: 1.5;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 
     @media (max-width: 600px) {
-        font-size: 14px;
-        margin-bottom: 20px;
+        font-size: 13px;
+        margin-bottom: 12px;
+        line-height: 1.4;
     }
 `;
 
@@ -106,18 +117,28 @@ const SearchBox = styled(TextField)`
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(8px);
     border-radius: 50px;
-    max-width: 480px;
+    max-width: 440px;
     width: 100%;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 
     & .MuiOutlinedInput-root {
         border-radius: 50px;
         color: #fff;
+        height: 40px;
+        font-size: 0.9rem;
         & fieldset { border-color: rgba(255, 255, 255, 0.35); }
         &:hover fieldset { border-color: rgba(255, 255, 255, 0.7); }
         &.Mui-focused fieldset { border-color: var(--primary-color, #e94560); }
     }
-    & input::placeholder { color: rgba(255, 255, 255, 0.6); }
+    & input::placeholder { color: rgba(255, 255, 255, 0.65); font-size: 0.85rem; }
+
+    @media (max-width: 600px) {
+        max-width: 100%;
+        & .MuiOutlinedInput-root {
+            height: 38px;
+            font-size: 0.85rem;
+        }
+    }
 `;
 
 const PostsGrid = styled(Box)`
@@ -309,14 +330,14 @@ const Home = () => {
 
                         {/* Target Link Action Button if specified */}
                         {activeSlide?.link && (
-                            <Box sx={{ mb: 3 }}>
+                            <Box sx={{ mb: 1.8 }}>
                                 <Button
                                     component={activeSlide.link.startsWith('http') ? 'a' : RouterLink}
                                     {...(activeSlide.link.startsWith('http')
                                         ? { href: activeSlide.link, target: '_blank', rel: 'noopener noreferrer' }
                                         : { to: activeSlide.link })}
                                     variant="contained"
-                                    endIcon={<OpenIcon sx={{ fontSize: 16 }} />}
+                                    endIcon={<OpenIcon sx={{ fontSize: 14 }} />}
                                     sx={{
                                         bgcolor: 'var(--primary-color, #e94560)',
                                         color: '#ffffff',
@@ -326,11 +347,11 @@ const Home = () => {
                                         },
                                         transition: 'all 0.25s ease',
                                         borderRadius: '50px',
-                                        px: 3.5,
-                                        py: 1,
+                                        px: 2.8,
+                                        py: 0.6,
                                         fontWeight: 700,
                                         textTransform: 'none',
-                                        fontSize: '0.95rem'
+                                        fontSize: '0.85rem'
                                     }}
                                 >
                                     {t("home.explore", "Explore More")}
@@ -349,7 +370,7 @@ const Home = () => {
                                 input: {
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            <SearchOutlined sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                                            <SearchOutlined sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.1rem' }} />
                                         </InputAdornment>
                                     )
                                 }
@@ -365,7 +386,7 @@ const Home = () => {
                                 aria-label="Previous Slide"
                                 sx={{
                                     position: 'absolute',
-                                    left: { xs: 8, sm: 20 },
+                                    left: { xs: 6, sm: 16 },
                                     top: '50%',
                                     transform: 'translateY(-50%)',
                                     zIndex: 3,
@@ -373,11 +394,11 @@ const Home = () => {
                                     bgcolor: 'rgba(0, 0, 0, 0.35)',
                                     backdropFilter: 'blur(4px)',
                                     '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.65)' },
-                                    width: { xs: 36, sm: 44 },
-                                    height: { xs: 36, sm: 44 }
+                                    width: { xs: 30, sm: 38 },
+                                    height: { xs: 30, sm: 38 }
                                 }}
                             >
-                                <PrevIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                                <PrevIcon sx={{ fontSize: { xs: 15, sm: 18 } }} />
                             </IconButton>
 
                             <IconButton
@@ -385,7 +406,7 @@ const Home = () => {
                                 aria-label="Next Slide"
                                 sx={{
                                     position: 'absolute',
-                                    right: { xs: 8, sm: 20 },
+                                    right: { xs: 6, sm: 16 },
                                     top: '50%',
                                     transform: 'translateY(-50%)',
                                     zIndex: 3,
@@ -393,20 +414,20 @@ const Home = () => {
                                     bgcolor: 'rgba(0, 0, 0, 0.35)',
                                     backdropFilter: 'blur(4px)',
                                     '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.65)' },
-                                    width: { xs: 36, sm: 44 },
-                                    height: { xs: 36, sm: 44 }
+                                    width: { xs: 30, sm: 38 },
+                                    height: { xs: 30, sm: 38 }
                                 }}
                             >
-                                <NextIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                                <NextIcon sx={{ fontSize: { xs: 15, sm: 18 } }} />
                             </IconButton>
 
                             {/* Pagination Indicators Dots */}
                             <Stack
                                 direction="row"
-                                spacing={1}
+                                spacing={0.8}
                                 sx={{
                                     position: 'absolute',
-                                    bottom: 14,
+                                    bottom: 8,
                                     left: '50%',
                                     transform: 'translateX(-50%)',
                                     zIndex: 3
@@ -417,9 +438,9 @@ const Home = () => {
                                         key={`dot-${idx}`}
                                         onClick={() => setCurrentSlideIdx(idx)}
                                         sx={{
-                                            width: idx === currentSlideIdx ? 24 : 8,
-                                            height: 8,
-                                            borderRadius: '4px',
+                                            width: idx === currentSlideIdx ? 18 : 6,
+                                            height: 6,
+                                            borderRadius: '3px',
                                             bgcolor: idx === currentSlideIdx ? 'var(--primary-color, #e94560)' : 'rgba(255, 255, 255, 0.45)',
                                             cursor: 'pointer',
                                             transition: 'all 0.3s ease',

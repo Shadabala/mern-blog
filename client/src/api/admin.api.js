@@ -313,7 +313,8 @@ export const fetchHeaderSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([
     'header_logo', 'topbar_banner', 'topbar_banner_link', 'helpline_number',
     'helpine_email', 'helpline_email', 'helpine_whatsapp', 'helpline_whatsapp',
     'show_language_switcher', 'enable_sticky_header', 'header_nav_menu_text',
-    'header_menu_labels', 'header_menu_links'
+    'header_menu_labels', 'header_menu_links', 'top_bar_bg_color',
+    'header_bg_color'
 ], lang);
 export const updateHeaderSettingsApi = updateWebsiteSettingsApi;
 
@@ -321,8 +322,8 @@ export const fetchFooterSettingsApi = (lang = 'en') => fetchWebsiteSettingsApi([
     'footer_logo', 'about_us_description', 'contact_address', 'contact_phone',
     'contact_email', 'widget_one_title', 'widget_one_labels', 'widget_one_links',
     'widget_two_title', 'widget_two_labels', 'widget_two_links',
-    'frontend_copyright_text', 'show_social_links', 'facebook_link', 'twitter_link',
-    'instagram_link', 'youtube_link', 'linkedin_link', 'payment_method_images'
+    'frontend_copyright_text', 'show_social_links', 'facebook_link', 'twitter_link', 'x_link',
+    'instagram_link', 'youtube_link', 'linkedin_link', 'payment_method_images', 'footer_bg_color'
 ], lang);
 export const updateFooterSettingsApi = updateWebsiteSettingsApi;
 

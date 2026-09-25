@@ -66,6 +66,8 @@ const Header = ({ isAuthenticated }) => {
 
     const headerLogo = get_setting('header_logo');
     const siteName = get_setting('site_name', get_setting('website_name', t("navbar.home")));
+    const top_bar_bg_color = get_setting('top_bar_bg_color');
+    const header_bg_color = get_setting('header_bg_color');
 
     const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
     const handleMenuClose = () => setAnchorEl(null);
@@ -80,7 +82,12 @@ const Header = ({ isAuthenticated }) => {
     };
 
     return (
-        <StyledAppBar position={get_setting('enable_sticky_header', 'on') === 'off' ? 'static' : 'fixed'}>
+        <StyledAppBar
+            position={get_setting('enable_sticky_header', 'on') === 'off' ? 'static' : 'fixed'}
+            sx={{
+                ...(header_bg_color ? { background: `${header_bg_color} !important`, backgroundColor: `${header_bg_color} !important` } : {})
+            }}
+        >
             <Toolbar sx={{ gap: 1, px: { xs: 2, md: 4 } }}>
                 <Box
                     onClick={() => navigate('/')}

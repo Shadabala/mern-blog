@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useLanguage } from "../../context/LanguageContext";
-import { Button, Menu, MenuItem, ListItemText, Typography, Box } from "@mui/material";
+import { Button, IconButton, Avatar, Tooltip, Menu, MenuItem, ListItemText, Typography, Box } from "@mui/material";
 import { Language as LanguageIcon, Check as CheckIcon } from "@mui/icons-material";
 import { getFlagUrl } from "../../utils/languageFlags";
 
@@ -43,49 +43,45 @@ const LanguageSwitcher = ({ variant = "light" }) => {
 
     return (
         <>
-            <Button
-                onClick={handleClick}
-                startIcon={<LanguageIcon fontSize="small" />}
-                variant="outlined"
-                size="small"
-                sx={{
-                    textTransform: "none",
-                    borderRadius: 1.5,
-                    color: isDark ? "#ffffff" : "#495057",
-                    borderColor: isDark ? "rgba(255, 255, 255, 0.2)" : "#ced4da",
-                    fontWeight: 600,
-                    fontSize: "0.8125rem",
-                    px: 1.5,
-                    py: 0.5,
-                    bgcolor: isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
-                    "&:hover": {
-                        bgcolor: isDark ? "rgba(255, 255, 255, 0.1)" : "#f8f9fa",
-                        borderColor: isDark ? "#ffffff" : "#adb5bd"
-                    }
-                }}
-            >
-                {activeLanguage && (
-                    <Box
-                        component="img"
-                        src={getFlagUrl(activeLanguage.flag || activeLanguage.code)}
-                        alt=""
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/assets/img/flags/us.png";
+            <Tooltip title={activeLanguage?.name || "Language"}>
+                <IconButton
+                    onClick={handleClick}
+                    size="small"
+                    sx={{
+                        p: 0,
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        border: isDark ? "1.5px solid rgba(255, 255, 255, 0.2)" : "1.5px solid rgba(0, 0, 0, 0.12)",
+                        bgcolor: isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": {
+                            bgcolor: isDark ? "rgba(255, 255, 255, 0.15)" : "#f8f9fa",
+                            borderColor: isDark ? "#ffffff" : "#64748b",
+                            transform: "scale(1.05)"
+                        }
+                    }}
+                >
+                    <Avatar
+                        src={activeLanguage ? getFlagUrl(activeLanguage.flag || activeLanguage.code) : "/assets/img/flags/us.png"}
+                        alt={activeLanguage?.name || "Flag"}
+                        imgProps={{
+                            onError: (e) => {
+                                e.target.onerror = null;
+                                e.target.src = "/assets/img/flags/us.png";
+                            },
+                            style: { objectFit: "cover" }
                         }}
                         sx={{
-                            width: 18,
-                            height: 12,
-                            borderRadius: "2px",
-                            objectFit: "cover",
-                            mr: 0.75
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%"
                         }}
-                    />
-                )}
-                <Typography component="span" sx={{ fontWeight: 600, fontSize: "0.8125rem" }}>
-                    {activeLanguage?.name ? activeLanguage.name.split(" ")[0] : "Language"}
-                </Typography>
-            </Button>
+                    >
+                        <LanguageIcon sx={{ fontSize: 20 }} />
+                    </Avatar>
+                </IconButton>
+            </Tooltip>
 
             <Menu
                 anchorEl={anchorEl}
