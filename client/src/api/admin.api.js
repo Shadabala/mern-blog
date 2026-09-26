@@ -178,6 +178,15 @@ export const deleteLanguageApi = async (id) => {
     return response.data;
 };
 
+// Instagram Token API
+export const fetchInstaTokenSettings = async () => {
+    const response = await api.get('/admin/setup/insta-token');
+    return response.data;
+};
+export const updateInstaTokenSettings = async (data) => {
+    const response = await api.post('/admin/setup/insta-token', data);
+    return response.data;
+};
 // File System & Redis Configuration API
 export const fetchFileSystemSettings = async () => {
     const response = await api.get('/admin/file_system');

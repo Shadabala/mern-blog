@@ -27,6 +27,7 @@ import {
     postGetAll,
     postToggleStatus
 } from '../controllers/BlogController.js';
+import { getInstaFeeds } from '../controllers/InstaController.js';
 import { getPublicSettings } from '../controllers/SettingController.js';
 import { newComment, getComments, deleteComment } from '../controllers/CommentController.js';
 import { getHomepageSettings, getHeaderSettings, getWebsiteSettings } from '../controllers/WebsiteSettingController.js';
@@ -71,6 +72,7 @@ const router = express.Router();
 
 // Public System Health & Settings
 router.get('/', (req, res) => res.send('MERN Blog Server API Working'));
+router.get('/insta/feeds', getInstaFeeds);
 router.get('/public/settings', getPublicSettings);
 router.get('/public/website-settings', getWebsiteSettings);
 router.get('/public/website-settings/header', getHeaderSettings);

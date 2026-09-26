@@ -25,7 +25,9 @@ import {
     google_recaptcha_update,
     google_firebase_update,
     google_file_update,
-    google_play
+    google_play,
+    getInstaTokenSettings,
+    updateInstaTokenSettings
 } from '../controllers/WebsiteSettingController.js';
 import {
     getPages,
@@ -184,7 +186,9 @@ router.get('/file_system', protect, checkPermission('file_system_manage'), getFi
 router.get('/admin/file_system', protect, checkPermission('file_system_manage'), getFileSystemSettings);
 router.get('/setup/file-system', protect, checkPermission('file_system_manage'), getFileSystemSettings);
 router.get('/admin/setup/file-system', protect, checkPermission('file_system_manage'), getFileSystemSettings);
+router.get('/admin/setup/insta-token', protect, checkPermission('insta_token_manage'), getInstaTokenSettings);
 
+router.post('/admin/setup/insta-token', protect, checkPermission('insta_token_update'), updateInstaTokenSettings);
 router.post('/file_system', protect, checkPermission('file_system_manage'), updateFileSystemSettings);
 router.post('/admin/file_system', protect, checkPermission('file_system_manage'), updateFileSystemSettings);
 router.post('/setup/file-system', protect, checkPermission('file_system_manage'), updateFileSystemSettings);

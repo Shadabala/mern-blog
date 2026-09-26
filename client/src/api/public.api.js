@@ -39,3 +39,7 @@ export const submitContactForm = async (data) => {
     return response.data;
 };
 
+export const fetchInstafeeds = async () => {
+    const response = await api.get(`/insta/feeds`);
+    return response.data;
+};

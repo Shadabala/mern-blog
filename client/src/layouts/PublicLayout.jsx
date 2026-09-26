@@ -831,9 +831,17 @@ const PublicLayout = ({ children }) => {
                                     </Typography>
                                 )}
 
-                                <Typography variant="body2" sx={{ lineHeight: 1.5, fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.75)" }}>
-                                    <div dangerouslySetInnerHTML={{ __html: aboutDescription }} />
-                                </Typography>
+
+                                <Typography
+                                    variant="body2"
+                                    component="div"
+                                    sx={{
+                                        lineHeight: 1.5,
+                                    }}
+                                    dangerouslySetInnerHTML={{
+                                        __html: aboutDescription || "",
+                                    }}
+                                />
                             </Stack>
                         </Grid>
 
@@ -965,10 +973,16 @@ const PublicLayout = ({ children }) => {
                             gap: 1.5
                         }}
                     >
-                        <Typography variant="body2" sx={{ fontSize: "0.825rem", color: "rgba(255, 255, 255, 0.6)" }}>
-                            <div dangerouslySetInnerHTML={{ __html: copyrightText || '' }} />
-                        </Typography>
-
+                        <Typography
+                            variant="body2"
+                            component="div"
+                            sx={{
+                                lineHeight: 1.5,
+                            }}
+                            dangerouslySetInnerHTML={{
+                                __html: copyrightText || "",
+                            }}
+                        />
                         {showSocialLinks && (
                             <Stack direction="row" spacing={0.5} alignItems="center">
                                 {get_setting('facebook_link') && (

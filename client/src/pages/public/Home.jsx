@@ -17,6 +17,7 @@ import { API } from '../../service/api';
 import PublicLayout from '../../layouts/PublicLayout';
 import Post from '../../components/home/post/Post';
 import CategoryNav from '../../components/header/CategoryNav';
+import InstaFeeds from './Instafeeds.jsx';
 
 const PageWrapper = styled(Box)`
     min-height: 100vh;
@@ -483,6 +484,7 @@ const Home = () => {
                     </EmptyState>
                 )}
             </PageWrapper>
+            <InstaFeeds />
         </PublicLayout>
     );
 };

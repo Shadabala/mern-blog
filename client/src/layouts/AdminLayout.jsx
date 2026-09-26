@@ -115,6 +115,7 @@ const AdminLayout = () => {
                 { text: t("Language", "Language"), path: "/admin/setup/language", permission: 'languages_manage' },
                 { text: t("File System Configuration", "File System Configuration"), path: "/admin/file_system", permission: 'file_system_manage' },
                 { text: t("SMTP Setting", "SMTP Setting"), path: "/admin/setup/smtp", permission: 'smtp_manage' },
+                { text: t("Instagram Token", "Instagram Token"), path: "/admin/setup/insta-token", permission: 'insta_token_manage' },
                 { text: t("Payment Methods", "Payment Methods"), path: "/admin/setup/payment-methods", permission: 'payment_methods_manage' },
                 { text: t("Offline Payments", "Offline Payments"), path: "/admin/setup/offline-payments", permission: 'payment_methods_manage' },
                 { text: t("Google (reCAPTCHA & Analytics)", "Google (reCAPTCHA & Analytics)"), path: "/admin/setup/google", permission: 'google_manage' }

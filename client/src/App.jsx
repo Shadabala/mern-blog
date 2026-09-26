@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import DataProvider from "./context/DataProvider";
 import { LanguageProvider } from "./context/LanguageContext";
@@ -64,6 +64,7 @@ import PageEdit from "./pages/admin/PageEdit";
 // Setup & Configuration Pages
 import FeatureActivation from "./pages/admin/FeatureActivation";
 import SmtpSettings from "./pages/admin/SmtpSettings";
+import InstaToken from "./pages/admin/InstaToken";
 import PaymentMethodsSettings from "./pages/admin/PaymentMethodsSettings";
 import OfflinePayments from "./pages/admin/OfflinePayments";
 import GoogleSettings from "./pages/admin/GoogleSettings";
@@ -196,6 +197,9 @@ function AppRoutes() {
           </Route>
           <Route element={<ProtectedRoute requiredPermission="smtp_manage" />}>
             <Route path="/admin/setup/smtp" element={<SmtpSettings />} />
+          </Route>
+          <Route element={<ProtectedRoute requiredPermission="insta_token_manage" />}>
+            <Route path="/admin/setup/insta-token" element={<InstaToken />} />
           </Route>
           <Route element={<ProtectedRoute requiredPermission="payment_methods_manage" />}>
             <Route path="/admin/setup/payment-methods" element={<PaymentMethodsSettings />} />

@@ -336,6 +336,55 @@ export const updateGoogleSettings = async (req, res) => {
     }
 };
 
+export const getInstaTokenSettings = async (req, res) => {
+    try {
+        const envMap = readEnvFile();
+        const settings = {
+            INSTA_FEED: Number(envMap.INSTA_FEED ?? process.env.INSTA_FEED ?? 0),
+            INSTAGRAM_USER_ID: envMap.INSTAGRAM_USER_ID || process.env.INSTAGRAM_USER_ID || '',
+            INSTAGRAM_ACCESS_TOKEN: envMap.INSTAGRAM_ACCESS_TOKEN || process.env.INSTAGRAM_ACCESS_TOKEN || ''
+        };
+
+        return res.status(200).json({
+            success: true,
+            status: true,
+            settings
+        });
+    } catch (error) {
+        console.error('Error fetching Google settings:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to fetch Google settings'
+        });
+    }
+};
+
+export const updateInstaTokenSettings = async (req, res) => {
+    try {
+        const payload = req.body || {};
+
+        for (const [key, value] of Object.entries(payload)) {
+            overWriteEnvFile(key, value);
+            // Sync with WebsiteSetting model
+            await syncWebsiteSettingToDb(key, value);
+        }
+
+        clearSettingsCache();
+
+        return res.status(200).json({
+            success: true,
+            status: true,
+            message: 'Instagram settings updated successfully'
+        });
+    } catch (error) {
+        console.error('Error updating Instagram settings:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to update Google settings'
+        });
+    }
+};
+
 /**
  * 5. General Website Settings (Fetched from DB & .env)
  */
@@ -575,5 +624,7 @@ export default {
     readEnvFile,
     getEnvValue,
     overWriteEnvFile,
-    env_key_update
+    env_key_update,
+    getInstaTokenSettings,
+    updateInstaTokenSettings
 };
